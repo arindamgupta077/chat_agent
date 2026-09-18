@@ -2,24 +2,52 @@ import { v4 as uuid } from 'uuid'
 import { z } from 'zod'
 import type { MCPServerConfig } from '@/packages/mcp/types'
 
-const envUtils = {
+const isValidHeaderKey = (key: string) => /^[A-Za-z0-9_-]{1,40}$/.test(key)
+
+export const envUtils = {
   parse: (env: string): Record<string, string> => {
     const lines = env.split('\n')
     const result: Record<string, string> = {}
-    for (const line of lines) {
+    let lastKey = ''
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim()
+      if (!line) continue
+
+      // Support either KEY=VALUE or KEY: VALUE (standard HTTP header syntax)
       const eqIndex = line.indexOf('=')
-      if (eqIndex === -1) continue
-      const key = line.slice(0, eqIndex).trim()
-      let value = line.slice(eqIndex + 1).trim()
-      if (key && value) {
-        // Strip accidental angle brackets from Bearer placeholder, e.g. "Bearer <token>" -> "Bearer token"
+      const colonIndex = line.indexOf(':')
+      let sepIndex = -1
+      if (eqIndex !== -1 && colonIndex !== -1) {
+        sepIndex = Math.min(eqIndex, colonIndex)
+      } else {
+        sepIndex = Math.max(eqIndex, colonIndex)
+      }
+
+      const candidateKey = sepIndex !== -1 ? line.slice(0, sepIndex).trim() : ''
+      if (sepIndex !== -1 && isValidHeaderKey(candidateKey)) {
+        let value = line.slice(sepIndex + 1).trim()
         const bearerMatch = value.match(/^Bearer\s+<(.+)>$/i)
         if (bearerMatch) {
           value = `Bearer ${bearerMatch[1].trim()}`
         }
-        result[key] = value
+        result[candidateKey] = value
+        lastKey = candidateKey
+      } else if (lastKey) {
+        // Continuation line: append wrapped or multi-line header values (e.g. pasted JWT token)
+        result[lastKey] = result[lastKey] ? `${result[lastKey]} ${line}` : line
+      } else if (line.startsWith('Bearer ') || line.startsWith('eyJ')) {
+        // User pasted just the Bearer token without 'Authorization='
+        result.Authorization = line.startsWith('Bearer ') ? line : `Bearer ${line}`
+        lastKey = 'Authorization'
       }
     }
+
+    // Clean up any duplicated Bearer prefix (e.g., if user pasted "Authorization=Bearer Bearer ...")
+    for (const [key, value] of Object.entries(result)) {
+      result[key] = value.replace(/^Bearer\s+Bearer\s+/i, 'Bearer ')
+    }
+
     return result
   },
   stringify: (env: Record<string, string>): string => {

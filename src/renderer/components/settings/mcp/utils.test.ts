@@ -141,4 +141,69 @@ describe('MCP stdio command form conversion', () => {
       },
     })
   })
+
+  it('handles wrapped or multiline Bearer tokens gracefully', () => {
+    const values: MCPServerConfigFormValues = {
+      id: 'server-n8n',
+      name: 'n8n',
+      enabled: true,
+      transport: {
+        type: 'http',
+        url: 'http://localhost:5678/mcp-server/http',
+        headers: 'Authorization=Bearer\neyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMifQ.signature',
+      },
+    }
+    const config = getConfigFromFormValues(values)
+    expect(config.transport).toEqual({
+      type: 'http',
+      url: 'http://localhost:5678/mcp-server/http',
+      headers: {
+        Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMifQ.signature',
+      },
+    })
+  })
+
+  it('supports colon-delimited standard HTTP headers', () => {
+    const values: MCPServerConfigFormValues = {
+      id: 'server-n8n',
+      name: 'n8n',
+      enabled: true,
+      transport: {
+        type: 'http',
+        url: 'http://localhost:5678/mcp-server/http',
+        headers: 'Authorization: Bearer <secret-token>\nContent-Type: application/json',
+      },
+    }
+    const config = getConfigFromFormValues(values)
+    expect(config.transport).toEqual({
+      type: 'http',
+      url: 'http://localhost:5678/mcp-server/http',
+      headers: {
+        Authorization: 'Bearer secret-token',
+        'Content-Type': 'application/json',
+      },
+    })
+  })
+
+  it('auto-detects bare token as Authorization header', () => {
+    const values: MCPServerConfigFormValues = {
+      id: 'server-n8n',
+      name: 'n8n',
+      enabled: true,
+      transport: {
+        type: 'http',
+        url: 'http://localhost:5678/mcp-server/http',
+        headers: 'Bearer eyJhbGciOiJIUzI1NiJ9.test',
+      },
+    }
+    const config = getConfigFromFormValues(values)
+    expect(config.transport).toEqual({
+      type: 'http',
+      url: 'http://localhost:5678/mcp-server/http',
+      headers: {
+        Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.test',
+      },
+    })
+  })
 })
+

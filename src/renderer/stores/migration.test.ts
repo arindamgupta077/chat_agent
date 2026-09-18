@@ -254,7 +254,6 @@ vi.mock('@/setup/init_data', () => ({
 
 vi.mock('../platform/storages', () => ({
   getOldVersionStorages: vi.fn(() => []),
-  DesktopFileStorage: vi.fn(),
   LocalStorage: vi.fn(),
   IndexedDBStorage: vi.fn(),
   MobileSQLiteStorage: class MockMobileSQLiteStorage {
@@ -377,10 +376,19 @@ vi.mock('../packages/navigator', () => ({
 describe('migrateStorage test', () => {
   // Initialize platform instances after all mocks are set up
   beforeAll(async () => {
-    const { default: DesktopPlatformClass } = await import('@/platform/desktop_platform')
     const { default: MobilePlatformClass } = await import('@/platform/mobile_platform')
 
-    desktopPlatform = new DesktopPlatformClass(window.electronAPI)
+    desktopPlatform = {
+      type: 'desktop',
+      getPlatform: () => 'desktop',
+      getVersion: () => Promise.resolve('1.0.0'),
+      getStorageType: () => 'DESKTOP_FILE',
+      getStoreValue: (key: string) => mockIpcInvoke('getStoreValue', key),
+      setStoreValue: (key: string, value: any) => mockIpcInvoke('setStoreValue', key, JSON.stringify(value)),
+      delStoreValue: (key: string) => mockIpcInvoke('delStoreValue', key),
+      getAllStoreValues: () => mockIpcInvoke('getAllStoreValues'),
+      getAllStoreKeys: () => mockIpcInvoke('getAllStoreKeys'),
+    } as unknown as Platform
     mobilePlatform = new MobilePlatformClass()
     currentPlatform = desktopPlatform
   })
@@ -469,68 +477,6 @@ describe('migrateStorage test', () => {
     expect(localforageData[StorageKey.ChatSessionsList]).toBeDefined()
     expect(localforageData['session:1']).toBeDefined()
     expect(localforageData['session:2']).toBeDefined()
-  })
-
-  it('should migrate from desktop file storage (v1.9.x) to v1.17.0', async () => {
-    const { getOldVersionStorages } = await import('@/platform/storages')
-    const { initData } = await import('@/setup/init_data')
-
-    // Desktop platform already set in beforeEach
-
-    // Setup: Desktop v1.9.x used single config.json file (DESKTOP_FILE)
-    // Old storage: DESKTOP_FILE with all data in one place
-    const oldFileData: StorageData = {
-      [StorageKey.ConfigVersion]: JSON.stringify(5),
-      [StorageKey.Settings]: JSON.stringify({ theme: 'dark', language: 'en' }),
-      [StorageKey.Configs]: JSON.stringify({ apiKey: 'test-key' }),
-      [StorageKey.ChatSessionsList]: JSON.stringify([{ id: '1' }, { id: '2' }]),
-      'session:1': JSON.stringify({ id: '1', name: 'Session 1', messages: [] }),
-      'session:2': JSON.stringify({ id: '2', name: 'Session 2', messages: [] }),
-      'some-other-key': JSON.stringify({ data: 'value' }),
-    }
-
-    const mockOldStorage = createOldStorageMock('DESKTOP_FILE', oldFileData)
-    ;(getOldVersionStorages as ReturnType<typeof vi.fn>).mockReturnValueOnce([mockOldStorage])
-
-    const migration = await import('@/stores/migration')
-    await migration._migrateStorageForTest()
-
-    // Should get all values from old storage
-    expect(mockOldStorage.getAllStoreValues).toHaveBeenCalled()
-
-    // In v1.17.0: settings, configs, configVersion should stay in file (IPC)
-    // They should NOT be migrated to IndexedDB
-    const localforageKeys = Object.keys(localforageData)
-    expect(localforageKeys).not.toContain(StorageKey.Settings)
-    expect(localforageKeys).not.toContain(StorageKey.Configs)
-    expect(localforageKeys).not.toContain(StorageKey.ConfigVersion)
-
-    // Session data should be migrated to IndexedDB
-    expect(localforageKeys).toContain(StorageKey.ChatSessionsList)
-    expect(localforageKeys).toContain('session:1')
-    expect(localforageKeys).toContain('session:2')
-    expect(localforageKeys).toContain('some-other-key')
-
-    // Only session-related keys should be deleted from old storage
-    // Settings, configs, configVersion are NOT deleted because they stay in file storage
-    const deletedKeys = mockOldStorage.delStoreValue.mock.calls.map((call: unknown[]) => call[0])
-    expect(deletedKeys).toContain(StorageKey.ChatSessionsList)
-    expect(deletedKeys).toContain('session:1')
-    expect(deletedKeys).toContain('session:2')
-    expect(deletedKeys).toContain('some-other-key')
-
-    // These should NOT be deleted because they stay in file storage
-    expect(deletedKeys).not.toContain(StorageKey.Settings)
-    expect(deletedKeys).not.toContain(StorageKey.Configs)
-    expect(deletedKeys).not.toContain(StorageKey.ConfigVersion)
-
-    // Should mark as migrated in old storage
-    expect(mockOldStorage.setStoreValue).toHaveBeenCalledWith(
-      'migrated',
-      expect.stringContaining('migrated from DESKTOP_FILE to INDEXEDDB')
-    )
-
-    expect(initData).not.toHaveBeenCalled()
   })
 
   it('should skip migration when old storage has same type as current storage', async () => {
@@ -714,57 +660,6 @@ describe('migrateStorage test', () => {
 
     // localStorage should NOT be marked as migrated
     expect(mockLocalStorage.setStoreValue).not.toHaveBeenCalled()
-
-    expect(initData).not.toHaveBeenCalled()
-  })
-
-  it('should migrate from desktop file (v1.9.10) to IndexedDB (v1.16.1) and preserve settings/configs in file', async () => {
-    const { getOldVersionStorages } = await import('@/platform/storages')
-    const { initData } = await import('@/setup/init_data')
-
-    // Desktop platform already set in beforeEach
-
-    // Setup: Desktop v1.9.10 used single config.json (version 5)
-    // User upgrades to v1.16.1 which uses IndexedDB
-    // Note: v1.17.0 uses hybrid (IndexedDB for sessions, file for settings/configs)
-    const oldFileData: StorageData = {
-      [StorageKey.ConfigVersion]: JSON.stringify(5),
-      [StorageKey.Settings]: JSON.stringify({ theme: 'dark', fontSize: 14 }),
-      [StorageKey.Configs]: JSON.stringify({ apiKey: 'desktop-key' }),
-      [StorageKey.ChatSessionsList]: JSON.stringify([{ id: 'desk1' }]),
-      'session:desk1': JSON.stringify({ id: 'desk1', name: 'Desktop Session', messages: [] }),
-      'custom-key': JSON.stringify({ custom: 'data' }),
-    }
-
-    const mockOldStorage = createOldStorageMock('DESKTOP_FILE', oldFileData)
-    ;(getOldVersionStorages as ReturnType<typeof vi.fn>).mockReturnValueOnce([mockOldStorage])
-
-    const migration = await import('@/stores/migration')
-    await migration._migrateStorageForTest()
-
-    // Should get all values from old storage
-    expect(mockOldStorage.getAllStoreValues).toHaveBeenCalled()
-
-    // Session data should be migrated to IndexedDB
-    expect(localforageData[StorageKey.ChatSessionsList]).toBeDefined()
-    expect(localforageData['session:desk1']).toBeDefined()
-    expect(localforageData['custom-key']).toBeDefined()
-
-    // Settings, configs, configVersion should NOT be in IndexedDB (they stay in file)
-    expect(localforageData[StorageKey.Settings]).toBeUndefined()
-    expect(localforageData[StorageKey.Configs]).toBeUndefined()
-    expect(localforageData[StorageKey.ConfigVersion]).toBeUndefined()
-
-    // Session keys should be deleted from old file storage
-    const deletedKeys = mockOldStorage.delStoreValue.mock.calls.map((call: unknown[]) => call[0])
-    expect(deletedKeys).toContain(StorageKey.ChatSessionsList)
-    expect(deletedKeys).toContain('session:desk1')
-    expect(deletedKeys).toContain('custom-key')
-
-    // Settings/configs/configVersion should NOT be deleted (stay in file)
-    expect(deletedKeys).not.toContain(StorageKey.Settings)
-    expect(deletedKeys).not.toContain(StorageKey.Configs)
-    expect(deletedKeys).not.toContain(StorageKey.ConfigVersion)
 
     expect(initData).not.toHaveBeenCalled()
   })

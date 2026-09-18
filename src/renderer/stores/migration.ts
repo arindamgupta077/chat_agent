@@ -82,23 +82,6 @@ async function doMigrateStorage(oldStorage: Storage) {
         log.info(`migrateStorage: failed to migrate ${key}`)
       }
     }
-  } else if (platform.type === 'desktop') {
-    // for desktop copy all except settings, configs and configVersion, then delete old key
-    const kvs = await oldStorage.getAllStoreValues()
-    const keys = Object.keys(kvs).filter((k) => !['settings', 'configs', 'configVersion'].includes(k))
-    for (let index = 0; index < keys.length; index++) {
-      const key = keys[index]
-      try {
-        const val = kvs[key]
-        await storage.setItemNow(key, val)
-        await oldStorage.delStoreValue(key)
-        log.info(`migrateStorage: ${index + 1} / ${keys.length} migrated`)
-      } catch {
-        log.info(`migrateStorage: failed to migrate ${key}`)
-      }
-    }
-  } else {
-    // no migration for web platform yet
   }
   const migrated = await oldStorage.getStoreValue('migrated')
 
@@ -132,40 +115,24 @@ async function migrateStorage() {
   }
 
   /**
-   * 对于桌面端：
-   *   需要判断configVersion，如果小于上次迁移过数据的版本号，需要从旧的storage中迁移数据
-   * 对于其他端（目前只有移动端）：
-   *   需要遍历所有旧的storage，找到configVersion最大的那个，如果比当前的新，则迁移数据
+   * 需要遍历所有旧的storage，找到configVersion最大的那个，如果比当前的新，则迁移数据
    * 如果当前 configVersion 为 0，且没有找到可迁移数据，说明是第一次启动应用，需要初始化数据
    */
 
   let needMigration = false
 
-  const latestDesktopMigratedVersion = 12 // desktop 端最新的迁移版本是 11 到 12
-
-  // 桌面端的configVersion一直在config file storage中，不存在不同storage间不同的情况
-  if (platform.type === 'desktop' && configVersion > 0 && configVersion < latestDesktopMigratedVersion) {
-    log.info(
-      `migrateStorage: desktop platform needs migration, config version ${configVersion} < latest migrated version ${latestDesktopMigratedVersion}`
-    )
-    needMigration = true
-  }
-
   const [oldConfigVersion, oldStorage] = await findNewestStorage(getOldVersionStorages())
 
-  if (!needMigration) {
-    log.info(
-      `migrateStorage check: platform ${platform.type} old config version: ${oldConfigVersion}, old storage: ${oldStorage?.getStorageType()}`
-    )
+  log.info(
+    `migrateStorage check: platform ${platform.type} old config version: ${oldConfigVersion}, old storage: ${oldStorage?.getStorageType()}`
+  )
 
-    if (
-      platform.type !== 'desktop' &&
-      oldConfigVersion > configVersion &&
-      oldStorage &&
-      oldStorage.getStorageType() !== storage.getStorageType()
-    ) {
-      needMigration = true
-    }
+  if (
+    oldConfigVersion > configVersion &&
+    oldStorage &&
+    oldStorage.getStorageType() !== storage.getStorageType()
+  ) {
+    needMigration = true
   }
 
   if (needMigration && oldStorage) {

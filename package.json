@@ -12,7 +12,6 @@
     "generate:model-snapshot": "pnpm exec tsx scripts/generate-model-snapshot.ts",
     "build": "vite build --config vite.config.web.ts",
     "build:web": "vite build --config vite.config.web.ts",
-    "postinstall": "node .erb/scripts/postinstall.cjs",
     "release:web": "bash release-web.sh",
     "dev": "vite --config vite.config.web.ts",
     "dev:local": "cross-env USE_LOCAL_API=true vite --config vite.config.web.ts",
@@ -21,7 +20,6 @@
     "start": "vite --config vite.config.web.ts",
     "serve:web": "vite preview --config vite.config.web.ts",
     "test": "vitest run",
-    "test:windows": "vitest run src/main/sandbox/manager.windows.test.ts src/main/skills/user-exec-runner.windows.test.ts",
     "test:ui": "vitest --ui",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -334,13 +332,6 @@
     "@rollup/rollup-win32-x64-msvc": "4.48.1"
   },
   "browserslist": [],
-  "electronmon": {
-    "patterns": [
-      "!**/**",
-      "src/main/**"
-    ],
-    "logLevel": "quiet"
-  },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": "biome format --write --no-errors-on-unmatched"
   },

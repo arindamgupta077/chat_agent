@@ -128,7 +128,62 @@ async function connectNegotiatingClient(
   }
 }
 
-type HttpTransportOptions = StreamableHTTPClientTransportOptions & { authProvider: MCPOAuthProvider }
+type HttpTransportOptions = StreamableHTTPClientTransportOptions & { authProvider?: MCPOAuthProvider }
+
+export function createMcpFetch(): typeof fetch {
+  return async (input: RequestInfo | URL, init?: RequestInit) => {
+    let urlString =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : input instanceof Request
+            ? input.url
+            : String(input)
+
+    if (platform.type === 'web') {
+      try {
+        const baseOrigin =
+          typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'http://localhost:1212'
+        const parsed = new URL(urlString, baseOrigin)
+        if ((parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') && parsed.port === '5678') {
+          urlString = `/n8n-mcp${parsed.pathname}${parsed.search}`
+        }
+      } catch (e) {
+        console.warn('Failed to parse URL in mcpFetch', urlString, e)
+      }
+    }
+
+    const response = await fetch(urlString, init)
+
+    // In web mode, if n8n returns WWW-Authenticate with localhost:5678 URLs, rewrite them
+    // so any discovery requests by the SDK stay same-origin and route through the proxy.
+    if (platform.type === 'web' && response.headers.has('www-authenticate')) {
+      const authHeader = response.headers.get('www-authenticate')
+      if (authHeader && (authHeader.includes('localhost:5678') || authHeader.includes('127.0.0.1:5678'))) {
+        const baseOrigin =
+          typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'http://localhost:1212'
+        const rewritten = authHeader.replace(/http:\/\/(localhost|127\.0\.0\.1):5678/g, baseOrigin + '/n8n-mcp')
+        const newHeaders = new Headers(response.headers)
+        newHeaders.set('www-authenticate', rewritten)
+        return new Proxy(response, {
+          get(target, prop, receiver) {
+            if (prop === 'headers') {
+              return newHeaders
+            }
+            const val = Reflect.get(target, prop, receiver)
+            if (typeof val === 'function') {
+              return val.bind(target)
+            }
+            return val
+          },
+        })
+      }
+    }
+
+    return response
+  }
+}
 
 async function connectStreamableHttpClient(
   url: URL,
@@ -150,7 +205,7 @@ async function connectStreamableHttpClient(
     }
     // The SDK has already discovered the authorization server, registered this client and
     // opened the browser. Wait for the redirect, exchange the code, then connect with the token.
-    const pendingCallback = options.authProvider.waitForAuthorizationCallback()
+    const pendingCallback = options.authProvider?.waitForAuthorizationCallback()
     if (!pendingCallback) {
       throw error
     }
@@ -192,6 +247,7 @@ async function createAutoClient(config: MCPServerConfig, name: string, interacti
   const transportOptions: HttpTransportOptions = {
     requestInit: { headers: transportConfig.headers },
     authProvider: new MCPOAuthProvider(config.id, interactive),
+    fetch: createMcpFetch(),
     // Vendors commonly publish an `issuer` that differs from the advertised authorization server
     // URL (for example the bare origin of a path-scoped server), which the RFC 8414 §3.3 echo
     // check rejects. Compatibility with those servers matters more than this check here.
@@ -248,6 +304,7 @@ async function createLegacyClient(transportConfig: TransportConfig, name: string
     try {
       const transport = new LegacyHTTPClientTransport(url, {
         requestInit: { headers: transportConfig.headers },
+        fetch: createMcpFetch(),
       })
       return createLegacyClientAdapter(
         await createMCPClient({

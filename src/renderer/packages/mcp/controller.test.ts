@@ -7,7 +7,7 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import platform from '@/platform'
 import { settingsStore } from '@/stores/settingsStore'
-import { MCPServer, mcpController, resolveMcpUrl } from './controller'
+import { MCPServer, createMcpFetch, mcpController, resolveMcpUrl } from './controller'
 import { IPCStdioTransport } from './ipc-stdio-transport'
 
 interface RecordedRequest {
@@ -916,3 +916,36 @@ describe('resolveMcpUrl', () => {
     }
   })
 })
+
+describe('createMcpFetch', () => {
+  it('rewrites localhost:5678 requests to /n8n-mcp and proxies www-authenticate headers in web mode', async () => {
+    const originalType = platform.type
+    const originalFetch = globalThis.fetch
+    try {
+      ;(platform as { type: string }).type = 'web'
+      let requestedUrl = ''
+      globalThis.fetch = vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
+        requestedUrl = String(input)
+        return new Response('{}', {
+          status: 401,
+          headers: {
+            'www-authenticate':
+              'Bearer realm="n8n MCP Server", resource_metadata="http://localhost:5678/.well-known/oauth-protected-resource/mcp-server/http"',
+          },
+        })
+      })
+
+      const mcpFetch = createMcpFetch()
+      const response = await mcpFetch('http://localhost:5678/mcp-server/http')
+
+      expect(requestedUrl).toBe('/n8n-mcp/mcp-server/http')
+      const authHeader = response.headers.get('www-authenticate')
+      expect(authHeader).toContain('/n8n-mcp/.well-known/oauth-protected-resource/mcp-server/http')
+      expect(authHeader).not.toContain('http://localhost:5678')
+    } finally {
+      ;(platform as { type: string }).type = originalType
+      globalThis.fetch = originalFetch
+    }
+  })
+})
+

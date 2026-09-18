@@ -250,7 +250,8 @@ const ConfigForm: FC<{
             <TextInput label="URL" required placeholder="https://..." {...form.getInputProps('transport.url')} />
             <Textarea
               label="HTTP Header"
-              placeholder="NAME=VALUE"
+              placeholder="Authorization=Bearer <token>"
+              description="One header per line, e.g. Authorization=Bearer <token>"
               autosize
               minRows={3}
               {...form.getInputProps('transport.headers')}

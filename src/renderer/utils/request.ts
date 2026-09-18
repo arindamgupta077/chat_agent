@@ -1,7 +1,6 @@
 import platform from '@/platform'
 import { ApiError, BaseError, NetworkError } from '../../shared/models/errors'
 import { isLocalHost } from '../../shared/utils/network_utils'
-import { desktopDirectRequestFromWindow } from './desktop-direct-request'
 import { handleMobileRequest } from './mobile-request'
 
 interface RequestOptions {
@@ -44,7 +43,7 @@ function buildHeaders(options: RequestOptions, url: string): Headers {
   const headers = new Headers(options.headers)
   headers.set('Content-Type', 'application/json')
 
-  if (options.useProxy && !isLocalHost(url) && platform.type !== 'mobile' && platform.type !== 'desktop') {
+  if (options.useProxy && !isLocalHost(url) && platform.type !== 'mobile') {
     headers.set('CHATBOX-TARGET-URI', url)
     headers.set('CHATBOX-PLATFORM', platform.type)
   }
@@ -57,7 +56,7 @@ async function doRequest(url: string, options: RequestOptions): Promise<Response
   let requestUrl = url
   const headers = buildHeaders(options, url)
 
-  if (useProxy && !isLocalHost(url) && platform.type !== 'mobile' && platform.type !== 'desktop') {
+  if (useProxy && !isLocalHost(url) && platform.type !== 'mobile') {
     const version = await platform.getVersion()
     headers.set('CHATBOX-VERSION', version || 'unknown')
     requestUrl = 'https://cors-proxy.chatboxai.app/proxy-api/completions'
@@ -67,8 +66,6 @@ async function doRequest(url: string, options: RequestOptions): Promise<Response
     let res: Response
     if (platform.type === 'mobile' && useProxy) {
       res = await handleMobileRequest(requestUrl, method, headers, body, signal)
-    } else if (platform.type === 'desktop' && useProxy && !isLocalHost(url)) {
-      res = await desktopDirectRequestFromWindow(requestUrl, method, headers, body, signal)
     } else {
       res = await fetch(requestUrl, { method, headers, body, signal })
     }

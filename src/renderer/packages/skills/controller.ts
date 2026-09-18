@@ -39,37 +39,50 @@ export function subscribeSkillsChanged(listener: () => void): () => void {
   }
 }
 
+async function invokeSkillsIpc<T>(channel: string, ...args: any[]): Promise<T> {
+  if (typeof window !== 'undefined' && window.electronAPI?.invoke) {
+    return window.electronAPI.invoke(channel, ...args)
+  }
+  throw new Error(`Skills IPC is not available in browser mode (${channel})`)
+}
+
 export const skillsController = {
   discoverSkills(): Promise<SkillInfo[]> {
+    if (typeof window === 'undefined' || !window.electronAPI?.invoke) {
+      return Promise.resolve([])
+    }
     return window.electronAPI.invoke('skills:discover')
   },
 
   loadSkill(
     name: string
   ): Promise<{ metadata: SkillMetadata; body: string; skillRoot?: string; files?: string[] } | null> {
+    if (typeof window === 'undefined' || !window.electronAPI?.invoke) {
+      return Promise.resolve(null)
+    }
     return window.electronAPI.invoke('skills:load', name)
   },
 
   getSkillsDirectory(): Promise<string> {
-    return window.electronAPI.invoke('skills:get-directory')
+    return invokeSkillsIpc('skills:get-directory')
   },
 
   async openSkillsDirectory(): Promise<void> {
-    await window.electronAPI.invoke('skills:open-directory')
+    await invokeSkillsIpc('skills:open-directory')
   },
 
   executeScript(skillName: string, scriptName: string, args?: string[]): Promise<SkillScriptResult> {
-    return window.electronAPI.invoke('skills:execute-script', { skillName, scriptName, args })
+    return invokeSkillsIpc('skills:execute-script', { skillName, scriptName, args })
   },
 
   async installSkill(owner: string, repo: string, skillPath: string): Promise<SkillInstallResult> {
-    const result = await window.electronAPI.invoke('skills:install', { owner, repo, skillPath })
+    const result = await invokeSkillsIpc<SkillInstallResult>('skills:install', { owner, repo, skillPath })
     if (result.success) notifySkillsChanged()
     return result
   },
 
   async installFromSandbox(sandboxPath: string, sessionId?: string, sourceInfo?: string): Promise<SkillInstallResult> {
-    const result = await window.electronAPI.invoke('skills:install-from-sandbox', {
+    const result = await invokeSkillsIpc<SkillInstallResult>('skills:install-from-sandbox', {
       sandboxPath,
       sessionId,
       sourceInfo,
@@ -92,11 +105,11 @@ export const skillsController = {
       injectBundledNode?: boolean
     }
   ): Promise<SkillScriptResult> {
-    return window.electronAPI.invoke('skills:user-exec', { command, ...options })
+    return invokeSkillsIpc('skills:user-exec', { command, ...options })
   },
 
   resolveUserExecCwd(options: { cwd?: string; baseCwd?: string }): Promise<string> {
-    return window.electronAPI.invoke('skills:resolve-user-exec-cwd', options)
+    return invokeSkillsIpc('skills:resolve-user-exec-cwd', options)
   },
 
   resolveCommandRetry(options: {
@@ -106,39 +119,45 @@ export const skillsController = {
     cwd: string
     shell: 'bash' | 'powershell'
   }): Promise<{ valid: true; retryOf: string } | { valid: false; error: string }> {
-    return window.electronAPI.invoke('skills:resolve-command-retry', options)
+    return invokeSkillsIpc('skills:resolve-command-retry', options)
   },
 
   cancelUserExec(options: { sessionId?: string; toolCallId: string }): Promise<{ killed: boolean }> {
-    return window.electronAPI.invoke('skills:user-exec-cancel', options)
+    return invokeSkillsIpc('skills:user-exec-cancel', options)
   },
 
   async installMarketplaceSkill(skill: MarketplaceSkill): Promise<SkillInstallResult> {
-    const result = await window.electronAPI.invoke('skills:install-marketplace', skill)
+    const result = await invokeSkillsIpc<SkillInstallResult>('skills:install-marketplace', skill)
     if (result.success) notifySkillsChanged()
     return result
   },
 
   async deleteSkill(name: string): Promise<{ success: boolean; error?: string }> {
-    const result = await window.electronAPI.invoke('skills:delete', name)
+    const result = await invokeSkillsIpc<{ success: boolean; error?: string }>('skills:delete', name)
     if (result.success) notifySkillsChanged()
     return result
   },
 
   scanRepo(owner: string, repo: string): Promise<Array<{ name: string; path: string; description?: string }>> {
-    return window.electronAPI.invoke('skills:scan-repo', owner, repo)
+    return invokeSkillsIpc('skills:scan-repo', owner, repo)
   },
 
   checkForUpdate(name: string): Promise<SkillUpdateResult> {
-    return window.electronAPI.invoke('skills:check-update', name)
+    return invokeSkillsIpc('skills:check-update', name)
   },
 
   checkForUpdatesBatch(): Promise<Record<string, { hasUpdate: boolean; error?: string }>> {
+    if (typeof window === 'undefined' || !window.electronAPI?.invoke) {
+      return Promise.resolve({})
+    }
     return window.electronAPI.invoke('skills:check-updates-batch')
   },
 
   /** 触发后端内置 skill 同步（main 进程拉取 manifest 并按内容 hash 更新本地快照）。 */
   async syncBuiltinSkills(lang?: string): Promise<{ changed: boolean }> {
+    if (typeof window === 'undefined' || !window.electronAPI?.invoke) {
+      return Promise.resolve({ changed: false })
+    }
     const result = await window.electronAPI.invoke('skills:sync-builtin', lang)
     if (result?.changed) notifySkillsChanged()
     return result ?? { changed: false }

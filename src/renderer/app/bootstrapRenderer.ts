@@ -1,14 +1,12 @@
 import type { Settings } from '@shared/types'
 import i18n from '@/i18n'
 import { getLogger } from '@/lib/utils'
-import platform from '@/platform'
 import { router } from '@/router'
 import { initSessionPresentationBindings } from '@/session-bootstrap'
 import { initGoogleAnalyticsTracking } from '@/setup/ga_init'
 import { initJkTracking } from '@/setup/jk_analytics_init'
 import { initPlausibleTracking } from '@/setup/plausible_init'
 import { initSentry } from '@/setup/sentry_init'
-import { initSessionAttachmentRagMaintenance } from '@/setup/session_attachment_rag_maintenance'
 import { initLastUsedModelStore } from '@/stores/lastUsedModelStore'
 import * as migration from '@/stores/migration'
 import { getMigrationErrorContext } from '@/stores/migration-error'
@@ -16,7 +14,6 @@ import { initOnboardingStore } from '@/stores/onboardingStore'
 import { initLoginLicenseStateReconciliation } from '@/stores/premiumActions'
 import { initRecentDirectoriesStore } from '@/stores/recentDirectoriesStore'
 import { initSettingsStore } from '@/stores/settingsStore'
-import { initUpdateListeners } from '@/stores/updateStore'
 import { reportError } from '@/utils/sentry'
 import type { RendererApplication } from './createRendererApplication'
 
@@ -72,10 +69,6 @@ export async function bootstrapRenderer(application: RendererApplication): Promi
   void i18n.changeLanguage(settings.language)
   initLoginLicenseStateReconciliation()
 
-  if (platform.type === 'desktop') {
-    initUpdateListeners()
-    initSessionAttachmentRagMaintenance()
-  }
   initSessionPresentationBindings()
 
   return settings

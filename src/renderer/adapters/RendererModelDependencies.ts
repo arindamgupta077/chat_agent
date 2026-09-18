@@ -61,11 +61,7 @@ function createRequestAdapter(
 }
 
 function getDefaultOAuthIpc(): OAuthIpcInvoker {
-  const maybeDesktopPlatform = platform as unknown as { ipc?: OAuthIpcInvoker }
-  if (!maybeDesktopPlatform.ipc) {
-    throw new Error('OAuth IPC is only available on desktop')
-  }
-  return maybeDesktopPlatform.ipc
+  throw new Error('OAuth IPC is not supported in web application')
 }
 
 export async function createModelDependencies(

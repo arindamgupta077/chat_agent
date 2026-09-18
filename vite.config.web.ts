@@ -17,8 +17,49 @@
 import path from 'node:path'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
-import { dvhToVh, injectBaseTag, injectViewportContent } from './electron.vite.config'
+import { defineConfig, type Plugin } from 'vite'
+
+function injectBaseTag(): Plugin {
+  return {
+    name: 'inject-base-tag',
+    transformIndexHtml() {
+      return [
+        {
+          tag: 'base',
+          attrs: { href: '/' },
+          injectTo: 'head-prepend',
+        },
+      ]
+    },
+  }
+}
+
+function injectViewportContent(isDesktop: boolean): Plugin {
+  const content = isDesktop
+    ? 'width=device-width, initial-scale=1, user-scalable=no'
+    : 'height=device-height, width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover'
+  return {
+    name: 'inject-viewport-content',
+    transformIndexHtml(html) {
+      return html.replace('%VIEWPORT_CONTENT%', content)
+    },
+  }
+}
+
+function dvhToVh(): Plugin {
+  return {
+    name: 'dvh-to-vh',
+    transform(code, id) {
+      if (id.endsWith('.css') || id.endsWith('.scss') || id.endsWith('.sass')) {
+        return {
+          code: code.replace(/(\d+)dvh/g, '$1vh'),
+          map: null,
+        }
+      }
+      return null
+    },
+  }
+}
 
 export default defineConfig({
   root: 'src/renderer',
