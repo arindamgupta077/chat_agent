@@ -43,6 +43,15 @@ export default defineConfig({
   server: {
     host: process.env.DEV_HOST || '0.0.0.0',
     port: Number(process.env.DEV_PORT) || 1212,
+    proxy: {
+      '/n8n-mcp': {
+        target: process.env.N8N_URL || 'http://localhost:5678',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        rewrite: (path) => path.replace(/^\/n8n-mcp/, ''),
+      },
+    },
   },
   define: {
     'process.type': '"renderer"',

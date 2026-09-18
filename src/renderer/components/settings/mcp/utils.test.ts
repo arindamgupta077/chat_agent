@@ -120,4 +120,25 @@ describe('MCP stdio command form conversion', () => {
     expect(config?.transport).toEqual({ type: 'http', url: 'https://openapi-mcp.example.com/id/abc/mcp' })
     expect(() => parseServerFromJson(JSON.stringify({ headers: {} }))).toThrow()
   })
+
+  it('sanitizes accidental angle brackets from Bearer header values', () => {
+    const values: MCPServerConfigFormValues = {
+      id: 'server-n8n',
+      name: 'n8n',
+      enabled: true,
+      transport: {
+        type: 'http',
+        url: 'http://localhost:5678/mcp-server/http',
+        headers: 'Authorization=Bearer <eyJhbGciOiJIUzI1NiJ9.test>',
+      },
+    }
+    const config = getConfigFromFormValues(values)
+    expect(config.transport).toEqual({
+      type: 'http',
+      url: 'http://localhost:5678/mcp-server/http',
+      headers: {
+        Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.test',
+      },
+    })
+  })
 })

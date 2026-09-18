@@ -13,6 +13,7 @@ import { StreamableHTTPClientTransport as LegacyHTTPClientTransport } from '@mod
 import { type JSONValue as AIToolJSONValue, dynamicTool, jsonSchema, type ToolSet } from 'ai'
 import Emittery from 'emittery'
 import { isEqual } from 'lodash'
+import platform from '@/platform'
 import { IPCStdioTransport } from './ipc-stdio-transport'
 import { MCPOAuthProvider } from './oauth-provider'
 import type { MCPProtocolMode, MCPServerConfig, MCPServerStatus } from './types'
@@ -159,6 +160,27 @@ async function connectStreamableHttpClient(
   }
 }
 
+export function resolveMcpUrl(rawUrl: string): URL {
+  const baseOrigin =
+    typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'http://localhost:1212'
+  let url: URL
+  try {
+    url = new URL(rawUrl, baseOrigin)
+  } catch {
+    url = new URL(rawUrl)
+  }
+
+  // In web browser mode, local n8n (port 5678) has no CORS headers enabled.
+  // Automatically route through the Vite dev proxy (/n8n-mcp) to bypass browser CORS restrictions.
+  if (platform.type === 'web') {
+    if ((url.hostname === 'localhost' || url.hostname === '127.0.0.1') && url.port === '5678') {
+      return new URL(`/n8n-mcp${url.pathname}${url.search}`, baseOrigin)
+    }
+  }
+
+  return url
+}
+
 async function createAutoClient(config: MCPServerConfig, name: string, interactive: boolean): Promise<MCPClient> {
   const transportConfig = config.transport
   if (transportConfig.type === 'stdio') {
@@ -166,7 +188,7 @@ async function createAutoClient(config: MCPServerConfig, name: string, interacti
     return connectNegotiatingClient(transport, name, 'auto')
   }
 
-  const url = new URL(transportConfig.url)
+  const url = resolveMcpUrl(transportConfig.url)
   const transportOptions: HttpTransportOptions = {
     requestInit: { headers: transportConfig.headers },
     authProvider: new MCPOAuthProvider(config.id, interactive),
@@ -222,8 +244,9 @@ async function createLegacyClient(transportConfig: TransportConfig, name: string
     }
   }
   if (transportConfig.type === 'http') {
+    const url = resolveMcpUrl(transportConfig.url)
     try {
-      const transport = new LegacyHTTPClientTransport(new URL(transportConfig.url), {
+      const transport = new LegacyHTTPClientTransport(url, {
         requestInit: { headers: transportConfig.headers },
       })
       return createLegacyClientAdapter(
@@ -243,7 +266,7 @@ async function createLegacyClient(transportConfig: TransportConfig, name: string
             name,
             transport: {
               type: 'sse',
-              url: transportConfig.url,
+              url: url.toString(),
               headers: transportConfig.headers,
             },
             onUncaughtError(error: unknown) {

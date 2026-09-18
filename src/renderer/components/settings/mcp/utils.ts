@@ -9,10 +9,15 @@ const envUtils = {
     for (const line of lines) {
       const eqIndex = line.indexOf('=')
       if (eqIndex === -1) continue
-      const key = line.slice(0, eqIndex)
-      const value = line.slice(eqIndex + 1)
-      if (key && value && key.trim() && value.trim()) {
-        result[key.trim()] = value.trim()
+      const key = line.slice(0, eqIndex).trim()
+      let value = line.slice(eqIndex + 1).trim()
+      if (key && value) {
+        // Strip accidental angle brackets from Bearer placeholder, e.g. "Bearer <token>" -> "Bearer token"
+        const bearerMatch = value.match(/^Bearer\s+<(.+)>$/i)
+        if (bearerMatch) {
+          value = `Bearer ${bearerMatch[1].trim()}`
+        }
+        result[key] = value
       }
     }
     return result

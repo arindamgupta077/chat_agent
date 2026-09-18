@@ -5,8 +5,9 @@ import {
   type TransportSendOptions,
 } from '@modelcontextprotocol/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import platform from '@/platform'
 import { settingsStore } from '@/stores/settingsStore'
-import { MCPServer, mcpController } from './controller'
+import { MCPServer, mcpController, resolveMcpUrl } from './controller'
 import { IPCStdioTransport } from './ipc-stdio-transport'
 
 interface RecordedRequest {
@@ -889,6 +890,29 @@ describe('MCPServer stdio transport', () => {
       expect(mcpController.getServer(id)?.status).toEqual({ state: 'running' })
     } finally {
       await mcpController.stopServer(id)
+    }
+  })
+})
+
+describe('resolveMcpUrl', () => {
+  it('resolves remote absolute URLs without changes', () => {
+    const url = resolveMcpUrl('https://example.com/mcp')
+    expect(url.toString()).toBe('https://example.com/mcp')
+  })
+
+  it('resolves relative proxy URLs using current origin', () => {
+    const url = resolveMcpUrl('/n8n-mcp/mcp-server/http')
+    expect(url.pathname).toBe('/n8n-mcp/mcp-server/http')
+  })
+
+  it('automatically proxies localhost:5678 to /n8n-mcp in web mode', () => {
+    const originalType = platform.type
+    try {
+      ;(platform as { type: string }).type = 'web'
+      const url = resolveMcpUrl('http://localhost:5678/mcp-server/http')
+      expect(url.pathname).toBe('/n8n-mcp/mcp-server/http')
+    } finally {
+      ;(platform as { type: string }).type = originalType
     }
   })
 })
