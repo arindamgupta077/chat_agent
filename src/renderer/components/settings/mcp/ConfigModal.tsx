@@ -23,6 +23,7 @@ import { AppTooltip as Tooltip } from '@/components/ui/tooltip'
 import { useMCPServerStatus } from '@/hooks/mcp'
 import { MCPServer, mcpController } from '@/packages/mcp/controller'
 import type { MCPServerConfig } from '@/packages/mcp/types'
+import platform from '@/platform'
 import { trackEvent } from '@/utils/track'
 import { getConfigFromFormValues, getFormValuesFromConfig, type MCPServerConfigFormValues } from './utils'
 
@@ -131,6 +132,14 @@ const ConfigForm: FC<{
       return
     }
     const config = getConfigFromFormValues(form.getValues())
+    if (!platform.isDesktopLike && config.transport.type === 'stdio') {
+      setTestingResult({
+        config,
+        tools: [],
+        error: new Error(t('Local (stdio) MCP servers are only supported in the desktop application.')!),
+      })
+      return
+    }
     console.debug('Testing connection with config', config)
     setTesting(true)
     setTestingResult(null)
@@ -167,6 +176,8 @@ const ConfigForm: FC<{
     return props.onSave(getConfigFromFormValues(values))
   }
 
+  const isStdioOnWeb = !platform.isDesktopLike && form.values.transport.type === 'stdio'
+
   return (
     <form ref={formRef} onSubmit={form.onSubmit(handleSubmit)}>
       <Stack gap="md">
@@ -179,9 +190,24 @@ const ConfigForm: FC<{
         >
           <Group>
             <Radio variant="outline" size="sm" value="http" label={t('Remote (http/sse)')} />
-            <Radio variant="outline" size="sm" value="stdio" label={t('Local (stdio)')} />
+            <Radio
+              variant="outline"
+              size="sm"
+              value="stdio"
+              label={platform.isDesktopLike ? t('Local (stdio)') : `${t('Local (stdio)')} (${t('Desktop only')})`}
+              disabled={!platform.isDesktopLike}
+            />
           </Group>
         </Radio.Group>
+        {isStdioOnWeb && (
+          <Paper withBorder p="sm" bg="var(--chatbox-background-error-secondary)">
+            <Text size="sm" c="chatbox-error">
+              {t(
+                'Local (stdio) MCP servers are only supported in the desktop application. Please use a remote (http/sse) server in the browser.'
+              )}
+            </Text>
+          </Paper>
+        )}
         <Stack gap={4}>
           <Radio.Group
             required
@@ -245,14 +271,16 @@ const ConfigForm: FC<{
                 {t('Cancel')}
               </Button>
             )}
-            <Button variant="outline" onClick={testConnection} loading={testing} disabled={testing}>
+            <Button variant="outline" onClick={testConnection} loading={testing} disabled={testing || isStdioOnWeb}>
               {t('Connect')}
             </Button>
             {props.mode === 'edit' || testingResult ? (
-              <Button type="submit">{t('Save')}</Button>
+              <Button type="submit" disabled={isStdioOnWeb}>
+                {t('Save')}
+              </Button>
             ) : (
               <Tooltip label={t('Please connect before saving')} withArrow zIndex={3000}>
-                <Button data-disabled type="submit" onClick={(e) => e.preventDefault()}>
+                <Button data-disabled type="submit" disabled={isStdioOnWeb} onClick={(e) => e.preventDefault()}>
                   {t('Save')}
                 </Button>
               </Tooltip>

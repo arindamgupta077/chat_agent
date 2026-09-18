@@ -26,7 +26,6 @@ import { ScalableIcon } from './components/common/ScalableIcon'
 import ThemeSwitchButton from './components/dev/ThemeSwitchButton'
 import SessionList from './components/session/SessionList'
 import { FORCE_ENABLE_DEV_PAGES } from './dev/devToolsConfig'
-import useNeedRoomForMacWinControls from './hooks/useNeedRoomForWinControls'
 import { useIsSmallScreen, useSidebarWidth } from './hooks/useScreenChange'
 import useVersion from './hooks/useVersion'
 import { navigateToSettings } from './modals/settings-navigation'
@@ -73,8 +72,6 @@ export default function Sidebar() {
   const [isResizing, setIsResizing] = useState(false)
   const resizeStartX = useRef<number>(0)
   const resizeStartWidth = useRef<number>(0)
-
-  const { needRoomForMacWindowControls } = useNeedRoomForMacWinControls()
 
   const handleCreateNewSession = useCallback(() => {
     navigate({ to: `/` })
@@ -172,7 +169,6 @@ export default function Sidebar() {
         pb="var(--mobile-safe-area-inset-bottom, 0px)"
         className="relative"
       >
-        {needRoomForMacWindowControls && <Box className="title-bar flex-[0_0_44px]" />}
         <Flex align="center" justify="space-between" gap="xs" px="md" py="sm" className="border-0">
           <Flex align="center" gap="sm" style={{ minWidth: 0, flex: 1 }}>
             <Flex
@@ -235,8 +231,6 @@ export default function Sidebar() {
         </Flex>
 
         <SessionList sessionListViewportRef={sessionListViewportRef} />
-
-        <SidebarUpdateBanner />
 
         <Stack gap={0} px="xs" pb="xs">
           <Divider />
@@ -376,51 +370,8 @@ export default function Sidebar() {
   )
 }
 
-/**
- * Desktop: shows update banner when an update is downloaded and ready to install.
- * Not shown on mobile (mobile uses dot indicator on About link).
- */
-function SidebarUpdateBanner() {
-  const isMobile = CHATBOX_BUILD_TARGET === 'mobile_app'
-  if (isMobile) return null
-  return <SidebarUpdateBannerInner />
-}
-
-function SidebarUpdateBannerInner() {
-  const { t } = useTranslation()
-  const updateStatus = useUpdateStore((s) => s.status)
-  const updateVersion = useUpdateStore((s) => s.version)
-
-  if (updateStatus !== 'downloaded') return null
-
-  return (
-    <Box px="xs" pb={4}>
-      <Flex
-        align="center"
-        gap="xs"
-        px="sm"
-        py={6}
-        className="rounded-lg cursor-pointer bg-chatbox-background-brand-secondary"
-        onClick={installUpdate}
-      >
-        <ScalableIcon icon={IconDownload} size={16} className="text-chatbox-brand flex-shrink-0" />
-        <Text size="sm" c="chatbox-brand" lineClamp={1} flex={1}>
-          {`${t('Update ready to install')}${updateVersion ? ` (v${updateVersion})` : ''}`}
-        </Text>
-      </Flex>
-    </Box>
-  )
-}
-
-/**
- * About NavLink with update dot indicator.
- * Desktop: shows dot when electron-updater detects update (downloaded/available).
- * Mobile: shows dot when remote API says needCheckUpdate.
- */
 function useShowUpdateDot(versionHook: ReturnType<typeof useVersion>) {
-  const updateStatus = useUpdateStore((s) => s.status)
-  const isMobile = CHATBOX_BUILD_TARGET === 'mobile_app'
-  return isMobile ? versionHook.needCheckUpdate : updateStatus === 'downloaded'
+  return versionHook.needCheckUpdate
 }
 
 function AboutNavLink({

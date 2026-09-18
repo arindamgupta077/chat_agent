@@ -16,7 +16,6 @@ import { navigateToSettings } from '@/modals/settings-navigation'
 import * as remote from '@/packages/remote'
 import { toastError } from '@/packages/toast'
 import platform from '@/platform'
-import { useAuthInfoStore } from '@/stores/authInfoStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { trackEvent } from '@/utils/track'
 import { ScalableIcon } from '../common/ScalableIcon'
@@ -120,9 +119,7 @@ const KnowledgeBasePage: React.FC = () => {
   const [showCreate, setShowCreate] = useState(false)
   const licenseKey = useSettingsStore((state) => state.licenseKey)
   const customProviders = useSettingsStore((state) => state.customProviders)
-  const accessToken = useAuthInfoStore((state) => state.accessToken)
-  const refreshToken = useAuthInfoStore((state) => state.refreshToken)
-  const isLoggedIn = !!(accessToken && refreshToken)
+  const isLoggedIn = false
 
   const [newEmbeddingModel, setNewEmbeddingModel] = useState<string | null>(null)
   const [newRerankModel, setNewRerankModel] = useState<string | null>(null)

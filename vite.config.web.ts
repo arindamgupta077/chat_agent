@@ -18,7 +18,7 @@ import path from 'node:path'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
-import { dvhToVh, injectBaseTag } from './electron.vite.config'
+import { dvhToVh, injectBaseTag, injectViewportContent } from './electron.vite.config'
 
 export default defineConfig({
   root: 'src/renderer',
@@ -31,6 +31,7 @@ export default defineConfig({
     }),
     react({}),
     dvhToVh(),
+    injectViewportContent(false),
     injectBaseTag(),
   ],
   resolve: {
@@ -59,6 +60,31 @@ export default defineConfig({
       generateScopedName: '[name]__[local]___[hash:base64:5]',
     },
     postcss: './postcss.config.cjs',
+  },
+  build: {
+    outDir: path.resolve(__dirname, 'dist'),
+    emptyOutDir: true,
+    target: 'es2020',
+    sourcemap: false,
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        entryFileNames: 'js/[name].[hash].js',
+        chunkFileNames: 'js/[name].[hash].js',
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name?.endsWith('.css')) {
+            return 'styles/[name].[hash][extname]'
+          }
+          if (/\.(woff|woff2|eot|ttf|otf)$/i.test(assetInfo.name || '')) {
+            return 'fonts/[name].[hash][extname]'
+          }
+          if (/\.(png|jpg|jpeg|gif|svg|webp|ico)$/i.test(assetInfo.name || '')) {
+            return 'images/[name].[hash][extname]'
+          }
+          return 'assets/[name].[hash][extname]'
+        },
+      },
+    },
   },
   optimizeDeps: {
     include: ['mermaid'],

@@ -96,6 +96,13 @@ export interface BuildToolsOptions {
    * switch for tool registration. Defaults to the global store.
    */
   memoryScope?: MemoryScope
+  /**
+   * Controls whether MCP tools should be registered.
+   * If not provided, defaults to includeAgentTools (agentMode === 'on' && modelSupportsAgentTools).
+   * In web browser environments where agentMode is 'off', passing mcp: true allows enabled MCP tools
+   * to be registered for the session.
+   */
+  mcp?: boolean
 }
 
 export interface BuildToolsResult {
@@ -438,8 +445,9 @@ When you create a Git commit that includes code changes, append this exact trail
 
   let tools: ToolSet = {}
 
-  // MCP tools: agent mode only, requires model support
-  if (includeAgentTools) {
+  // MCP tools: agent mode only, or explicitly enabled via options.mcp; requires model support
+  const includeMcpTools = options.mcp !== undefined ? options.mcp && modelSupportsAgentTools : includeAgentTools
+  if (includeMcpTools) {
     tools = { ...mcpController.getAvailableTools() }
   }
 

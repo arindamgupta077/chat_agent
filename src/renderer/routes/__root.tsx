@@ -39,7 +39,6 @@ import { createPageViewVisitGate } from '@/analytics/page-view-visit-gate'
 import { AppProviders } from '@/components/AppProviders'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import Toasts from '@/components/common/Toasts'
-import DesktopDownloadReminder from '@/components/layout/DesktopDownloadReminder'
 import ExitFullscreenButton from '@/components/layout/ExitFullscreenButton'
 import useAppTheme from '@/hooks/useAppTheme'
 import { useSystemLanguageWhenInit } from '@/hooks/useDefaultSystemLanguage'
@@ -75,7 +74,6 @@ function getSessionIdFromPathname(pathname: string): string | null {
 }
 
 import { initOnboardingStore, onboardingStore } from '@/stores/onboardingStore'
-import * as premiumActions from '@/stores/premiumActions'
 import * as settingActions from '@/stores/settingActions'
 import { initSettingsStore, settingsStore, useLanguage, useSettingsStore, useTheme } from '@/stores/settingsStore'
 import { add as addToast } from '@/stores/toastActions'
@@ -449,7 +447,6 @@ function Root() {
       {/* <ReportContentDialog /> */}
       {/* 搜索 */}
       <SearchDialog />
-      <DesktopDownloadReminder />
       {/* 没有配置模型时的欢迎弹窗 */}
       {/* <WelcomeDialog /> */}
       <Toasts /> {/* mui */}
@@ -728,7 +725,6 @@ const creteMantineTheme = (scale = 1) =>
 export const Route = createRootRoute({
   component: () => {
     useI18nEffect()
-    premiumActions.useAutoValidate() // 每次启动都执行 license 检查，防止用户在lemonsqueezy管理页面中取消了当前设备的激活
     useSystemLanguageWhenInit()
     useShortcut()
     const theme = useAppTheme()

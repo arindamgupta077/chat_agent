@@ -12,7 +12,6 @@ import platform from '@/platform'
 import { settingsStore } from '@/stores/settingsStore'
 import { uiStore } from '@/stores/uiStore'
 import { ScalableIcon } from '../common/ScalableIcon'
-import DesktopDownloadReminder from '../layout/DesktopDownloadReminder'
 import ExitFullscreenButton from '../layout/ExitFullscreenButton'
 import { Drawer, Modal } from '../layout/Overlay'
 import Page from '../layout/Page'
@@ -197,33 +196,6 @@ export const ExitFullscreenButtonState: StoryObj = {
         </Stack>
       </Paper>
     </Stack>
-  ),
-}
-
-export const DesktopDownloadReminderState: StoryObj = {
-  name: 'Desktop download reminder web floating prompt state',
-  parameters: {
-    uiInventoryTargets: ['src/renderer/components/layout/DesktopDownloadReminder'],
-  },
-  render: () => (
-    <StoryRouter>
-      <Stack gap="lg">
-        <SurfaceLabel
-          title="DesktopDownloadReminder"
-          description="Actual web-only floating reminder that promotes the desktop app outside settings routes."
-        />
-        <WebPlatformFixture />
-        <Paper withBorder radius="md" h={260} pos="relative" style={{ overflow: 'hidden' }}>
-          <Box p="md">
-            <Text fw={600}>Web chat viewport</Text>
-            <Text size="sm" c="dimmed">
-              The real fixed reminder is rendered at the bottom right of this iframe viewport.
-            </Text>
-          </Box>
-          <DesktopDownloadReminder />
-        </Paper>
-      </Stack>
-    </StoryRouter>
   ),
 }
 

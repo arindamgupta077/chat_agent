@@ -7,7 +7,6 @@ import { createMemoryHistory, createRootRoute, createRoute, createRouter, Router
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react'
 import {
   FreeTrialLink,
-  LoginButton,
   NewChatButton,
   NewChatTip,
   ProviderSettingsButton,
@@ -71,9 +70,6 @@ export const GuideActionButtonsStates: StoryObj = {
         description="Actual guide action components for login, provider settings, new chat, onboarding tip, license details, and free trial claim."
       />
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-        <ActionSurface label="Login">
-          <LoginButton onLoginSuccess={() => undefined} />
-        </ActionSurface>
         <ActionSurface label="Provider settings">
           <ProviderSettingsButton />
         </ActionSurface>

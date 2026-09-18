@@ -111,7 +111,7 @@ export const ChatboxWelcomeCardStates: StoryObj = {
       />
       <Group align="stretch">
         <Box w={260}>
-          <ChatboxWelcomeCard mode="login" pageName="storybook" />
+          <ChatboxWelcomeCard mode="no-provider" pageName="storybook" />
         </Box>
         <Box w={260}>
           <ChatboxWelcomeCard mode="no-license" pageName="storybook" />

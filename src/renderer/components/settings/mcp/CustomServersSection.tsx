@@ -11,6 +11,7 @@ import { useToggleMCPServer } from '@/hooks/mcp'
 import { mcpController } from '@/packages/mcp/controller'
 import type { MCPServerConfig } from '@/packages/mcp/types'
 import { toastError } from '@/packages/toast'
+import platform from '@/platform'
 import { useMcpSettings, useSettingsStore } from '@/stores/settingsStore'
 import { trackEvent } from '@/utils/track'
 import { ConfigModal } from './ConfigModal'
@@ -94,36 +95,47 @@ const CustomServersSection: FC<Props> = (props) => {
     setModal(null)
   }
 
-  const triggerAddServer = useCallback((entry?: MCPRegistryEntry) => {
-    if (entry) {
-      setModal({
-        mode: 'add',
-        config: {
-          id: uuid(),
-          name: entry.title,
-          enabled: true,
-          protocolMode: 'auto',
-          transport: {
-            type: 'stdio',
-            command: entry.configuration.command,
-            args: entry.configuration.args,
-            env: entry.configuration.env,
+  const triggerAddServer = useCallback(
+    (entry?: MCPRegistryEntry) => {
+      if (entry) {
+        if (!platform.isDesktopLike) {
+          toastError(
+            t(
+              'Pre-configured registry servers require local command execution (stdio) and are only supported in the desktop application.'
+            )
+          )
+          return
+        }
+        setModal({
+          mode: 'add',
+          config: {
+            id: uuid(),
+            name: entry.title,
+            enabled: true,
+            protocolMode: 'auto',
+            transport: {
+              type: 'stdio',
+              command: entry.configuration.command,
+              args: entry.configuration.args,
+              env: entry.configuration.env,
+            },
           },
-        },
-      })
-    } else {
-      setModal({
-        mode: 'add',
-        config: {
-          id: uuid(),
-          name: '',
-          enabled: true,
-          protocolMode: 'auto',
-          transport: { type: 'http', url: '' },
-        },
-      })
-    }
-  }, [])
+        })
+      } else {
+        setModal({
+          mode: 'add',
+          config: {
+            id: uuid(),
+            name: '',
+            enabled: true,
+            protocolMode: 'auto',
+            transport: { type: 'http', url: '' },
+          },
+        })
+      }
+    },
+    [t]
+  )
 
   const triggerImportJson = async () => {
     const content = await navigator.clipboard.readText()

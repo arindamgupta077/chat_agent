@@ -1476,4 +1476,39 @@ describe('buildToolsForSession — view_image gating', () => {
     })
     expect(result.tools.view_image).toBeUndefined()
   })
+
+  test('registers MCP tools outside agent mode when mcp is explicitly true and model supports agent tools', async () => {
+    const model = createMockModel()
+    const result = await buildToolsForSession(model, {
+      webBrowsing: false,
+      messages: [],
+      agentMode: 'off',
+      mcp: true,
+    })
+    expect(result.tools.mcp_tool).toBeDefined()
+  })
+
+  test('omits MCP tools when mcp is explicitly false even if agentMode is on', async () => {
+    const model = createMockModel()
+    const result = await buildToolsForSession(model, {
+      webBrowsing: false,
+      messages: [],
+      agentMode: 'on',
+      mcp: false,
+    })
+    expect(result.tools.mcp_tool).toBeUndefined()
+  })
+
+  test('omits MCP tools when mcp is true but model lacks agent tool-use support', async () => {
+    const model = createMockModel({
+      isSupportToolUse: vi.fn().mockImplementation((scope: string) => scope !== 'agent'),
+    } as Partial<ModelInterface>)
+    const result = await buildToolsForSession(model, {
+      webBrowsing: false,
+      messages: [],
+      agentMode: 'off',
+      mcp: true,
+    })
+    expect(result.tools.mcp_tool).toBeUndefined()
+  })
 })

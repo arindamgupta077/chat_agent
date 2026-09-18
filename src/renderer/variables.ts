@@ -2,7 +2,7 @@
 // 在编译时 webpack 会根据环境变量替换掉 process.env.XXX
 
 export const CHATBOX_BUILD_TARGET = (process.env.CHATBOX_BUILD_TARGET || 'unknown') as 'unknown' | 'mobile_app'
-export const CHATBOX_BUILD_PLATFORM = (process.env.CHATBOX_BUILD_PLATFORM || 'unknown') as
+export const CHATBOX_BUILD_PLATFORM = (process.env.CHATBOX_BUILD_PLATFORM || 'web') as
   | 'unknown'
   | 'ios'
   | 'android'

@@ -26,7 +26,6 @@ import {
   VibedropSlugNotOwnedError,
   type VibedropVisibility,
 } from '@/packages/vibedrop'
-import { useAuthInfoStore } from '@/stores/authInfoStore'
 
 export interface VibedropPublishProps {
   html: string
@@ -35,7 +34,7 @@ export interface VibedropPublishProps {
   sessionId?: string
 }
 
-type Stage = 'login_required' | 'form' | 'publishing' | 'email_required' | 'success' | 'error'
+type Stage = 'form' | 'publishing' | 'email_required' | 'success' | 'error'
 type PublishMode = 'new' | 'update'
 
 const ManageSitesHint = () => (
@@ -61,7 +60,6 @@ const VibedropPublish = NiceModal.create(({ html, uniqueId, sessionId }: Vibedro
   const modal = useModal()
   const { t } = useTranslation()
 
-  const isLoggedIn = useAuthInfoStore((state) => Boolean(state.accessToken && state.refreshToken))
   const publicationTargets = useMemo(() => {
     const storedSlug = getStoredSlug(uniqueId)
     const publications = getSessionVibedropPublications(sessionId)
@@ -82,7 +80,7 @@ const VibedropPublish = NiceModal.create(({ html, uniqueId, sessionId }: Vibedro
   const storedSlug = getStoredSlug(uniqueId)
   const initialTargetSlug = storedSlug || publicationTargets[0]?.slug || ''
   const initialTarget = publicationTargets.find((publication) => publication.slug === initialTargetSlug)
-  const [stage, setStage] = useState<Stage>(isLoggedIn ? 'form' : 'login_required')
+  const [stage, setStage] = useState<Stage>('form')
   const [publishMode, setPublishMode] = useState<PublishMode>(storedSlug ? 'update' : 'new')
   const [selectedSlug, setSelectedSlug] = useState(initialTargetSlug)
   const [visibility, setVisibility] = useState<VibedropVisibility>(
@@ -122,17 +120,6 @@ const VibedropPublish = NiceModal.create(({ html, uniqueId, sessionId }: Vibedro
       modal.remove()
     }
   }
-
-  const goLogin = () => {
-    navigateToSettings('/provider/chatbox-ai')
-    onClose()
-  }
-
-  useEffect(() => {
-    if (isLoggedIn && stage === 'login_required') {
-      setStage('form')
-    }
-  }, [isLoggedIn, stage])
 
   const changePublishMode = (value: string) => {
     const nextMode = value as PublishMode
@@ -214,22 +201,6 @@ const VibedropPublish = NiceModal.create(({ html, uniqueId, sessionId }: Vibedro
       title={t('Publish to VibeDrop')}
     >
       <Stack>
-        {stage === 'login_required' && (
-          <>
-            <Text size="sm" c="dimmed">
-              {t('Sign in to your Chatbox account to publish and manage your pages.')}
-            </Text>
-            <AdaptiveModal.Actions>
-              <Button variant="default" onClick={onClose}>
-                {t('Close')}
-              </Button>
-              <Button onClick={goLogin} c="white">
-                {t('Sign in')}
-              </Button>
-            </AdaptiveModal.Actions>
-          </>
-        )}
-
         {(stage === 'form' || stage === 'publishing') && (
           <>
             <Text size="sm" c="dimmed">

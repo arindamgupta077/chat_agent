@@ -112,6 +112,9 @@ export class MCPOAuthProvider implements OAuthClientProvider {
     if (!this.interactive) {
       throw new Error(t('Authorization required. Open this server in MCP settings and click Connect to sign in.')!)
     }
+    if (typeof window === 'undefined' || !window.electronAPI?.invoke) {
+      throw new Error(t('OAuth authentication for MCP servers is only supported in the desktop application.')!)
+    }
     // Start listening before the browser opens so the redirect can never race the server.
     this.pendingCallback = window.electronAPI.invoke(OAuthIpcChannels.MCP_WAIT_CALLBACK, MCP_OAUTH_CALLBACK_PORT)
     await platform.openLink(authorizationUrl.toString())

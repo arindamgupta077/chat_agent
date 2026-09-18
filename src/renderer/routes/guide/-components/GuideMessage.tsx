@@ -14,7 +14,6 @@ import type { GuideToolPart, GuideUIMessage, UserType } from '../-hooks/useGuide
 import {
   AutoNewChatLoading,
   FreeTrialLink,
-  LoginButton,
   NewChatButton,
   NewChatTip,
   ProviderSettingsButton,
@@ -60,8 +59,7 @@ function ToolPartRenderer({
       return <UserTypeCards onSelect={onSelectUserType} disabled={disabled} />
 
     case 'show_login_button':
-      if (!onLoginSuccess) return null
-      return <LoginButton onLoginSuccess={onLoginSuccess} />
+      return <ProviderSettingsButton />
 
     case 'show_provider_settings_button':
       return <ProviderSettingsButton />
@@ -82,19 +80,14 @@ function ToolPartRenderer({
     case 'show_new_chat_tip':
       return <NewChatTip />
 
-    case 'show_view_license_button':
-      return <ViewLicenseButton />
-
     case 'show_suggested_questions':
       if (!onQuestionClick) return null
       return <SuggestedQuestions onQuestionClick={onQuestionClick} disabled={disabled} />
 
+    case 'show_view_license_button':
     case 'show_free_trial_link':
-      return <FreeTrialLink onAfterClick={onClaimStart} />
-
     case 'show_claim_waiting':
-      if (!onClaimDetected) return null
-      return <ClaimWaitingCard onClaimDetected={onClaimDetected} />
+      return null
 
     case 'mark_completed':
     case 'activate_license':

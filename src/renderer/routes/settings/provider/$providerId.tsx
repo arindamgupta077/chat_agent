@@ -597,72 +597,7 @@ function ProviderSettings({ providerId }: { providerId: string }) {
           </Stack>
         )}
 
-        {/* OAuth Login (Desktop only) */}
-        {isDesktop && supportsOAuth && (
-          <Stack gap="xs">
-            <Text span fw="600">
-              {t('Authentication')}
-            </Text>
 
-            {/* Auth mode toggle - show when both OAuth and API key are configured */}
-            {hasOAuth && !isOAuthOnlyProvider && (
-              <SegmentedControl
-                value={providerSettings?.activeAuthMode || 'apikey'}
-                onChange={handleAuthModeChange}
-                data={[
-                  { label: t('API Key'), value: 'apikey' },
-                  { label: t('OAuth Login'), value: 'oauth' },
-                ]}
-              />
-            )}
-
-            {/* OAuth status & actions */}
-            <Flex gap="xs" align="center">
-              {hasOAuth ? (
-                <>
-                  <Badge color="green" variant="light">
-                    {t('Logged in')}
-                  </Badge>
-                  <Button
-                    variant="light"
-                    color="red"
-                    size="compact-sm"
-                    leftSection={<ScalableIcon icon={IconLogout} size={14} />}
-                    onClick={logout}
-                  >
-                    {t('Logout')}
-                  </Button>
-                </>
-              ) : oauthLoading ? (
-                <Flex gap="xs" align="center">
-                  <Loader size="xs" />
-                  <Text size="sm" c="chatbox-tertiary">
-                    {t('Waiting for authorization...')}
-                  </Text>
-                  <Button variant="light" color="red" size="compact-sm" onClick={handleCancelOAuth}>
-                    {t('Cancel')}
-                  </Button>
-                </Flex>
-              ) : (
-                <Button
-                  variant="light"
-                  size="sm"
-                  leftSection={<ScalableIcon icon={IconLogin} size={16} />}
-                  onClick={handleOAuthLogin}
-                >
-                  {t('Login with OAuth')}
-                </Button>
-              )}
-            </Flex>
-            {usesResponsesTransportForOAuth && (
-              <Text size="xs" c="chatbox-tertiary">
-                {t(
-                  'When OAuth Login is enabled, OpenAI requests use the Responses transport instead of the legacy Chat Completions transport.'
-                )}
-              </Text>
-            )}
-          </Stack>
-        )}
 
         {/* API Key */}
         {!isOAuthOnlyProvider &&

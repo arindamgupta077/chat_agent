@@ -384,6 +384,11 @@ export async function prepareAgentGenerationHarness(
     workspaceInstructionsOverride: promptContextSnapshot?.workspaceInstructions,
     globalSettings,
     memoryScope,
+    mcp:
+      platform.type === 'web'
+        ? (globalSettings.mcp?.enabledBuiltinServers?.length ?? 0) > 0 ||
+          (globalSettings.mcp?.servers?.some((s) => s.enabled) ?? false)
+        : undefined,
   })
   const hasTools = Object.keys(tools).length > 0
   // A request that declares no tools must not carry tool wire blocks: providers

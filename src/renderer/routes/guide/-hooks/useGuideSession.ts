@@ -431,42 +431,25 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
       const responseContent =
         type === 'novice'
           ? t(
-              'Great! Chatbox AI is our all-in-one service designed for new users - it works out of the box with no complex setup required.\n\nClick the login button below, then enter your email and verification code in the popup to sign in.'
+              'Great! Chatbox allows you to connect to multiple AI providers such as OpenAI, Claude, Gemini, Ollama, DeepSeek, and more. Click the button below to set up your preferred model provider.'
             )
           : t(
               "Excellent! You're ready to explore.\n\nClick the button below to configure your API directly. If you need help later, just click the **Help** button in the sidebar. Enjoy!"
             )
 
       // Create appropriate tool parts based on selection
-      let toolParts: GuideToolPart[] = []
-      let shouldShowConfetti = false
-
-      if (type === 'novice') {
-        toolParts = [
-          {
-            type: 'tool-show_login_button',
-            toolCallId: `login-btn-${Date.now()}`,
-            toolName: 'show_login_button',
-            state: 'result',
-            result: { displayed: true },
-          },
-        ]
-        setOnboardingStep('login_flow')
-      } else {
-        toolParts = [
-          {
-            type: 'tool-show_provider_settings_button',
-            toolCallId: `provider-settings-btn-${Date.now()}`,
-            toolName: 'show_provider_settings_button',
-            state: 'result',
-            result: { displayed: true },
-          },
-        ]
-        // Expert/skip users configure on their own - mark as completed
-        onboardingStore.getState().markCompleted()
-        setOnboardingStep('completed')
-        shouldShowConfetti = true
-      }
+      const toolParts: GuideToolPart[] = [
+        {
+          type: 'tool-show_provider_settings_button',
+          toolCallId: `provider-settings-btn-${Date.now()}`,
+          toolName: 'show_provider_settings_button',
+          state: 'result',
+          result: { displayed: true },
+        },
+      ]
+      onboardingStore.getState().markCompleted()
+      setOnboardingStep('completed')
+      const shouldShowConfetti = true
 
       // Stream assistant response with typing effect
       await streamFixedMessage(responseContent, toolParts)
@@ -537,27 +520,8 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
 
     setHasValidConfig(true)
     onboardingStore.getState().markCompleted()
-
-    const hasLicense = Boolean(settingsStore.getState().licenseKey)
-    if (hasLicense) {
-      await renderCelebration()
-    } else {
-      await streamFixedMessage(
-        t(
-          "You're logged in! Claim your **free plan** below to unlock Chatbox AI features. If you have any questions, feel free to click the Help button in the bottom left corner anytime."
-        ),
-        [
-          {
-            type: 'tool-show_free_trial_link',
-            toolCallId: `free-trial-link-${Date.now()}`,
-            toolName: 'show_free_trial_link',
-            state: 'result',
-            result: { displayed: true },
-          },
-        ]
-      )
-    }
-  }, [streamFixedMessage, t, renderCelebration])
+    await renderCelebration()
+  }, [renderCelebration])
 
   /**
    * Triggered by FreeTrialLink after the claim page successfully opens. Streams the awaiting card

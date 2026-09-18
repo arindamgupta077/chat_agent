@@ -1045,9 +1045,10 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
     }
 
     if (page === 'mcp') {
+      const mcpDisabled = platform.isDesktopLike ? workModeCapabilitiesDisabled : false
       return (
         <>
-          <SubPanelHeader title="MCP" settingsPath="/mcp" disabled={workModeCapabilitiesDisabled} />
+          <SubPanelHeader title="MCP" settingsPath="/mcp" disabled={mcpDisabled} />
           <Divider my={4} />
           {isPremium && (
             <>
@@ -1057,7 +1058,7 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
                   id={server.id}
                   name={server.name}
                   enabled={mcp.enabledBuiltinServers.includes(server.id)}
-                  disabled={workModeCapabilitiesDisabled}
+                  disabled={mcpDisabled}
                   onEnabledChange={onMCPEnabledChange}
                 />
               ))}
@@ -1070,7 +1071,7 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
               id={server.id}
               name={server.name}
               enabled={server.enabled}
-              disabled={workModeCapabilitiesDisabled}
+              disabled={mcpDisabled}
               onEnabledChange={onMCPEnabledChange}
             />
           ))}
@@ -1079,9 +1080,9 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
               <Button
                 size="xs"
                 variant="light"
-                disabled={workModeCapabilitiesDisabled}
+                disabled={mcpDisabled}
                 onClick={() => {
-                  if (workModeCapabilitiesDisabled) return
+                  if (mcpDisabled) return
                   onClose()
                   navigateToSettings('/mcp')
                 }}
@@ -1401,7 +1402,7 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
                 badge={enabledMCPCount > 0 ? enabledMCPCount : undefined}
                 active={page === 'mcp'}
                 page="mcp"
-                disabled={workModeCapabilitiesDisabled}
+                disabled={platform.isDesktopLike ? workModeCapabilitiesDisabled : false}
               />
             )}
 

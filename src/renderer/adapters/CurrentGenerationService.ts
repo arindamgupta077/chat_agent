@@ -170,6 +170,11 @@ async function buildToolsForPausedToolCall(session: Session, settings: SessionSe
       void lockSessionAgentMode(session.id, 'load_skill')
     },
     memoryScope: await getPausedCallMemoryScope(settings.sessionPromptContextSnapshot, session.copilotId),
+    mcp:
+      platform.type === 'web'
+        ? (settingsService.getSettings().mcp?.enabledBuiltinServers?.length ?? 0) > 0 ||
+          (settingsService.getSettings().mcp?.servers?.some((s) => s.enabled) ?? false)
+        : undefined,
   })
   return tools
 }
