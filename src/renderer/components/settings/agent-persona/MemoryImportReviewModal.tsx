@@ -30,7 +30,7 @@ export function MemoryImportReviewModal({
     <AdaptiveModal opened={opened} onClose={onClose} title={t('Review local memories')} centered size="lg">
       <Stack gap="sm">
         <Text size="sm" c="dimmed">
-          {t('Chatbox found these memories in Claude and Codex. Select the ones you want to import.')}
+          {t('AgentLab found these memories in Claude and Codex. Select the ones you want to import.')}
         </Text>
         <Flex align="center" justify="space-between">
           <Checkbox

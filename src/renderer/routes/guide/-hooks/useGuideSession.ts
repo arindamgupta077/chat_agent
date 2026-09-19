@@ -8,7 +8,6 @@ import { useTranslation } from 'react-i18next'
 import { trackJkClickEvent } from '@/analytics/jk'
 import { JK_EVENTS, JK_PAGE_NAMES } from '@/analytics/jk-events'
 import { cancelConfetti, confetti } from '@/components/Confetti'
-import { buildChatboxUrl } from '@/packages/remote'
 import platform from '@/platform'
 import { authInfoStore, useAuthInfoStore } from '@/stores/authInfoStore'
 import { onboardingStore, useOnboardingStore } from '@/stores/onboardingStore'
@@ -168,7 +167,7 @@ export function useGuideSession(): UseGuideSessionReturn {
     if (enterCompleted) {
       // User already has valid config, show completion message
       const configCompleteMsg = t(
-        "You've already completed the setup and can use Chatbox normally.\n\nIf you have any questions about Chatbox AI, feel free to ask me here."
+        "You've already completed the setup and can use AgentLab normally.\n\nIf you have any questions about AgentLab, feel free to ask me here."
       )
       setMessages([
         {
@@ -192,60 +191,19 @@ export function useGuideSession(): UseGuideSessionReturn {
         setHasValidConfig(false)
       }
       // Show initial greeting with cards using fast streaming
-      const isChinese = language.startsWith('zh')
-      const guideUrl = buildChatboxUrl('/redirect_app/guide')
-      const helpCenterUrl = buildChatboxUrl('/redirect_app/help_center')
+      const greeting = t(`## 👋 Hey! I'm Arindam, your setup guide assistant.
 
-      const greeting = isChinese
-        ? [
-            t(`## 👋 Hey! I'm Boxy, your setup guide assistant.
-
-Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models including ChatGPT, Claude, DeepSeek, and more.
+AgentLab is an **all-in-one AI chat client** that supports 30+ mainstream models including ChatGPT, Claude, Gemini, and more.
 
 ### ✨ Key Features
 - 🔐 **Local First** — Your data stays on your device, ensuring privacy and security
 - 🎯 **Multi-Model Support** — One app, chat with all AI models
 - 📚 **Knowledge Base** — Let AI understand your private documents
-
-### 📖 Get Help
-- 🎬 [Xiaohongshu Setup Guide](https://www.xiaohongshu.com/user/profile/67b581b6000000000e01d11f) — Step-by-step tutorial (Recommended)
-- 📕 [Product Manual](`),
-            guideUrl,
-            t(`) — Detailed feature documentation
-- 🆘 [Help Center](`),
-            helpCenterUrl,
-            t(`) — FAQs
-- 📮 Contact us: hi@chatboxai.com
-
-💡 Follow Chatbox on [Xiaohongshu](https://www.xiaohongshu.com/user/profile/67b581b6000000000e01d11f) for the latest updates and tips
+- MCP support -
 
 ---
 
-**Now, let me help you get set up!** First, tell me about your AI experience:`),
-          ].join('')
-        : [
-            t(`## 👋 Hey! I'm Boxy, your setup guide assistant.
-
-Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models including ChatGPT, Claude, DeepSeek, and more.
-
-### ✨ Key Features
-- 🔐 **Local First** — Your data stays on your device, ensuring privacy and security
-- 🎯 **Multi-Model Support** — One app, chat with all AI models
-- 📚 **Knowledge Base** — Let AI understand your private documents
-
-### 📖 Get Help
-- 📕 [Product Manual](`),
-            guideUrl,
-            t(`) — Detailed feature documentation
-- 🆘 [Help Center](`),
-            helpCenterUrl,
-            t(`) — FAQs
-- 📮 Contact us: hi@chatboxai.com
-
----
-
-**Now, let me help you get set up!** First, tell me about your AI experience:`),
-          ].join('')
+**Now, let me help you get set up!** First, tell me about your AI experience:`)
 
       // Stream greeting with fast speed
       const messageId = generateMessageId()
@@ -431,7 +389,7 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
       const responseContent =
         type === 'novice'
           ? t(
-              'Great! Chatbox allows you to connect to multiple AI providers such as OpenAI, Claude, Gemini, Ollama, DeepSeek, and more. Click the button below to set up your preferred model provider.'
+              'Great! AgentLab allows you to connect to multiple AI providers such as OpenAI, Claude, Gemini, Ollama, DeepSeek, and more. Click the button below to set up your preferred model provider.'
             )
           : t(
               "Excellent! You're ready to explore.\n\nClick the button below to configure your API directly. If you need help later, just click the **Help** button in the sidebar. Enjoy!"
@@ -479,7 +437,7 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
       setIsAutoRedirectingToNewChat(true)
       const baseTimestamp = Date.now()
 
-      await streamFixedMessage(t("Awesome, everything is ready! Let's start your first Chatbox AI chat."), [
+      await streamFixedMessage(t("Awesome, everything is ready! Let's start your first AgentLab chat."), [
         createAutoNewChatLoadingToolPart(`auto-new-chat-${baseTimestamp}`, {
           waitForWindowFocusBeforeAutoNavigate: options?.waitForWindowFocusBeforeAutoNavigate,
         }),
@@ -575,7 +533,7 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
       setOnboardingStep('completed')
       appendFixedMessage(
         t(
-          "You've already completed the setup and can use Chatbox normally.\n\nIf you have any questions about Chatbox AI, feel free to ask me here."
+          "You've already completed the setup and can use AgentLab normally.\n\nIf you have any questions about AgentLab, feel free to ask me here."
         ),
         [
           createNewChatButtonToolPart(`new-chat-btn-${Date.now()}`, {
@@ -781,7 +739,7 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
     completionTriggeredRef.current = true
 
     // Add the success message
-    const successText = t("Awesome, everything is ready! Let's start your first Chatbox AI chat.")
+    const successText = t("Awesome, everything is ready! Let's start your first AgentLab chat.")
     const successMessage: GuideUIMessage = {
       id: generateMessageId(),
       role: 'assistant',
@@ -811,8 +769,8 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
     fakeMessages.push({
       id: generateMessageId(),
       role: 'assistant',
-      content: t('Welcome to Chatbox!'),
-      parts: [{ type: 'text', text: t('Welcome to Chatbox!') }],
+      content: t('Welcome to AgentLab!'),
+      parts: [{ type: 'text', text: t('Welcome to AgentLab!') }],
     })
 
     // Add maxRounds - 1 user messages, so next send triggers limit message

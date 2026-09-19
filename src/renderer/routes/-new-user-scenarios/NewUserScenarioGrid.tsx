@@ -36,10 +36,10 @@ export function NewUserScenarioGrid({ scenarios, onSelect }: NewUserScenarioGrid
             lineHeight: 1.2,
           }}
         >
-          {t('What would you like Chatbox to help with?')}
+          {t('What would you like AgentLab to help with?')}
         </Text>
         <Text size="md" className="text-chatbox-tint-secondary">
-          {t('Choose a scenario to explore Chatbox, or type your own question below.')}
+          {t('Choose a scenario to explore AgentLab, or type your own question below.')}
         </Text>
       </Stack>
 

@@ -3,7 +3,7 @@ import { parseChatboxCliInput } from '@/packages/chatbox-cli/parser'
 import type { ChatboxCliInput } from '@/packages/chatbox-cli/types'
 
 function getChatboxCliToolName(input: unknown): string {
-  if (!input || typeof input !== 'object') return t('Chatbox')
+  if (!input || typeof input !== 'object') return t('AgentLab')
   const value = input as Record<string, unknown>
   const cliInput: ChatboxCliInput = {
     ...(typeof value.command === 'string' ? { command: value.command } : {}),
@@ -14,11 +14,11 @@ function getChatboxCliToolName(input: unknown): string {
   try {
     argv = parseChatboxCliInput(cliInput).argv.map((item) => item.toLowerCase())
   } catch {
-    return t('Chatbox')
+    return t('AgentLab')
   }
 
   const [first, second] = argv
-  if (first === 'version') return t('Chatbox Version')
+  if (first === 'version') return t('AgentLab Version')
   if (first === 'status' || first === 'whoami' || (first === 'account' && !second)) return t('Account Status')
   if (first === 'quota' || first === 'usage' || (first === 'account' && second === 'quota')) return t('Quota Details')
   if (first === 'license' && (second === 'refresh' || second === 'sync')) return t('Refresh Account Status')
@@ -36,7 +36,7 @@ function getChatboxCliToolName(input: unknown): string {
   if (first === 'image' && second === 'generate') return t('Generate images')
   if (first === 'image' && second === 'status') return t('Image Generation Status')
   if (first === 'image' && second === 'history') return t('Image History')
-  return t('Chatbox')
+  return t('AgentLab')
 }
 
 export function getToolName(toolName: string, input?: unknown): string {

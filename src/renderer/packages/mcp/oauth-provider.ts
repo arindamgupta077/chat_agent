@@ -45,7 +45,7 @@ export class MCPOAuthProvider implements OAuthClientProvider {
 
   get clientMetadata(): OAuthClientMetadata {
     return {
-      client_name: 'Chatbox',
+      client_name: 'AgentLab',
       client_uri: 'https://chatboxai.app',
       redirect_uris: [REDIRECT_URL],
       grant_types: ['authorization_code', 'refresh_token'],

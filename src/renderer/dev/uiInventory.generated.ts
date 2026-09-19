@@ -10306,7 +10306,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
     platforms: ['all'],
     platformNotes: [],
     previewModes: [],
-    text: ['I know how to configure API keys', 'Recommended', 'Skip guide', 'Use Chatbox AI service'],
+    text: ['I know how to configure API keys', 'Recommended', 'Skip guide', 'Use AgentLab service'],
     stories: [],
     storyNames: [],
     storyTargets: [],

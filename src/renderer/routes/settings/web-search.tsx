@@ -162,7 +162,7 @@ export function RouteComponent() {
       </Stack>
       {extension.webSearch.provider === 'build-in' && (
         <Text size="xs" c="chatbox-gray">
-          {t('Chatbox Search is a paid feature with advanced capabilities and better performance.')}
+          {t('AgentLab Search is a paid feature with advanced capabilities and better performance.')}
         </Text>
       )}
       {extension.webSearch.provider === 'bing' && (

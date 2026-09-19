@@ -177,7 +177,7 @@ export function AutoNewChatLoading({ waitForWindowFocusBeforeAutoNavigate }: Aut
             lineHeight: 1.35,
           }}
         >
-          {t('Sit back, relax. Chatbox will start a new chat in {{count}}s...', { count: remainingSeconds })}
+          {t('Sit back, relax. AgentLab will start a new chat in {{count}}s...', { count: remainingSeconds })}
         </Text>
       </Stack>
     </Group>

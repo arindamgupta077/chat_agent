@@ -22,7 +22,7 @@ export function ChatboxWelcomeCard(props: { mode: HomeWelcomeCardMode; pageName:
       <Stack gap="sm">
         <Stack gap="xxs" align="center">
           <Text fw={600} className="text-center">
-            {t('Welcome to Chatbox!')}
+            {t('Welcome to AgentLab!')}
           </Text>
 
           <Text size="xs" c="chatbox-tertiary" className="text-center">

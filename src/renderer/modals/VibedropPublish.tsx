@@ -40,7 +40,7 @@ type PublishMode = 'new' | 'update'
 const ManageSitesHint = () => (
   <Text size="xs" c="dimmed">
     <Trans
-      i18nKey="Manage your published pages at <ManageLink>app.vibedrop.cc</ManageLink> — sign in with your Chatbox email."
+      i18nKey="Manage your published pages at <ManageLink>app.vibedrop.cc</ManageLink> — sign in with your AgentLab email."
       components={{
         ManageLink: (
           <a
@@ -273,7 +273,7 @@ const VibedropPublish = NiceModal.create(({ html, uniqueId, sessionId }: Vibedro
         {stage === 'email_required' && (
           <>
             <Text size="sm" c="dimmed">
-              {t('Publishing requires an email on your Chatbox account. Please add one and try again.')}
+              {t('Publishing requires an email on your AgentLab account. Please add one and try again.')}
             </Text>
             <AdaptiveModal.Actions>
               <Button variant="default" onClick={onClose}>

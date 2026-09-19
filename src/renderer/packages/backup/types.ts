@@ -67,7 +67,7 @@ export const BackupManifestSchema = z.object({
   formatVersion: z.literal(BACKUP_FORMAT_VERSION),
   exportedAt: z.string().datetime(),
   application: z.object({
-    name: z.literal('Chatbox'),
+    name: z.union([z.literal('AgentLab'), z.literal('Chatbox')]),
     version: z.string(),
     platform: z.string(),
   }),

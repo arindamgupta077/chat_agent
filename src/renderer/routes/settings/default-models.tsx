@@ -62,7 +62,7 @@ export function RouteComponent() {
         </ModelSelector>
 
         <Text c="chatbox-tertiary" size="xs">
-          {t('Chatbox will use this model as the default for new chats.')}
+          {t('AgentLab will use this model as the default for new chats.')}
         </Text>
       </Stack>
 
@@ -97,7 +97,7 @@ export function RouteComponent() {
         </ModelSelector>
 
         <Text c="chatbox-tertiary" size="xs">
-          {t('Chatbox will automatically use this model to rename threads.')}
+          {t('AgentLab will automatically use this model to rename threads.')}
         </Text>
       </Stack>
 
@@ -132,7 +132,7 @@ export function RouteComponent() {
         </ModelSelector>
 
         <Text c="chatbox-tertiary" size="xs">
-          {t('Chatbox will automatically use this model to construct search term.')}
+          {t('AgentLab will automatically use this model to construct search term.')}
         </Text>
       </Stack>
       <Stack gap="xs">
@@ -167,7 +167,7 @@ export function RouteComponent() {
         </ModelSelector>
 
         <Text c="chatbox-tertiary" size="xs">
-          {t('Chatbox OCRs images with this model and sends the text to models without image support.')}
+          {t('AgentLab OCRs images with this model and sends the text to models without image support.')}
         </Text>
       </Stack>
 
@@ -204,7 +204,7 @@ export function RouteComponent() {
         </ModelSelector>
 
         <Text c="chatbox-tertiary" size="xs">
-          {t('When selected, Chatbox will use this model instead of the automatic Chatbox AI embedding model.')}
+          {t('When selected, AgentLab will use this model instead of the automatic Chatbox AI embedding model.')}
         </Text>
       </Stack>
 
@@ -241,7 +241,7 @@ export function RouteComponent() {
         </ModelSelector>
 
         <Text c="chatbox-tertiary" size="xs">
-          {t('When selected, Chatbox will use this model instead of the automatic Chatbox AI reranking model.')}
+          {t('When selected, AgentLab will use this model instead of the automatic Chatbox AI reranking model.')}
         </Text>
       </Stack>
     </Stack>
