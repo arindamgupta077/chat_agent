@@ -1,4 +1,4 @@
-import type { ProviderModelInfo } from '@shared/types'
+import { ModelProviderEnum, type ProviderModelInfo } from '@shared/types'
 
 export function filterModelsForSelector(
   models: ProviderModelInfo[] | undefined,
@@ -6,6 +6,9 @@ export function filterModelsForSelector(
   providerId?: string
 ): ProviderModelInfo[] | undefined {
   if (!models) return models
+  if (providerId === ModelProviderEnum.ChatboxAI || providerId === 'chatbox-ai') {
+    return []
+  }
 
   return models.filter((model) => {
     const matchesFilter = modelFilter ? modelFilter(model, providerId) : true

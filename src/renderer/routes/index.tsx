@@ -34,7 +34,6 @@ import useVersion from '@/hooks/useVersion'
 import * as remote from '@/packages/remote'
 import { router } from '@/router'
 import { useAuthInfoStore } from '@/stores/authInfoStore'
-import { resolveChatboxLicenseDefaultModel } from '@/stores/defaultChatModel'
 import { getHasCompletedFirstSuccessfulChat } from '@/stores/firstSuccessfulChat'
 import { getSessionAgentModeEntry } from '@/stores/session/agent-mode'
 import { switchCurrentSession } from '@/stores/session/crud'
@@ -52,11 +51,6 @@ const scenarioAgentModeOff = {
   locked: false,
   lockReason: null,
 } satisfies AgentModeEntry
-
-const firstChatScenarioDefaultModel = {
-  provider: ModelProviderEnum.ChatboxAI,
-  modelId: 'chatboxai-3.5',
-} satisfies Pick<SessionSettings, 'provider' | 'modelId'>
 
 export const Route = createFileRoute('/')({
   component: Index,
@@ -118,7 +112,12 @@ function Index() {
   )
 
   const selectedModel = useMemo(() => {
-    if (session.settings?.provider && session.settings?.modelId) {
+    if (
+      session.settings?.provider &&
+      session.settings?.modelId &&
+      session.settings.provider !== ModelProviderEnum.ChatboxAI &&
+      session.settings.provider !== 'chatbox-ai'
+    ) {
       return {
         provider: session.settings.provider,
         modelId: session.settings.modelId,
@@ -152,39 +151,22 @@ function Index() {
   useEffect(() => {
     setSession((old) => {
       if (
-        hasCompletedFirstSuccessfulChat === false &&
-        isLoggedIn &&
-        !session.copilotId &&
-        !hasUserSelectedModelRef.current
+        old.settings?.provider &&
+        old.settings?.modelId &&
+        old.settings.provider !== ModelProviderEnum.ChatboxAI &&
+        old.settings.provider !== 'chatbox-ai'
       ) {
-        if (
-          old.settings?.provider === firstChatScenarioDefaultModel.provider &&
-          old.settings?.modelId === firstChatScenarioDefaultModel.modelId
-        ) {
-          return old
-        }
-        return {
-          ...old,
-          settings: {
-            ...(old.settings || {}),
-            ...firstChatScenarioDefaultModel,
-          },
-        }
-      }
-      if (old.settings?.provider && old.settings?.modelId) {
         return old
       }
-      const defaultModel = defaultChatModel
-        ? {
-            provider: defaultChatModel.provider,
-            modelId: defaultChatModel.model,
-          }
-        : resolveChatboxLicenseDefaultModel({
-            licenseKey,
-            hasExpiredLicense,
-            licenseDetail,
-            licensePlanName,
-          })
+      const defaultModel =
+        defaultChatModel &&
+        defaultChatModel.provider !== ModelProviderEnum.ChatboxAI &&
+        defaultChatModel.provider !== 'chatbox-ai'
+          ? {
+              provider: defaultChatModel.provider,
+              modelId: defaultChatModel.model,
+            }
+          : undefined
       if (!defaultModel) {
         return old
       }
@@ -196,16 +178,7 @@ function Index() {
         },
       }
     })
-  }, [
-    defaultChatModel,
-    hasCompletedFirstSuccessfulChat,
-    hasExpiredLicense,
-    isLoggedIn,
-    licenseDetail,
-    licenseKey,
-    licensePlanName,
-    session.copilotId,
-  ])
+  }, [defaultChatModel])
 
   const { copilots: myCopilots } = useMyCopilots()
   const { copilots: remoteCopilots } = useRemoteCopilotsByCursor({ limit: 10 })
@@ -398,7 +371,7 @@ function Index() {
       trackJkClickEvent(JK_EVENTS.LEAD_CHAT_CARD_CLICK, {
         pageName: JK_PAGE_NAMES.CHAT_PAGE,
         content: t(scenario.titleKey),
-        contentType: session.settings?.modelId ?? firstChatScenarioDefaultModel.modelId,
+        contentType: session.settings?.modelId ?? '',
       })
       const assistantMessage = createMessage('assistant', '')
       assistantMessage.generating = true

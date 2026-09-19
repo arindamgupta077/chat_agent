@@ -25,28 +25,9 @@ function isChatboxLicenseDefaultModelId(value: string | undefined): value is Cha
 }
 
 export function resolveChatboxLicenseDefaultModel(
-  settings: ChatboxDefaultModelSettings
+  _settings: ChatboxDefaultModelSettings
 ): DefaultChatModelSelection | undefined {
-  if (!settings.licenseKey || settings.hasExpiredLicense) {
-    return undefined
-  }
-
-  const licenseModel = settings.licenseDetail?.defaultModel ?? settings.licenseDetail?.type
-  if (isChatboxLicenseDefaultModelId(licenseModel)) {
-    return {
-      provider: ModelProviderEnum.ChatboxAI,
-      modelId: licenseModel,
-    }
-  }
-
-  const modelId = isChatboxAILowTierPlan(settings.licenseDetail, settings.licensePlanName)
-    ? CHATBOX_AI_35_MODEL_ID
-    : CHATBOX_AI_4_MODEL_ID
-
-  return {
-    provider: ModelProviderEnum.ChatboxAI,
-    modelId,
-  }
+  return undefined
 }
 
 export function applyChatboxLicenseDefaultModelToSession<T extends Pick<Session, 'type' | 'settings'>>(

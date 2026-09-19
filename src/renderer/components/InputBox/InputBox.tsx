@@ -88,15 +88,16 @@ import { useUIStore } from '@/stores/uiStore'
 import { confirmModelSwitchIfNeeded } from '@/utils/prompt-cache-confirm'
 import { getSessionLockNotice, notifySessionLockBlocked } from '@/utils/session-lock-copy'
 import { trackEvent } from '@/utils/track'
-import type {
-  KnowledgeBase,
-  Message,
-  ProviderModelInfo,
-  SessionAttachment,
-  SessionAttachmentIndexingStage,
-  SessionSettings,
-  SessionType,
-  ShortcutSendValue,
+import {
+  type KnowledgeBase,
+  type Message,
+  ModelProviderEnum,
+  type ProviderModelInfo,
+  type SessionAttachment,
+  type SessionAttachmentIndexingStage,
+  type SessionSettings,
+  type SessionType,
+  type ShortcutSendValue,
 } from '../../../shared/types'
 import * as dom from '../../hooks/dom'
 import {
@@ -668,8 +669,11 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
         return result.changed ? { ...prev, preprocessedFiles: result.files } : prev
       })
     }, [preprocessedAttachmentStates, setPreConstructedMessage])
+    const isChatboxAI = (provider?: string) =>
+      provider === ModelProviderEnum.ChatboxAI || provider === 'chatbox-ai'
+
     const modelSelectorDisplayText = useMemo(() => {
-      if (!model) {
+      if (!model || isChatboxAI(model.provider)) {
         return t('Select Model')
       }
       const modelInfo = (selectedProviderInfo?.models || selectedProviderInfo?.defaultSettings?.models)?.find(
@@ -2046,8 +2050,8 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                 <Box className="min-w-0 flex-1 justify-end max-w-[200px]">
                   <ModelSelectorV2
                     onSelect={handleSelectModel}
-                    selectedProviderId={model?.provider}
-                    selectedModelId={model?.modelId}
+                    selectedProviderId={!model || isChatboxAI(model.provider) ? undefined : model.provider}
+                    selectedModelId={!model || isChatboxAI(model.provider) ? undefined : model.modelId}
                     modelDisabledCheck={modelDisabledCheck}
                     pageName={JK_PAGE_NAMES.CHAT_PAGE}
                     position="top-end"
@@ -2059,10 +2063,10 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                     <UnstyledButton
                       className={cn(
                         'flex min-w-0 max-w-full items-center gap-1 px-2 py-1 rounded-lg hover:bg-[var(--chatbox-background-tertiary)] transition-colors',
-                        !model && 'animate-pulse bg-blue-500/20'
+                        (!model || isChatboxAI(model.provider)) && 'animate-pulse bg-blue-500/20'
                       )}
                     >
-                      {!!model && <ProviderImageIcon size={18} provider={model.provider} />}
+                      {!!model && !isChatboxAI(model.provider) && <ProviderImageIcon size={18} provider={model.provider} />}
                       <Text
                         size="sm"
                         data-testid={TestId.model.selectorTrigger}

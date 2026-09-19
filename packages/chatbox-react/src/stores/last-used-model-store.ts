@@ -29,6 +29,9 @@ export interface CreateLastUsedModelStoreOptions {
   skipHydration?: boolean
 }
 
+const isChatboxAIProvider = (provider?: string) =>
+  provider === 'chatbox-ai' || provider === 'ChatboxAI'
+
 export function createLastUsedModelStore(options: CreateLastUsedModelStoreOptions) {
   return createStore<LastUsedModelStoreState>()(
     persist(
@@ -37,9 +40,15 @@ export function createLastUsedModelStore(options: CreateLastUsedModelStoreOption
         picture: undefined,
         task: undefined,
         setChatModel(provider, modelId) {
+          if (isChatboxAIProvider(provider)) {
+            return
+          }
           set({ chat: { provider, modelId } })
         },
         setPictureModel(provider, modelId) {
+          if (isChatboxAIProvider(provider)) {
+            return
+          }
           set({ picture: { provider, modelId } })
         },
         setTaskModel(provider, modelId) {
@@ -51,6 +60,16 @@ export function createLastUsedModelStore(options: CreateLastUsedModelStoreOption
         version: LAST_USED_MODEL_PERSIST_VERSION,
         storage: options.storage,
         skipHydration: options.skipHydration,
+        onRehydrateStorage: () => (state) => {
+          if (state) {
+            if (isChatboxAIProvider(state.chat?.provider)) {
+              state.chat = undefined
+            }
+            if (isChatboxAIProvider(state.picture?.provider)) {
+              state.picture = undefined
+            }
+          }
+        },
         partialize: ({ chat, picture, task }) => ({ chat, picture, task }),
       }
     )

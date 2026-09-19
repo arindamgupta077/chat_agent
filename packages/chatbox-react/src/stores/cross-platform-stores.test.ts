@@ -55,4 +55,27 @@ describe('cross-platform Zustand stores', () => {
     store.getState().setTaskModel('openai', 'gpt-5-codex')
     expect(store.getState().task).toEqual({ provider: 'openai', modelId: 'gpt-5-codex' })
   })
+
+  test('clears and rejects Chatbox AI models in lastUsedModelStore', async () => {
+    const storage = new MemoryPersistStorage<LastUsedModelState>()
+    storage.values.set(LAST_USED_MODEL_PERSIST_KEY, {
+      state: {
+        chat: { provider: 'chatbox-ai', modelId: 'chatboxai-3.5' },
+        picture: { provider: 'ChatboxAI', modelId: 'DALL-E-3' },
+      },
+      version: 0,
+    })
+    const store = createLastUsedModelStore({ storage, skipHydration: true })
+
+    await store.persist.rehydrate()
+
+    expect(store.getState().chat).toBeUndefined()
+    expect(store.getState().picture).toBeUndefined()
+
+    store.getState().setChatModel('chatbox-ai', 'chatboxai-3.5')
+    expect(store.getState().chat).toBeUndefined()
+
+    store.getState().setPictureModel('ChatboxAI', 'DALL-E-3')
+    expect(store.getState().picture).toBeUndefined()
+  })
 })

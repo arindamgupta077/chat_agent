@@ -17,7 +17,13 @@ export function initLastUsedModelStore(): Promise<LastUsedModelState> {
     initLastUsedModelStorePromise = new Promise<LastUsedModelState>((resolve) => {
       const unsubscribe = lastUsedModelStore.persist.onFinishHydration((state) => {
         unsubscribe()
-        resolve(state)
+        if (state.chat?.provider === 'chatbox-ai' || state.chat?.provider === 'ChatboxAI') {
+          lastUsedModelStore.setState({ chat: undefined })
+        }
+        if (state.picture?.provider === 'chatbox-ai' || state.picture?.provider === 'ChatboxAI') {
+          lastUsedModelStore.setState({ picture: undefined })
+        }
+        resolve(lastUsedModelStore.getState())
       })
       void lastUsedModelStore.persist.rehydrate()
     })

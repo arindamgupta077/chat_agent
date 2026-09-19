@@ -1,5 +1,5 @@
 import type { ComboboxProps } from '@mantine/core'
-import type { ModelProvider, ProviderModelInfo } from '@shared/types'
+import { ModelProviderEnum, type ModelProvider, type ProviderModelInfo } from '@shared/types'
 import { forwardRef, type PropsWithChildren, useMemo, useState } from 'react'
 import { useProviders } from '@/hooks/useProviders'
 import { useIsSmallScreen } from '@/hooks/useScreenChange'
@@ -47,19 +47,21 @@ export const ModelSelector = forwardRef<HTMLDivElement, ModelSelectorProps>(
     const [search, setSearch] = useState('')
 
     const filteredProviders = useMemo(() => {
-      const filtered = providers.map((provider) => {
-        const models = filterModelsForSelector(provider.models, modelFilter, provider.id)?.filter(
-          (model) =>
-            provider.id.toLowerCase().includes(search.toLowerCase()) ||
-            provider.name.toLowerCase().includes(search.toLowerCase()) ||
-            model.nickname?.toLowerCase().includes(search.toLowerCase()) ||
-            model.modelId?.toLowerCase().includes(search.toLowerCase())
-        )
-        return {
-          ...provider,
-          models,
-        }
-      })
+      const filtered = providers
+        .filter((provider) => provider.id !== ModelProviderEnum.ChatboxAI && provider.id !== 'chatbox-ai')
+        .map((provider) => {
+          const models = filterModelsForSelector(provider.models, modelFilter, provider.id)?.filter(
+            (model) =>
+              provider.id.toLowerCase().includes(search.toLowerCase()) ||
+              provider.name.toLowerCase().includes(search.toLowerCase()) ||
+              model.nickname?.toLowerCase().includes(search.toLowerCase()) ||
+              model.modelId?.toLowerCase().includes(search.toLowerCase())
+          )
+          return {
+            ...provider,
+            models,
+          }
+        })
 
       return filtered
     }, [providers, search, modelFilter, activeTab, isFavoritedModel])

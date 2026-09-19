@@ -13,7 +13,14 @@ import {
   NON_RECOVERABLE_LOCAL_PARSER_ERROR_CODES,
 } from '@shared/file-parse-errors'
 import { searchSessionMessages } from '@shared/services/native-session-search'
-import type { Session, SessionMeta, SessionSettings, SessionThreadBrief, Settings } from '@shared/types'
+import {
+  ModelProviderEnum,
+  type Session,
+  type SessionMeta,
+  type SessionSettings,
+  type SessionThreadBrief,
+  type Settings,
+} from '@shared/types'
 import type { DocumentParserConfig } from '@shared/types/settings'
 import { migrateMessage } from '@shared/utils/message'
 import { BrowserAttachmentAdapter } from '@/adapters/BrowserAttachmentAdapter'
@@ -960,12 +967,21 @@ export function mergeSettings(
 export function initEmptyChatSession(): Omit<Session, 'id'> {
   const settings = settingsStore.getState().getSettings()
   const { chat: lastUsedChatModel } = lastUsedModelStore.getState()
-  const defaultChatModel = settings.defaultChatModel
+  const isChatboxAI = (provider?: string) =>
+    provider === ModelProviderEnum.ChatboxAI || provider === 'chatbox-ai'
+
+  const rawDefaultChatModel = settings.defaultChatModel
     ? {
         provider: settings.defaultChatModel.provider,
         modelId: settings.defaultChatModel.model,
       }
     : lastUsedChatModel || resolveChatboxLicenseDefaultModel(settings)
+
+  const defaultChatModel =
+    rawDefaultChatModel && !isChatboxAI(rawDefaultChatModel.provider)
+      ? rawDefaultChatModel
+      : undefined
+
   const newSession: Omit<Session, 'id'> = {
     name: 'Untitled',
     type: 'chat',

@@ -113,18 +113,19 @@ describe('defaults', () => {
     expect(getDefaultPrompt()).toBe('You are a helpful assistant.')
   })
 
-  it('chatSessionSettings() returns provider and modelId', () => {
+  it('chatSessionSettings() returns default settings without Chatbox AI provider or modelId', () => {
     const result: SessionSettings = chatSessionSettings()
 
-    expect(result.provider).toBe(ModelProviderEnum.ChatboxAI)
-    expect(result.modelId).toBe('chatboxai-4')
+    expect(result.provider).toBeUndefined()
+    expect(result.modelId).toBeUndefined()
+    expect(result.maxContextMessageCount).toBe(Number.MAX_SAFE_INTEGER)
   })
 
-  it('pictureSessionSettings() returns provider, modelId, dalleStyle, imageGenerateNum', () => {
+  it('pictureSessionSettings() returns dalleStyle and imageGenerateNum without Chatbox AI default', () => {
     const result: SessionSettings = pictureSessionSettings()
 
-    expect(result.provider).toBe(ModelProviderEnum.ChatboxAI)
-    expect(result.modelId).toBe('DALL-E-3')
+    expect(result.provider).toBeUndefined()
+    expect(result.modelId).toBeUndefined()
     expect(result.dalleStyle).toBe('vivid')
     expect(result.imageGenerateNum).toBe(1)
   })

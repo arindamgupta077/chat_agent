@@ -32,6 +32,12 @@ export function initSettingsStore() {
       .hydrate()
       .then(() => {
         const state = settingsStore.getState()
+        if (
+          state.defaultChatModel?.provider === 'chatbox-ai' ||
+          state.defaultChatModel?.provider === 'ChatboxAI'
+        ) {
+          state.setSettings({ defaultChatModel: undefined })
+        }
         const providers = state.providers
         const providersCount =
           providers && typeof providers === 'object' && !Array.isArray(providers) ? Object.keys(providers).length : 0

@@ -14,16 +14,12 @@ function makeSettings(overrides: Partial<ChatboxDefaultModelSettings> = {}): Cha
 }
 
 describe('resolveChatboxLicenseDefaultModel', () => {
-  it('keeps BYOK users without a Chatbox license on the existing no-default path', () => {
+  it('does not resolve Chatbox AI models as default model', () => {
     expect(resolveChatboxLicenseDefaultModel(makeSettings())).toBeUndefined()
-  })
-
-  it('does not use an expired Chatbox license as the default model source', () => {
     expect(
       resolveChatboxLicenseDefaultModel(
         makeSettings({
           licenseKey: 'license-key',
-          hasExpiredLicense: true,
           licenseDetail: {
             name: 'Chatbox AI Pro',
             defaultModel: 'chatboxai-4',
@@ -31,44 +27,6 @@ describe('resolveChatboxLicenseDefaultModel', () => {
         })
       )
     ).toBeUndefined()
-  })
-
-  it('uses the license defaultModel when the API provides one', () => {
-    expect(
-      resolveChatboxLicenseDefaultModel(
-        makeSettings({
-          licenseKey: 'license-key',
-          licenseDetail: {
-            name: 'Chatbox AI Pro',
-            defaultModel: 'chatboxai-4',
-            type: 'chatboxai-3.5',
-          },
-        })
-      )
-    ).toEqual({
-      provider: ModelProviderEnum.ChatboxAI,
-      modelId: 'chatboxai-4',
-    })
-  })
-
-  it('falls back to the license type when defaultModel is missing', () => {
-    expect(
-      resolveChatboxLicenseDefaultModel(
-        makeSettings({
-          licenseKey: 'license-key',
-          licenseDetail: {
-            name: 'Chatbox AI Lite',
-            type: 'chatboxai-3.5',
-          },
-        })
-      )
-    ).toEqual({
-      provider: ModelProviderEnum.ChatboxAI,
-      modelId: 'chatboxai-3.5',
-    })
-  })
-
-  it('uses plan names as a fallback for older license details', () => {
     expect(
       resolveChatboxLicenseDefaultModel(
         makeSettings({
@@ -76,75 +34,18 @@ describe('resolveChatboxLicenseDefaultModel', () => {
           licensePlanName: 'Chatbox AI Pro',
         })
       )
-    ).toEqual({
-      provider: ModelProviderEnum.ChatboxAI,
-      modelId: 'chatboxai-4',
-    })
-
-    expect(
-      resolveChatboxLicenseDefaultModel(
-        makeSettings({
-          licenseKey: 'license-key',
-          licensePlanName: 'Chatbox AI Lite',
-        })
-      )
-    ).toEqual({
-      provider: ModelProviderEnum.ChatboxAI,
-      modelId: 'chatboxai-3.5',
-    })
-  })
-
-  it('uses license plan over display name when defaultModel and type are missing', () => {
-    expect(
-      resolveChatboxLicenseDefaultModel(
-        makeSettings({
-          licenseKey: 'license-key',
-          licenseDetail: {
-            name: 'Chatbox AI Pro',
-            plan: 'lite',
-          },
-        })
-      )
-    ).toEqual({
-      provider: ModelProviderEnum.ChatboxAI,
-      modelId: 'chatboxai-3.5',
-    })
-
-    expect(
-      resolveChatboxLicenseDefaultModel(
-        makeSettings({
-          licenseKey: 'license-key',
-          licenseDetail: {
-            name: 'Chatbox AI Lite',
-            plan: 'pro',
-          },
-        })
-      )
-    ).toEqual({
-      provider: ModelProviderEnum.ChatboxAI,
-      modelId: 'chatboxai-4',
-    })
+    ).toBeUndefined()
   })
 })
 
 describe('applyChatboxLicenseDefaultModelToSession', () => {
-  it('keeps preset chat sessions unchanged for BYOK users', () => {
+  it('keeps preset chat sessions unchanged without applying Chatbox AI defaults', () => {
     const session = {
       type: 'chat' as const,
       settings: undefined,
     }
 
     expect(applyChatboxLicenseDefaultModelToSession(session, makeSettings())).toBe(session)
-  })
-
-  it('applies the Chatbox license model to preset chat sessions without a selected model', () => {
-    const session = {
-      type: 'chat' as const,
-      settings: {
-        temperature: 0.7,
-      },
-    }
-
     expect(
       applyChatboxLicenseDefaultModelToSession(
         session,
@@ -156,14 +57,7 @@ describe('applyChatboxLicenseDefaultModelToSession', () => {
           },
         })
       )
-    ).toEqual({
-      type: 'chat',
-      settings: {
-        temperature: 0.7,
-        provider: ModelProviderEnum.ChatboxAI,
-        modelId: 'chatboxai-4',
-      },
-    })
+    ).toBe(session)
   })
 
   it('does not override an existing preset session model', () => {

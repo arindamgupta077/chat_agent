@@ -27,4 +27,8 @@ describe('filterModelsForSelector', () => {
       { modelId: 'rerank-1', type: 'rerank' },
     ])
   })
+
+  test('filters out Chatbox AI models', () => {
+    expect(filterModelsForSelector(models, undefined, 'chatbox-ai')).toEqual([])
+  })
 })

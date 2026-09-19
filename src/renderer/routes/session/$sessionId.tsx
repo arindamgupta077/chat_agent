@@ -1,6 +1,6 @@
 import NiceModal from '@ebay/nice-modal-react'
 import { Box, Button } from '@mantine/core'
-import type { ModelProvider } from '@shared/types'
+import { ModelProviderEnum, type ModelProvider } from '@shared/types'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -131,7 +131,12 @@ function RouteComponent() {
     if (currentSession) {
       if (currentSession.type === 'chat' && currentSession.settings) {
         const { provider, modelId } = currentSession.settings
-        if (provider && modelId) {
+        if (
+          provider &&
+          modelId &&
+          provider !== ModelProviderEnum.ChatboxAI &&
+          provider !== 'chatbox-ai'
+        ) {
           setLastUsedChatModel(provider, modelId)
         }
       }
@@ -230,12 +235,19 @@ function RouteComponent() {
   }, [])
 
   const model = useMemo(() => {
-    if (!currentSessionWithDefaultModel?.settings?.modelId || !currentSessionWithDefaultModel?.settings?.provider) {
+    const provider = currentSessionWithDefaultModel?.settings?.provider
+    const modelId = currentSessionWithDefaultModel?.settings?.modelId
+    if (
+      !provider ||
+      !modelId ||
+      provider === ModelProviderEnum.ChatboxAI ||
+      provider === 'chatbox-ai'
+    ) {
       return undefined
     }
     return {
-      provider: currentSessionWithDefaultModel.settings.provider,
-      modelId: currentSessionWithDefaultModel.settings.modelId,
+      provider,
+      modelId,
     }
   }, [currentSessionWithDefaultModel?.settings?.provider, currentSessionWithDefaultModel?.settings?.modelId])
 
