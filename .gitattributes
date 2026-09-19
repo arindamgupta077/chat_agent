@@ -10,3 +10,16 @@
 *.ttf   binary
 *.woff  binary
 *.woff2 binary
+
+# Exclude non-essential files, documentation media, and dev tools from GitHub ZIP archives
+.gitattributes          export-ignore
+.gitignore              export-ignore
+.github/                export-ignore
+.storybook/             export-ignore
+.claude/                export-ignore
+.codex                  export-ignore
+doc/                    export-ignore
+docs/                   export-ignore
+team-sharing/           export-ignore
+test/                   export-ignore
+assets/icon-raw.png     export-ignore
