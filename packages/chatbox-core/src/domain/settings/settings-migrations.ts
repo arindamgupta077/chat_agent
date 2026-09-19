@@ -2,7 +2,7 @@ import deepmerge from 'deepmerge'
 import { createDefaultSettings, getDefaultDocumentParser, type SettingsHostDefaults } from './settings-defaults'
 import { type Settings, SettingsSchema } from './settings-schema'
 
-export const SETTINGS_PERSIST_VERSION = 6
+export const SETTINGS_PERSIST_VERSION = 7
 
 export interface PersistedSettingsEnvelope {
   settings: unknown
@@ -71,6 +71,10 @@ export function migrateSettings(persisted: unknown, version: number, host: Setti
     if (Array.isArray(mcp?.enabledBuiltinServers)) {
       mcp.enabledBuiltinServers = mcp.enabledBuiltinServers.filter((id) => id !== 'sequentialthinking')
     }
+  }
+
+  if (shouldRunMigration(6) && settings.defaultPrompt === 'You are a helpful assistant.') {
+    settings.defaultPrompt = ''
   }
 
   const extension = settings.extension as { documentParser?: { type?: string } } | undefined

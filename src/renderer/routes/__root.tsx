@@ -207,20 +207,11 @@ function Root() {
         .catch(() => ({ setting_chatboxai_first: false }) as RemoteConfig)
       setRemoteConfig(async (prev) => ({ ...(await prev), ...remoteConfig }))
 
-      // Skip guide-related checks if already on guide, dev tools, or settings/mcp page
-      if (
-        location.pathname === '/guide' ||
-        location.pathname.startsWith('/dev') ||
-        location.pathname === '/settings/mcp'
-      ) {
+      if (location.pathname === '/settings/mcp') {
         initialized.current = true
         return
       }
 
-      // On store builds (iOS / Google Play), wait for both version AND remoteConfig.current_version
-      // before making guide/navigation decisions. isExceeded depends on both async data sources;
-      // if we only wait for version, remoteConfig may still be empty, causing isExceeded to be
-      // falsely falsy and letting the guide navigation slip through during store review.
       const isStoreReviewPlatform =
         CHATBOX_BUILD_PLATFORM === 'ios' ||
         (CHATBOX_BUILD_PLATFORM === 'android' && CHATBOX_BUILD_CHANNEL === 'google_play')
@@ -229,17 +220,6 @@ function Root() {
       }
 
       initialized.current = true
-
-      // Check if user needs onboarding guide
-      // Conditions: not completed onboarding AND no valid config
-      const onboardingCompleted = onboardingStore.getState().completed
-      const needsSetup = settingActions.needEditSetting()
-
-      // Auto-navigate to guide for new users who need setup
-      if (!isExceeded && !onboardingCompleted && needsSetup) {
-        router.navigate({ to: '/guide', replace: true })
-        return
-      }
 
       const shouldShowAboutDialogWhenStartUp = await platform.shouldShowAboutDialogWhenStartUp()
       if (shouldShowAboutDialogWhenStartUp && remoteConfig.setting_chatboxai_first) {

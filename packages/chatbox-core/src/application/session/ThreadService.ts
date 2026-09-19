@@ -93,9 +93,11 @@ export class ThreadService {
         ...current,
         threads: [...(current.threads ?? []), this.createThreadSnapshot(current)],
         messages: [
-          systemPrompt
-            ? this.createMessage('system', getMessageText(systemPrompt))
-            : this.createMessage('system', this.dependencies.getDefaultSystemPrompt()),
+          ...(systemPrompt
+            ? [this.createMessage('system', getMessageText(systemPrompt))]
+            : this.dependencies.getDefaultSystemPrompt()
+              ? [this.createMessage('system', this.dependencies.getDefaultSystemPrompt())]
+              : []),
         ],
         threadName: '',
         compactionPoints: undefined,

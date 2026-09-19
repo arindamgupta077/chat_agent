@@ -2,7 +2,7 @@ import { getDefaultInterfaceColors } from '../../theme-colors'
 import { DEFAULT_ENABLED_BUILTIN_SKILL_NAMES } from '../../types/skills'
 import { type DocumentParserConfig, type Settings, Theme } from './settings-schema'
 
-export const DEFAULT_SYSTEM_PROMPT = 'You are a helpful assistant.'
+export const DEFAULT_SYSTEM_PROMPT = ''
 
 export interface SettingsHostDefaults {
   isDesktopLike: boolean

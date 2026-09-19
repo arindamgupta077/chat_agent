@@ -6,10 +6,7 @@ import { TestId } from '@shared/automation/testids'
 import {
   IconArchive,
   IconCirclePlus,
-  IconCode,
   IconDownload,
-  IconHelpCircle,
-  IconInfoCircle,
   IconLayoutSidebarLeftCollapse,
   IconMessageChatbot,
   IconPhotoPlus,
@@ -23,11 +20,8 @@ import { useTranslation } from 'react-i18next'
 import { AppTooltip as Tooltip } from '@/components/ui/tooltip'
 import Divider from './components/common/Divider'
 import { ScalableIcon } from './components/common/ScalableIcon'
-import ThemeSwitchButton from './components/dev/ThemeSwitchButton'
 import SessionList from './components/session/SessionList'
-import { FORCE_ENABLE_DEV_PAGES } from './dev/devToolsConfig'
 import { useIsSmallScreen, useSidebarWidth } from './hooks/useScreenChange'
-import useVersion from './hooks/useVersion'
 import { navigateToSettings } from './modals/settings-navigation'
 import { trackingEvent } from './packages/event'
 import { getSidebarModalSx } from './sidebar-drawer'
@@ -55,7 +49,6 @@ function setIosTextInteractionEnabled(enabled: boolean) {
 
 export default function Sidebar() {
   const { t } = useTranslation()
-  const versionHook = useVersion()
   const language = useLanguage()
   const navigate = useNavigate()
   const showSidebar = useUIStore((s) => s.showSidebar)
@@ -170,21 +163,13 @@ export default function Sidebar() {
             <Flex
               align="center"
               gap="sm"
-              onClick={() => navigate({ to: '/about' })}
-              style={{ cursor: 'pointer', minWidth: 0 }}
+              style={{ minWidth: 0 }}
             >
               <Image src={icon} w={20} h={20} />
               <Text span c="chatbox-secondary" size="xl" lh={1.2} fw="700" truncate>
                 AgentLab
               </Text>
-              {/* Desktop shows the version in the bottom About link, so only surface it here on mobile */}
-              {isSmallScreen && /\d/.test(versionHook.version) && (
-                <Text span c="chatbox-tertiary" size="sm">
-                  {versionHook.version}
-                </Text>
-              )}
             </Flex>
-            {FORCE_ENABLE_DEV_PAGES && <ThemeSwitchButton size="xs" />}
           </Flex>
 
           <Flex align="center" gap={2} style={{ flexShrink: 0 }}>
@@ -270,19 +255,6 @@ export default function Sidebar() {
                 p="xs"
               />
 
-              {!versionHook.isExceeded && (
-                <ActionIcon
-                  variant="transparent"
-                  color="chatbox-secondary"
-                  size={24}
-                  onClick={() => {
-                    navigate({ to: '/guide' })
-                    setShowSidebar(false)
-                  }}
-                >
-                  <ScalableIcon icon={IconHelpCircle} size={20} />
-                </ActionIcon>
-              )}
               <ActionIcon
                 data-testid={TestId.sidebar.settingsTrigger}
                 variant="transparent"
@@ -295,8 +267,6 @@ export default function Sidebar() {
               >
                 <ScalableIcon icon={IconSettingsFilled} size={20} />
               </ActionIcon>
-
-              <SmallScreenAboutIcon versionHook={versionHook} navigate={navigate} setShowSidebar={setShowSidebar} />
             </Flex>
           ) : (
             <>
@@ -326,29 +296,6 @@ export default function Sidebar() {
                 variant="light"
                 p="xs"
               />
-              {!versionHook.isExceeded && (
-                <NavLink
-                  c="chatbox-secondary"
-                  className="rounded-lg"
-                  label={t('Help')}
-                  leftSection={<ScalableIcon icon={IconHelpCircle} size={20} />}
-                  onClick={() => navigate({ to: '/guide' })}
-                  variant="light"
-                  p="xs"
-                />
-              )}
-              {FORCE_ENABLE_DEV_PAGES && (
-                <NavLink
-                  c="chatbox-secondary"
-                  className="rounded-lg"
-                  label="Dev Tools"
-                  leftSection={<ScalableIcon icon={IconCode} size={20} />}
-                  onClick={() => navigate({ to: '/dev' })}
-                  variant="light"
-                  p="xs"
-                />
-              )}
-              <AboutNavLink versionHook={versionHook} navigate={navigate} />
             </>
           )}
         </Stack>
@@ -362,71 +309,5 @@ export default function Sidebar() {
         )}
       </Stack>
     </SwipeableDrawer>
-  )
-}
-
-function useShowUpdateDot(versionHook: ReturnType<typeof useVersion>) {
-  return versionHook.needCheckUpdate
-}
-
-function AboutNavLink({
-  versionHook,
-  navigate,
-}: {
-  versionHook: ReturnType<typeof useVersion>
-  navigate: ReturnType<typeof useNavigate>
-}) {
-  const { t } = useTranslation()
-  const showDot = useShowUpdateDot(versionHook)
-
-  return (
-    <NavLink
-      c="chatbox-tertiary"
-      className="rounded-lg"
-      label={
-        <Flex align="center" gap={6}>
-          <span>{`${t('About')} ${/\d/.test(versionHook.version) ? `(${versionHook.version})` : ''}`}</span>
-          {showDot && <Box w={8} h={8} miw={8} bg="chatbox-brand" style={{ borderRadius: '50%' }} />}
-        </Flex>
-      }
-      leftSection={<ScalableIcon icon={IconInfoCircle} size={20} />}
-      onClick={() => navigate({ to: '/about' })}
-      variant="light"
-      p="xs"
-    />
-  )
-}
-
-/**
- * Small screen About icon with dot indicator for mobile.
- */
-function SmallScreenAboutIcon({
-  versionHook,
-  navigate,
-  setShowSidebar,
-}: {
-  versionHook: ReturnType<typeof useVersion>
-  navigate: ReturnType<typeof useNavigate>
-  setShowSidebar: (v: boolean) => void
-}) {
-  const showDot = useShowUpdateDot(versionHook)
-
-  return (
-    <Box className="relative">
-      <ActionIcon
-        variant="transparent"
-        color="chatbox-secondary"
-        size={24}
-        onClick={() => {
-          navigate({ to: '/about' })
-          setShowSidebar(false)
-        }}
-      >
-        <ScalableIcon icon={IconInfoCircle} size={20} />
-      </ActionIcon>
-      {showDot && (
-        <Box w={8} h={8} bg="chatbox-brand" className="absolute -top-0.5 -right-0.5" style={{ borderRadius: '50%' }} />
-      )}
-    </Box>
   )
 }

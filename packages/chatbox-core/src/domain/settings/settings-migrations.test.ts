@@ -108,7 +108,7 @@ describe('settings migrations', () => {
     ])
   })
 
-  test.each([0, 1, 2, 3, 4, 5, 6])('keeps the complete version %i snapshot compatible', (version) => {
+  test.each([0, 1, 2, 3, 4, 5, 6, 7])('keeps the complete version %i snapshot compatible', (version) => {
     const defaults = createDefaultSettings()
     const persisted = {
       ...defaults,
@@ -167,5 +167,33 @@ describe('settings migrations', () => {
     }
 
     expect(actual).toEqual(expected)
+  })
+
+  test('migrates legacy default prompt "You are a helpful assistant." to empty string', () => {
+    const defaults = createDefaultSettings()
+    const migrated = migrateSettings(
+      {
+        ...defaults,
+        defaultPrompt: 'You are a helpful assistant.',
+      },
+      6,
+      { isDesktopLike: true }
+    )
+
+    expect(migrated.defaultPrompt).toBe('')
+  })
+
+  test('preserves customized default prompt during migration', () => {
+    const defaults = createDefaultSettings()
+    const migrated = migrateSettings(
+      {
+        ...defaults,
+        defaultPrompt: 'You are a custom assistant.',
+      },
+      6,
+      { isDesktopLike: true }
+    )
+
+    expect(migrated.defaultPrompt).toBe('You are a custom assistant.')
   })
 })
