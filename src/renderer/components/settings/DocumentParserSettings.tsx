@@ -9,9 +9,7 @@ import { getPlatformDefaultDocumentParser, useSettingsStore } from '@/stores/set
 const ALL_PARSER_OPTIONS: {
   value: DocumentParserType
   label: string
-}[] = [
-  { value: 'local', label: 'Local' },
-]
+}[] = [{ value: 'local', label: 'Local' }]
 
 const PARSER_DESCRIPTIONS: Record<DocumentParserType, string> = {
   none: 'Only supports basic text files (.txt, .md, .json, code files, etc.).',

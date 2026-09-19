@@ -1,6 +1,5 @@
 import type { UpdaterFn } from '@shared/types'
 
-// 原子性执行update操作，避免数据竞态
 type QueueItem<T extends object> = {
   updater: UpdaterFn<T>
   resolve: (result: T) => void
@@ -28,7 +27,6 @@ export class UpdateQueue<T extends object> {
     })
   }
 
-  /** 可供测试时手动触发；正常情况下由微任务自动触发 */
   async flush(): Promise<void> {
     if (this.state === null) {
       if (typeof this.initial === 'function') {

@@ -65,7 +65,6 @@ type MigrateStore = {
 export const CurrentVersion = 15
 
 async function doMigrateStorage(oldStorage: Storage) {
-  // 找到老版本的数据，说明是升级，执行数据迁移操作
   log.info(
     `migrateStorage: old version storage found, migrating data from old storage(${oldStorage.getStorageType()}) to ${storage.getStorageType()}`
   )
@@ -114,11 +113,6 @@ async function migrateStorage() {
     return
   }
 
-  /**
-   * 需要遍历所有旧的storage，找到configVersion最大的那个，如果比当前的新，则迁移数据
-   * 如果当前 configVersion 为 0，且没有找到可迁移数据，说明是第一次启动应用，需要初始化数据
-   */
-
   let needMigration = false
 
   const [oldConfigVersion, oldStorage] = await findNewestStorage(getOldVersionStorages())
@@ -127,11 +121,7 @@ async function migrateStorage() {
     `migrateStorage check: platform ${platform.type} old config version: ${oldConfigVersion}, old storage: ${oldStorage?.getStorageType()}`
   )
 
-  if (
-    oldConfigVersion > configVersion &&
-    oldStorage &&
-    oldStorage.getStorageType() !== storage.getStorageType()
-  ) {
+  if (oldConfigVersion > configVersion && oldStorage && oldStorage.getStorageType() !== storage.getStorageType()) {
     needMigration = true
   }
 
@@ -141,9 +131,7 @@ async function migrateStorage() {
 
   if (configVersion === 0 && needMigration === false) {
     log.info(`migrateStorage: no old storage found, and config version is 0, initializing data`)
-    // 这是第一次运行应用，直接将ConfigVersion设置为CurrentVersion，跳过后续的数据迁移
     await storage.setItemNow(StorageKey.ConfigVersion, CurrentVersion)
-    // 初始化默认会话
     await initData()
   }
 }
@@ -189,7 +177,6 @@ export async function migrateOnData(dataStore: MigrateStore, canRelaunch = true)
     log.info(`migrate_${configVersion}_to_${configVersion + 1}, needRelaunch: ${needRelaunch}`)
   }
 
-  // 如果需要重启，则重启应用
   if (needRelaunch && canRelaunch) {
     log.info(`migrate: relaunch`)
     await platform.relaunch()
@@ -198,7 +185,6 @@ export async function migrateOnData(dataStore: MigrateStore, canRelaunch = true)
 
 async function migrate_0_to_1(dataStore: MigrateStore) {
   const settings = await dataStore.getData(StorageKey.Settings, defaults.settings())
-  // 如果历史版本的用户开启了消息的token计数展示，那么也帮他们开启token消耗展示
   if (settings.showTokenCount) {
     await dataStore.setData(StorageKey.Settings, {
       ...settings,
@@ -224,7 +210,6 @@ async function migrate_1_to_2(dataStore: MigrateStore) {
 }
 
 async function migrate_2_to_3(dataStore: MigrateStore) {
-  // 原来 Electron 应用存储图片 base64 数据到 IndexedDB，现在改成本地文件存储
   if (!dataStore.setBlob) {
     return
   }
@@ -253,13 +238,10 @@ async function migrate_3_to_4(dataStore: MigrateStore) {
   await dataStore.setData(StorageKey.ChatSessions, [...sessions, targetSession])
 }
 
-// 已经迁移到storage migration
 async function migrate_4_to_5(dataStore: MigrateStore): Promise<boolean> {
   if (platform.type !== 'web') {
     return false
   }
-  // 针对网页版，从 store 迁移至 localforage
-  // 本质上是从更小的 localStorage 迁移到更大的 IndexedDB，解决容量不够用的问题
   const keys: string[] = []
   oldStore.each((value, key) => {
     keys.push(key)
@@ -283,15 +265,10 @@ async function migrate_5_to_6(dataStore: MigrateStore) {
   await dataStore.setData(StorageKey.ChatSessions, [...sessions, targetSession])
 }
 
-// 针对 mobile 端，从 store 迁移至 sqlite
-// 解决容量不够用的问题
-// 不在需要了
 async function migrate_6_to_7(dataStore: MigrateStore): Promise<boolean> {
   if (platform.type !== 'mobile') {
     return false
   }
-  // 针对mobile端，从 store 迁移至 sqllite
-  // 解决容量不够用的问题
   const keys: string[] = []
   oldStore.each((value, key) => {
     keys.push(key)
@@ -305,7 +282,6 @@ async function migrate_6_to_7(dataStore: MigrateStore): Promise<boolean> {
   return true
 }
 
-// 从所有 sessions 保存在一个 key 迁移到每个 session 保存在一个 key，增加 session 列表的读取性能
 async function migrate_7_to_8(dataStore: MigrateStore): Promise<boolean> {
   const sessions = await dataStore.getData<Session[]>(StorageKey.ChatSessions, [])
   log.info(`migrate_7_to_8, sessions: ${sessions.length}`)
@@ -317,14 +293,12 @@ async function migrate_7_to_8(dataStore: MigrateStore): Promise<boolean> {
   await dataStore.setData(StorageKey.ChatSessionsList, sessionList)
   log.info(`migrate_7_to_8, sessionList: ${sessionList.length}`)
 
-  // 一次写入所有 session， 提升性能
   const sessionMap = keyBy(sessions, (session) => StorageKeyGenerator.session(session.id))
   await dataStore.setAll(sessionMap)
   log.info(`migrate_7_to_8, done`)
   return true
 }
 
-// 修复之前从 7 以下升级，会导致 7_8 不执行的问题，从 chat-sessions 里找到 chat-sessions-list 中不存在的 session，然后迁移
 async function migrate_8_to_9(dataStore: MigrateStore): Promise<boolean> {
   if (platform.type !== 'mobile') {
     return false
@@ -339,7 +313,6 @@ async function migrate_8_to_9(dataStore: MigrateStore): Promise<boolean> {
   const sessionList = await dataStore.getData<SessionMeta[]>(StorageKey.ChatSessionsList, [])
   const existedSessionIds = sessionList.map((session) => session.id)
 
-  // 如果 排除掉 预置的 session， chat-sessions 和 chat-sessions-list 里的 session id 全都不一致，说明之前漏了 7-8 的 migration，需要执行数据找回，否则跳过找回步骤
   const intersectSessionIds = intersection(
     existedSessionIds,
     oldSessions.map((session) => session.id)
@@ -350,17 +323,14 @@ async function migrate_8_to_9(dataStore: MigrateStore): Promise<boolean> {
     ...defaultSessionsForCN.map((session) => session.id),
   ])
 
-  // 如果 intersectSessionIds 里还有值，说明之前成功执行过 7-8 的 migration，跳过找回步骤
   if (difference(intersectSessionIds, defaultSessionIds).length !== 0) {
     return false
   }
 
-  // 找到 chat-sessions 里不存在于 chat-sessions-list 的 session
   const missedSessions = oldSessions.filter((session) => !existedSessionIds.includes(session.id))
   const missedSessionList = missedSessions.map((session) => getSessionMeta(session))
   log.info(`migrate_8_to_9, missedSessions: ${missedSessions.length}`)
 
-  // 写入 chat-sessions-list
   await dataStore.setData(StorageKey.ChatSessionsList, [...sessionList, ...missedSessionList])
   const missedSessionMap = keyBy(missedSessions, (session) => StorageKeyGenerator.session(session.id))
   await dataStore.setAll(missedSessionMap)
@@ -374,11 +344,9 @@ function setInitProcess(process: string) {
   store.set(migrationProcessAtom, process)
 }
 
-// 迁移provider settings，session settings
 async function migrate_9_to_10(dataStore: MigrateStore): Promise<boolean> {
   const oldSettings = (await dataStore.getData(StorageKey.Settings, null)) as any
   if (oldSettings) {
-    // 迁移provider相关的配置（纯数据变换已下沉到 shared，web/native 共用）
     const { providers, customProviders } = migrateLegacyProviderSettings(oldSettings as LegacyFlatSettings)
 
     try {
@@ -393,7 +361,6 @@ async function migrate_9_to_10(dataStore: MigrateStore): Promise<boolean> {
     }
   }
 
-  // 迁移session settings
   const chatSessionList = await dataStore.getData<SessionMeta[]>(StorageKey.ChatSessionsList, [])
   log.info(`migrate_9_to_10, chatSessionList: ${chatSessionList.length}`)
 
@@ -449,12 +416,10 @@ async function migrate_9_to_10(dataStore: MigrateStore): Promise<boolean> {
 
 async function migrate_10_to_11(dataStore: MigrateStore) {
   if (platform.type === 'mobile') {
-    // 释放 localstorage 空间
     log.info('migrate_10_to_11, remove settings')
     oldStore.remove(StorageKey.Settings)
   }
 
-  // 修复之前写入的错误的默认值
   const settings = await dataStore.getData<Settings | null>(StorageKey.Settings, null)
   if (settings) {
     if (settings.fontSize === 16) {
@@ -466,12 +431,10 @@ async function migrate_10_to_11(dataStore: MigrateStore) {
   return false
 }
 
-// 为桌面端和移动端从sqlite和配置文件迁移到IndexedDB占位，防止后面重复使用该版本号
 async function migrate_11_to_12(dataStore: MigrateStore) {
   return true
 }
 
-// 为移动端从indexedDB迁移到Sqlite占位，防止后面重复使用该版本号
 async function migrate_12_to_13(dataStore: MigrateStore) {
   return true
 }

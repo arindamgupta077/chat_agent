@@ -5,7 +5,6 @@ import platform from '.'
 import type { Storage } from './interfaces'
 
 export class LocalStorage implements Storage {
-  // 使用LocalStorage存储的最后一个版本是ConfigVersion=6，当时只有这些key
   validStorageKeys: string[] = [
     StorageKey.ConfigVersion,
     StorageKey.Configs,
@@ -19,8 +18,6 @@ export class LocalStorage implements Storage {
   }
 
   public async setStoreValue(key: string, value: any) {
-    // 为什么序列化成 JSON？
-    // 因为 IndexedDB 作为底层驱动时，可以直接存储对象，但是如果对象中包含函数或引用，将会直接报错
     localStorage.setItem(key, JSON.stringify(value))
   }
   public async getStoreValue(key: string) {
@@ -33,7 +30,6 @@ export class LocalStorage implements Storage {
   public async getAllStoreValues(): Promise<{ [key: string]: any }> {
     const ret: { [key: string]: any } = {}
 
-    // 仅返回有效的key
     for (const key of this.validStorageKeys) {
       const val = localStorage.getItem(key)
       if (val) {
@@ -48,7 +44,6 @@ export class LocalStorage implements Storage {
     return ret
   }
   public async getAllStoreKeys(): Promise<string[]> {
-    // 仅返回有效的key
     return Object.keys(localStorage).filter((k) => this.validStorageKeys.includes(k))
   }
   public async setAllStoreValues(data: { [key: string]: any }): Promise<void> {
@@ -65,17 +60,14 @@ class SQLiteStorage {
 
   constructor() {
     this.sqlite = new SQLiteConnection(CapacitorSQLite)
-    this.initializePromise = this.initialize() // 初始化 Promise
+    this.initializePromise = this.initialize()
   }
 
-  // 创建并打开数据库
   private async initialize(): Promise<void> {
     try {
-      // reload的时候会报connection already open错误，所以先关闭
       this.sqlite.closeConnection('chatbox.db', false)
       this.database = await this.sqlite.createConnection('chatbox.db', false, 'no-encryption', 1, false)
 
-      // 创建表
       const createTable = `
                 CREATE TABLE IF NOT EXISTS key_value (
                     key TEXT PRIMARY KEY NOT NULL,
@@ -90,12 +82,10 @@ class SQLiteStorage {
     }
   }
 
-  // 确保数据库初始化完成
   private async ensureInitialized(): Promise<void> {
     await this.initializePromise
   }
 
-  // 插入或更新数据
   async setItem(key: string, value: string): Promise<void> {
     await this.ensureInitialized()
 
@@ -111,7 +101,6 @@ class SQLiteStorage {
     }
   }
 
-  // 获取值
   async getItem(key: string): Promise<string | null> {
     await this.ensureInitialized()
 
@@ -128,7 +117,6 @@ class SQLiteStorage {
     }
   }
 
-  // 删除值
   async removeItem(key: string): Promise<void> {
     await this.ensureInitialized()
 
@@ -144,7 +132,6 @@ class SQLiteStorage {
     }
   }
 
-  // 获取所有键值对
   async getAllItems(): Promise<{ [key: string]: any }> {
     await this.ensureInitialized()
 
@@ -153,7 +140,6 @@ class SQLiteStorage {
             SELECT * FROM key_value;
           `
       const result = await this.database.query(query)
-      // 将结果转换为 { [key: string]: value } 格式
       const keyValueObject: { [key: string]: any } = {}
       if (result.values && result.values.length > 0) {
         result.values.forEach((row) => {
@@ -167,7 +153,6 @@ class SQLiteStorage {
     }
   }
 
-  // 获取所有键
   async getAllKeys(): Promise<string[]> {
     await this.ensureInitialized()
 
@@ -176,7 +161,6 @@ class SQLiteStorage {
             SELECT key FROM key_value;
           `
       const result = await this.database.query(query)
-      // 提取所有key
       const keys: string[] = []
       if (result.values && result.values.length > 0) {
         result.values.forEach((row) => {
@@ -190,7 +174,6 @@ class SQLiteStorage {
     }
   }
 
-  // 关闭数据库
   async closeDatabase(): Promise<void> {
     await this.ensureInitialized()
 
@@ -247,8 +230,6 @@ export class IndexedDBStorage implements Storage {
   }
 
   public async setStoreValue(key: string, value: any) {
-    // 为什么序列化成 JSON？
-    // 因为 IndexedDB 作为底层驱动时，可以直接存储对象，但是如果对象中包含函数或引用，将会直接报错
     try {
       await this.store.setItem(key, JSON.stringify(value))
     } catch (error) {

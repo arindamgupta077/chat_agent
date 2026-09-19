@@ -64,7 +64,6 @@ function estimateMessageTextTokens(msg: Message, type: 'output' | 'input', model
   return estimateTokens(text, model)
 }
 
-// 参考: https://github.com/pkoukk/tiktoken-go#counting-tokens-for-chat-api-calls
 // OpenAI Cookbook: https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
 export function estimateTokensFromMessages(
   messages: Message[],

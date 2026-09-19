@@ -21,7 +21,7 @@ describe('RendererSettingsEffects', () => {
     effects.start()
     effects.start()
 
-    service.updateSettings({ language: 'ja' })
+    service.updateSettings({ fontSize: 18 })
     expect(host.ensureShortcutConfig).not.toHaveBeenCalled()
     expect(host.ensureProxyConfig).not.toHaveBeenCalled()
     expect(host.ensureAutoLaunch).not.toHaveBeenCalled()

@@ -11,7 +11,6 @@ interface ContentViewerProps {
   title?: string
   content?: string
   storageKey?: string
-  // 附件元信息（解析器、索引状态等）。label 省略时整条 value 自描述（如“解析器: MinerU”）。
   metadata?: Array<{ label?: string; value: string }>
 }
 

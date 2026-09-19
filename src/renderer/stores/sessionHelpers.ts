@@ -737,12 +737,6 @@ export async function prepareFileAttachment(
   }
 }
 
-/**
- * 预处理链接以获取内容
- * @param url 链接地址
- * @param settings 会话设置
- * @returns 预处理后的链接信息
- */
 export async function preprocessLink(
   url: string,
   settings: SessionSettings
@@ -760,10 +754,8 @@ export async function preprocessLink(
     const isPro = settingActions.isPro()
     const uniqKey = StorageKeyGenerator.linkUniqKey(url)
 
-    // 检查是否已经处理过这个链接
     const existingContent = await storage.getBlob(uniqKey).catch(() => null)
     if (existingContent) {
-      // 如果已经有内容，尝试从内容中提取标题
       const titleMatch = existingContent.match(/<title[^>]*>([^<]+)<\/title>/i)
       const title = titleMatch ? titleMatch[1] : url.replace(/^https?:\/\//, '')
 
@@ -789,14 +781,11 @@ export async function preprocessLink(
     }
 
     if (isPro) {
-      // ChatboxAI 方案：使用远程解析
       const licenseKey = settingActions.getLicenseKey()
       const parsed = await remote.parseUserLinkPro({ licenseKey: licenseKey || '', url })
 
-      // 获取解析后的内容
       const content = (await storage.getBlob(parsed.storageKey).catch(() => '')) || ''
 
-      // 将内容存储到唯一键下
       if (content) {
         await storage.setBlob(uniqKey, content)
       }
@@ -821,11 +810,9 @@ export async function preprocessLink(
         byteLength,
       }
     } else {
-      // 本地方案：解析链接内容
       const { key, title } = await localParser.parseUrl(url)
       const content = (await storage.getBlob(key).catch(() => '')) || ''
 
-      // 将内容存储到唯一键下
       if (content) {
         await storage.setBlob(uniqKey, content)
       }
@@ -859,14 +846,6 @@ export async function preprocessLink(
   }
 }
 
-/**
- * 构建用户消息，只包含元数据不包含内容
- * @param text 消息文本
- * @param pictureKeys 图片存储键列表
- * @param preprocessedFiles 预处理后的文件信息
- * @param preprocessedLinks 预处理后的链接信息
- * @returns 构建好的消息对象
- */
 export function constructUserMessage(
   messageId: string | undefined,
   text: string,
@@ -882,13 +861,11 @@ export function constructUserMessage(
     byteLength?: number
   }> = []
 ): Message {
-  // 只使用原始文本，不添加文件和链接内容
   const msg = createMessage('user', text)
   if (messageId) {
     msg.id = messageId
   }
 
-  // 添加图片
   if (pictureKeys.length > 0) {
     msg.contentParts = msg.contentParts ?? []
     msg.contentParts.push(...pictureKeys.map((k) => ({ type: 'image' as const, storageKey: k })))
@@ -967,8 +944,7 @@ export function mergeSettings(
 export function initEmptyChatSession(): Omit<Session, 'id'> {
   const settings = settingsStore.getState().getSettings()
   const { chat: lastUsedChatModel } = lastUsedModelStore.getState()
-  const isChatboxAI = (provider?: string) =>
-    provider === ModelProviderEnum.ChatboxAI || provider === 'chatbox-ai'
+  const isChatboxAI = (provider?: string) => provider === ModelProviderEnum.ChatboxAI || provider === 'chatbox-ai'
 
   const rawDefaultChatModel = settings.defaultChatModel
     ? {
@@ -978,9 +954,7 @@ export function initEmptyChatSession(): Omit<Session, 'id'> {
     : lastUsedChatModel || resolveChatboxLicenseDefaultModel(settings)
 
   const defaultChatModel =
-    rawDefaultChatModel && !isChatboxAI(rawDefaultChatModel.provider)
-      ? rawDefaultChatModel
-      : undefined
+    rawDefaultChatModel && !isChatboxAI(rawDefaultChatModel.provider) ? rawDefaultChatModel : undefined
 
   const newSession: Omit<Session, 'id'> = {
     name: 'Untitled',

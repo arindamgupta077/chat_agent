@@ -51,11 +51,6 @@ export class IndexedDBSessionMetaStorage implements SessionMetaStorage {
 
   private openDatabase(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // 这些索引只是性能优化，没有很强的 schema 迁移理由，去掉了强制指定 version。
-      // bump 后用户回退版本会因 VersionError 打不开 session meta DB，导致降级使用失败：
-      // `The requested version (X) is less than the existing version (Y)` —— 例如 1.22 → 1.21 降级后无法发消息。
-      // 如确需引入 version/schema 变更：只做加法式变更（新 store/索引，keyPath 不变），
-      // 并保留 db-schema-guard，让降级产生的 VersionError 显示更新引导，而不是静默改写数据。
       const request = indexedDB.open(DB_NAME)
       watchDbOpenBlocked(DB_NAME, request)
 

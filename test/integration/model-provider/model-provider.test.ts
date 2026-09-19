@@ -1,13 +1,3 @@
-/**
- * Integration tests for AI model providers.
- *
- * 运行方式
- * 1. 创建 .env 文件，添加各个模型提供商的 API Key，例如：
- *    TEST_OPENAI_API_KEY=your_openai_api_key
- *    TEST_GEMINI_API_KEY=your_gemini_api_key
- *    TEST_OPENAI_RESPONSES_API_KEY=your_openai_api_key
- * 2. npm run test:model-provider
- */
 import type { ModelMessage } from 'ai'
 import { describe, expect, it } from 'vitest'
 import TestPlatform from '../../../src/renderer/platform/test_platform'

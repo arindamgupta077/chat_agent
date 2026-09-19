@@ -81,7 +81,7 @@ const MCPMenu: FC<{ children: (enabledTools: number) => ReactNode }> = ({ childr
             </ActionIcon>
           </Menu.Label>
         </Flex>
-        {isPremium && (
+        {isPremium && BUILTIN_MCP_SERVERS.length > 0 && (
           <>
             {BUILTIN_MCP_SERVERS.map((server) => (
               <ServerItem

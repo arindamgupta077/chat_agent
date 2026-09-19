@@ -66,7 +66,7 @@ export default function ThreadHistoryDrawer({ session }: { session: Session }) {
 
   return (
     <SwipeableDrawer
-      anchor={language === 'ar' ? 'left' : 'right'}
+      anchor="right"
       variant="temporary"
       open={!!showDrawer}
       onClose={() => setShowDrawer(false)}
@@ -79,14 +79,9 @@ export default function ThreadHistoryDrawer({ session }: { session: Session }) {
         paper:
           'bg-none box-border max-w-75vw min-w-[240px] flex flex-col gap-0 pt-[var(--mobile-safe-area-inset-top)] pb-[var(--mobile-safe-area-inset-bottom)]',
       }}
-      SlideProps={language === 'ar' ? { direction: 'right' } : undefined}
-      PaperProps={
-        language === 'ar'
-          ? { sx: { direction: 'rtl', overflowY: 'initial' }, 'data-testid': TestId.session.threadHistoryDrawer }
-          : { sx: { overflowY: 'initial' }, 'data-testid': TestId.session.threadHistoryDrawer }
-      }
-      disableSwipeToOpen={CHATBOX_BUILD_PLATFORM !== 'ios'} // 只在iOS设备上启用SwipeToOpen
-      disableEnforceFocus={true} // 关闭 focus trap，避免在侧边栏打开时弹出的 modal 中 input 无法点击
+      PaperProps={{ sx: { overflowY: 'initial' }, 'data-testid': TestId.session.threadHistoryDrawer }}
+      disableSwipeToOpen={CHATBOX_BUILD_PLATFORM !== 'ios'}
+      disableEnforceFocus={true}
     >
       <Flex align="center" justify="space-between" className="px-sm py-xs">
         <Text size="md" fw={600}>

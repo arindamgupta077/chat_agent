@@ -15,11 +15,9 @@ export function LicenseSelectionModal({ opened, licenses, onConfirm, onCancel }:
   const [selectedKey, setSelectedKey] = useState(licenses[0]?.key || '')
 
   const handleClose = () => {
-    // 目前无法阻止ESC关闭，fallback到第一个
     onCancel?.()
   }
 
-  // 格式化数字为 K/M 格式
   const formatTokens = (num: number): string => {
     if (num >= 1_000_000) {
       return `${(num / 1_000_000).toFixed(1)}M`

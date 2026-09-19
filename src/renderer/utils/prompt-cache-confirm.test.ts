@@ -19,7 +19,6 @@ vi.mock('@/stores/uiStore', () => ({
   },
 }))
 
-import zhHans from '@/i18n/locales/zh-Hans/translation.json'
 import {
   confirmModelSwitchIfNeeded,
   confirmPromptCacheBreakingAction,
@@ -50,26 +49,6 @@ describe('getPromptCacheBreakCopy', () => {
       confirmText: 'Switch',
       dontShowAgainText: "Don't show again",
     })
-  })
-
-  it('localizes cache-break confirmation copy for Chinese', () => {
-    const zh = zhHans
-    const copy = getPromptCacheBreakCopy('delete-historical-message')
-    expect(copy.title).toBe('Delete this message?')
-    expect(copy.message).toBe(
-      'This conversation already has cached context. Deleting an earlier message will invalidate that cache, so the next reply may cost more and take longer.'
-    )
-    expect(zh['Delete this message?']).toBe('删除这条消息？')
-    expect(
-      zh[
-        'This conversation already has cached context. Deleting an earlier message will invalidate that cache, so the next reply may cost more and take longer.'
-      ]
-    ).toBe('这段对话已经有缓存上下文。删除较早的消息会使缓存失效，下一次回复可能更贵、也更慢。')
-    expect(zh["Don't show again"]).toBe('不再提示')
-    expect(zh['Switch models?']).toBe('切换模型？')
-    expect(zh['Deleting this summary will restore original messages to context calculation.']).toBe(
-      '删除此摘要将恢复到压缩前的状态'
-    )
   })
 })
 

@@ -57,8 +57,6 @@ async function getAfetch() {
   return _afetch
 }
 
-// ========== Authenticated Afetch (带 token 自动刷新) ==========
-
 let _authenticatedAfetch: ReturnType<typeof createAuthenticatedAfetch> | null = null
 let authenticatedAfetchPromise: Promise<ReturnType<typeof createAuthenticatedAfetch>> | null = null
 
@@ -99,8 +97,6 @@ async function getAuthenticatedAfetch() {
   return _authenticatedAfetch
 }
 
-// ========== API ORIGIN 根据可用性维护 ==========
-
 // const RELEASE_ORIGIN = 'https://releases.chatboxai.app'
 export function getAPIOrigin() {
   return chatboxaiAPI.getChatboxAPIOrigin()
@@ -129,8 +125,6 @@ const getChatboxHeaders = async () => {
     'CHATBOX-OS': getOS(),
   }
 }
-
-// ========== 各个接口方法 ==========
 
 export async function checkNeedUpdate(version: string, os: string, config: Config, settings: Settings) {
   type Response = {
@@ -370,7 +364,6 @@ export async function getLicenseDetailRealtime(params: { licenseKey: string }): 
     data: ChatboxAILicenseDetail | null
     error?: LicenseDetailError
   }
-  // 用于捕获错误响应体
   let capturedError: LicenseDetailError | undefined
   try {
     const res = await ofetch<Response>(`${getAPIOrigin()}/api/license/detail/realtime`, {
@@ -380,7 +373,6 @@ export async function getLicenseDetailRealtime(params: { licenseKey: string }): 
         ...(await getChatboxHeaders()),
       },
       onResponseError({ response }) {
-        // 在错误响应时捕获 error 对象
         const body = response._data as { error?: LicenseDetailError } | undefined
         if (body?.error) {
           capturedError = body.error
@@ -389,11 +381,9 @@ export async function getLicenseDetailRealtime(params: { licenseKey: string }): 
     })
     return { data: res.data || null, error: res.error }
   } catch (e: unknown) {
-    // 如果捕获到了错误响应体，返回它
     if (capturedError) {
       return { data: null, error: capturedError }
     }
-    // 重新抛出原始错误
     throw e
   }
 }
@@ -779,7 +769,6 @@ export async function requestLoginTicketId() {
     const os = getOS()
     deviceType = os
   } else {
-    // web 或其他
     deviceType = platform.type
   }
   const appVersion = await platform.getVersion()
@@ -1133,8 +1122,6 @@ export interface ImageCompletionRequest {
 }
 
 // Zod schemas for runtime validation
-// 后端异步生图任务的单个图片 item 状态；不要和客户端本地状态 ImageGeneration.status 混淆。
-// 这些状态来自接口，客户端会在 imageGenerationActions.ts 中聚合成一条本地生成记录的整体状态。
 const ImageGenerationItemSchema = z.object({
   uuid: z.string(),
   status: z.enum(['pending', 'processing', 'completed', 'failed']),
@@ -1147,8 +1134,6 @@ const ImageGenerationItemSchema = z.object({
 })
 
 const ImageGenerationTaskResponseSchema = z.object({
-  // 接口结构预留为数组，但当前产品功能层面不支持一次异步生成多张图。
-  // 现阶段后端也写死item 为 1；
   items: z.array(ImageGenerationItemSchema),
   is_finished: z.boolean(),
   task_id: z.string(),

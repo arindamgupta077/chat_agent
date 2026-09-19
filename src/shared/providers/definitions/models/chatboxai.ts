@@ -88,8 +88,6 @@ function getDefaultAnthropicMaxOutputTokens(model: ProviderModelInfo): number {
   return DEFAULT_CHATBOXAI_ANTHROPIC_MAX_OUTPUT_TOKENS
 }
 
-// 将chatboxAIFetch移到类内部作为私有方法
-
 export default class ChatboxAI extends AbstractAISDKModel implements ModelInterface {
   public name = 'ChatboxAI'
 
@@ -225,8 +223,6 @@ export default class ChatboxAI extends AbstractAISDKModel implements ModelInterf
       }
     }
     if (this.options.model.apiStyle === 'openai-responses') {
-      // Responses 的服务端状态（item_reference / previous_response_id）无法跨 provider 解析。
-      // store=false 让 AI SDK 内联完整历史，不依赖服务端状态。
       const isDeepSeek = isDeepSeekReasoningModel(this.options.model.modelId)
       const openAIOptions = options.providerOptions?.openai
       const responseEffort = openAIOptions?.reasoningEffort

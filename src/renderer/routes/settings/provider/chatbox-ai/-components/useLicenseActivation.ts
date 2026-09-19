@@ -32,9 +32,7 @@ export function useLicenseActivation({ settings, onActivationSuccess }: UseLicen
   const [activating, setActivating] = useState(false)
   const [activateError, setActivateError] = useState<string | undefined>()
 
-  // 只有当是 manual 方式激活时才认为"已激活"，避免登录&手动使用同一个 license 时 UI 显示错误
   const autoValidated = premiumActions.useAutoValidate()
-  // 兼容旧版本：如果没有 licenseActivationMethod 但有 licenseKey，也认为是 manual 模式
   const activated =
     autoValidated &&
     ((settings as any).licenseActivationMethod === 'manual' ||
@@ -50,7 +48,6 @@ export function useLicenseActivation({ settings, onActivationSuccess }: UseLicen
   })
 
   const licenseDetail = licenseDetailResponse?.data
-  // 合并两种错误来源：1) API 返回 200 但带有 error 字段  2) API 返回 4xx/5xx 被 ofetch 抛出
   const licenseDetailError: LicenseDetailError | undefined =
     licenseDetailResponse?.error || (queryError as any)?.data?.error || (queryError as any)?.error
 
@@ -65,7 +62,6 @@ export function useLicenseActivation({ settings, onActivationSuccess }: UseLicen
         onActivationSuccess?.()
       }
     } catch (e: unknown) {
-      // 提取具体的错误信息：API 返回的 error 对象或通用错误消息
       const err = e as { data?: { error?: { detail?: string } }; message?: string }
       const errorDetail = err?.data?.error?.detail || err?.message || 'Unknown error'
       setActivateError(errorDetail)

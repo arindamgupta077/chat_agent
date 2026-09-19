@@ -36,7 +36,6 @@ export default function TemperatureSlider(props: Props) {
       setInput(`${value}`)
       return
     }
-    // 保留一位小数
     num = Math.round(num * 100) / 100
     setInput(num.toString())
     props.onChange(num)

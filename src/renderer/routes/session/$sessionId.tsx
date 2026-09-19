@@ -124,21 +124,15 @@ function RouteComponent() {
   useEffect(() => {
     if (recovering) return
     setTimeout(() => {
-      scrollActions.scrollToBottom('auto') // 每次启动时自动滚动到底部
+      scrollActions.scrollToBottom('auto')
     }, 200)
   }, [recovering])
 
-  // currentSession变化时（包括session settings变化），存下当前的settings作为新Session的默认值
   useEffect(() => {
     if (currentSession) {
       if (currentSession.type === 'chat' && currentSession.settings) {
         const { provider, modelId } = currentSession.settings
-        if (
-          provider &&
-          modelId &&
-          provider !== ModelProviderEnum.ChatboxAI &&
-          provider !== 'chatbox-ai'
-        ) {
+        if (provider && modelId && provider !== ModelProviderEnum.ChatboxAI && provider !== 'chatbox-ai') {
           setLastUsedChatModel(provider, modelId)
         }
       }
@@ -239,12 +233,7 @@ function RouteComponent() {
   const model = useMemo(() => {
     const provider = currentSessionWithDefaultModel?.settings?.provider
     const modelId = currentSessionWithDefaultModel?.settings?.modelId
-    if (
-      !provider ||
-      !modelId ||
-      provider === ModelProviderEnum.ChatboxAI ||
-      provider === 'chatbox-ai'
-    ) {
+    if (!provider || !modelId || provider === ModelProviderEnum.ChatboxAI || provider === 'chatbox-ai') {
       return undefined
     }
     return {
@@ -297,7 +286,6 @@ function RouteComponent() {
     <div className={`flex flex-col h-full ${!isSmallScreen ? 'relative' : ''}`}>
       <Header session={currentSession} />
 
-      {/* MessageList 设置 key，确保每个 session 对应新的 MessageList 实例 */}
       <MessageList
         ref={messageListRef}
         key={`message-list${currentSessionId}`}

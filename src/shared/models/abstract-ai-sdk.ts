@@ -271,12 +271,10 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
       if (e instanceof ChatboxAIAPIError) {
         throw e
       }
-      // 如果当前模型不支持图片输入，抛出对应的错误
       if (
         e instanceof ApiError &&
         e.message.includes('Invalid content type. image_url is only supported by certain models.')
       ) {
-        // 根据当前 IP，判断是否在错误中推荐 Chatbox AI 4
         const remoteConfig = this.dependencies.getRemoteConfig()
         if (remoteConfig.setting_chatboxai_first) {
           throw ChatboxAIAPIError.fromCodeName('model_not_support_image', 'model_not_support_image')
@@ -490,7 +488,6 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
     const result = await generateImage({
       model: imageModel,
       prompt: params.prompt,
-      // images 暂时不支持
       n: params.num,
       abortSignal: signal,
       // Image generation is billable; network-error retries could double-charge.
@@ -765,8 +762,6 @@ export default abstract class AbstractAISDKModel implements ModelInterface {
       }
 
       case 'reasoning-delta': {
-        // 部分提供方会随文本返回空的reasoning，防止分割正常的content。
-        // Anthropic signature_delta 是空文本 + provider metadata，需要照常落到 part 上。
         const persistable = pickPersistableProviderMetadata(chunk.providerMetadata)
         if (currentReasoningPart) {
           // Signed thinking must round-trip byte-for-byte: once the block has a

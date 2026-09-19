@@ -10,7 +10,6 @@ import { GoogleSearch } from './google'
 
 const MAX_CONTEXT_ITEMS = 10
 
-// 根据配置的搜索提供方来选择搜索服务
 function getSearchProviders() {
   const settings = getExtensionSettings()
 
@@ -28,9 +27,10 @@ function getSearchProviders() {
     case 'bing':
     default:
       selectedProviders.push(new BingSearch())
-      if (language !== 'zh-Hans' && platform.type !== 'mobile') {
-        selectedProviders.push(new BingNewsSearch()) // 国内和移动端容易被重定向到 Bing 首页
+      if (platform.type !== 'mobile') {
+        selectedProviders.push(new BingNewsSearch())
       }
+
       break
   }
 

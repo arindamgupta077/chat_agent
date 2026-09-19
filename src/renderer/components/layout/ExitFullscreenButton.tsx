@@ -2,10 +2,6 @@ import { debounce } from 'lodash'
 import { useEffect, useState } from 'react'
 import platform from '@/platform'
 
-/**
- * 为 Windows 桌面用户准备的全屏退出按钮。一些用户会按 F11 强制进入全屏，但是却不知道怎么退出去。
- * @returns
- */
 export default function ExitFullscreenButton() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   useEffect(() => {
@@ -13,9 +9,7 @@ export default function ExitFullscreenButton() {
       const isFullscreen = await platform.isFullscreen()
       setIsFullscreen(isFullscreen)
     }
-    // 初始检查
     checkFullscreen()
-    // 监听窗口变化事件
     const handleResize = debounce(() => {
       checkFullscreen()
     }, 1 * 1000)

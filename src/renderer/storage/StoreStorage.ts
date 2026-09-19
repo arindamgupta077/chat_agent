@@ -40,7 +40,7 @@ export default class StoreStorage extends BaseStorage {
     const value: T = await super.getItem(key, initialValue)
 
     if (key === StorageKey.Configs && value === initialValue) {
-      await super.setItemNow(key, initialValue) // 持久化初始生成的 uuid
+      await super.setItemNow(key, initialValue)
     }
 
     return value

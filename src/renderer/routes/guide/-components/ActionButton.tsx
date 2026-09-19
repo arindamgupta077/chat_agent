@@ -42,10 +42,6 @@ export function ProviderSettingsButton() {
   )
 }
 
-/**
- * 普通"新对话"按钮，用于引导完成后的正常跳转场景（登录成功、对话轮次上限等）
- * 对应 tool: show_new_chat_button（客户端本地生成）
- */
 interface NewChatButtonProps {
   label?: string
 }
@@ -184,10 +180,6 @@ export function AutoNewChatLoading({ waitForWindowFocusBeforeAutoNavigate }: Aut
   )
 }
 
-/**
- * 提示 block，用于用户误将引导助手当作普通对话时的引导提醒
- * 对应 tool: show_new_chat_tip（后端 AI 判断用户偏离话题时返回）
- */
 export function NewChatTip() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -231,4 +223,3 @@ export function ViewLicenseButton() {
 export function FreeTrialLink(_props: { onAfterClick?: () => void } = {}) {
   return null
 }
-

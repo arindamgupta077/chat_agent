@@ -58,13 +58,9 @@ const useChatboxAIModels = () => {
       const modelListModels = modelListToProviderModels(modelList)
       const models = modelListModels.length > 0 ? modelListModels : manifest.models.map(toProviderModelInfo)
 
-      // 只更新 ChatboxAI provider 的 models 配置，不影响其他 provider
       if (models.length > 0) {
-        // 使用函数式更新，确保只修改 models 字段，保留其他配置
         setProviderSettings((prevChatboxAISettings) => ({
-          // 保留现有的 ChatboxAI 配置（如 excludedModels 等）
           ...prevChatboxAISettings,
-          // 只更新 models 字段
           models,
         }))
       }

@@ -206,4 +206,3 @@ describe('MCP stdio command form conversion', () => {
     })
   })
 })
-

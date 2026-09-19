@@ -47,15 +47,12 @@ type CleanupOptions = {
   deadlineMs?: number
 }
 
-// 启动时执行消息图片清理
-// 只有网页版本需要清理，桌面版本存在本地、空间足够大无需清理
-// 同时也避免了桌面端疑似出现的“图片丢失”问题（可能不是bug，与开发环境有关？）
 if (platform.type !== 'desktop') {
   setTimeout(() => {
     cleanupOrphanedBlobs({ deadlineMs: STARTUP_CLEANUP_DEADLINE_MS }).catch((e) =>
       console.error('storage_clear: startup cleanup failed', e)
     )
-  }, 10 * 1000) // 防止水合状态
+  }, 10 * 1000)
 }
 
 /**
@@ -120,7 +117,6 @@ async function doCleanupOrphanedBlobs(options?: CleanupOptions): Promise<number>
   }
   const needDeletedSet = new Set<string>(storageKeys)
 
-  // 正在预处理/草稿中的附件，以及刚写入但持久引用可能尚未落盘的 blob 不需要删除
   for (const key of options?.extraProtectedKeys ?? []) {
     needDeletedSet.delete(key)
   }
@@ -132,16 +128,9 @@ async function doCleanupOrphanedBlobs(options?: CleanupOptions): Promise<number>
   }
   if (needDeletedSet.size === 0) return 0
 
-  // 会话中还存在的图片、文件不需要删除。
-  // 必须用 getAllIncludingHidden 枚举：归档会话标记为 hidden，分页 API 会跳过它们，
-  // 否则归档会话的附件会被误判为孤儿而被永久删除。
-  // meta 记录很小，一次性加载不是成本大头；真正的成本是逐个加载完整会话正文，
-  // 因此逐会话让出事件循环并受总时限约束。
   const metaStorage = await getMetaStorage()
   const allSessionsMeta = await metaStorage.getAllIncludingHidden()
   for (const sessionMeta of allSessionsMeta) {
-    // 孤儿判定必须建立在全量扫描之上：扫描超时只能安全放弃（不删任何东西），
-    // 留待下一次运行重新扫描。
     if (Date.now() > deadline) {
       console.warn(
         `storage_clear: reference scan exceeded its time budget (${allSessionsMeta.length} sessions), aborting without deleting`
@@ -149,7 +138,6 @@ async function doCleanupOrphanedBlobs(options?: CleanupOptions): Promise<number>
       return 0
     }
     await yieldIfNeeded()
-    // 不从 atom 中获取，避免水合状态
     const session = await storage.getItem<Session | null>(StorageKeyGenerator.session(sessionMeta.id), null)
     if (!session) {
       continue
@@ -160,15 +148,12 @@ async function doCleanupOrphanedBlobs(options?: CleanupOptions): Promise<number>
     if (needDeletedSet.size === 0) return 0
   }
 
-  // 用户/助手头像、背景图，以及自定义 Copilot 的图标与背景不需要删除。
-  // Copilot 图片的唯一持久引用在 StorageKey.MyCopilots，必须显式加载保护。
   const settings = settingsStore.getState().getSettings()
   const copilots = await storage.getItem<CopilotDetail[]>(StorageKey.MyCopilots, [])
   for (const reference of collectGlobalResourceReferences(settings, copilots)) {
     needDeletedSet.delete(reference.storageKey)
   }
 
-  // Image Creator 的图片存储在独立的 ImageGenerationStorage 中，需要额外排除仍被记录引用的 blobs
   try {
     const imageGenStorage = platform.getImageGenerationStorage()
     await imageGenStorage.initialize()
@@ -196,9 +181,6 @@ async function doCleanupOrphanedBlobs(options?: CleanupOptions): Promise<number>
     return 0
   }
 
-  // 扫描可能耗时较长，而 file:<name>-<size>-<mtime> 是确定性 key：扫描期间用户重新
-  // 附加同一文件会让旧孤儿 key 重新变为在用。删除前重新快照一次内存保护集
-  //（草稿 + 最近写入，都是纯内存读，开销可忽略），收窄这个窗口。
   for (const key of collectDraftAttachmentKeys()) {
     needDeletedSet.delete(key)
   }
@@ -206,8 +188,6 @@ async function doCleanupOrphanedBlobs(options?: CleanupOptions): Promise<number>
     needDeletedSet.delete(key)
   }
 
-  // 删除阶段天然可增量：孤儿身份已经确立，分批删除 + 超时提前停止都是安全的，
-  // 已删的都是真孤儿，剩下的留待下次运行。
   let deletedCount = 0
   let processed = 0
   for (const key of needDeletedSet) {

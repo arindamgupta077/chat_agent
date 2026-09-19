@@ -33,10 +33,6 @@ import Broom from '../icons/Broom'
 import LayoutExpand from '../icons/LayoutExpand'
 import LayoutShrink from '../icons/LayoutShrink'
 
-/**
- * 顶部标题工具栏（右侧）
- * @returns
- */
 export default function Toolbar({ session }: { session: Session }) {
   const { t } = useTranslation()
   const sessionId = session.id

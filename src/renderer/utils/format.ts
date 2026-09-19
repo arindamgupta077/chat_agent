@@ -1,4 +1,3 @@
-// 格式化数字为简短形式 (例如: 12000000 -> 12M / 1200万, 210000 -> 210K / 21万, 191 -> 191)
 export const formatNumber = (num: number, decimals: number = 0, isCN: boolean = false): string => {
   const fmt = (val: number, d: number) => (d > 0 ? val.toFixed(d) : String(Math.floor(val)))
   const abs = Math.abs(num)
@@ -19,7 +18,6 @@ export const formatNumber = (num: number, decimals: number = 0, isCN: boolean = 
   return fmt(num, decimals)
 }
 
-// 格式化使用量显示 (例如: "210k/12m" 或 "191/200")
 export const formatUsage = (used: number, total: number, decimals: number = 0, isCN: boolean = false): string => {
   return `${formatNumber(used, decimals, isCN)}/${formatNumber(total, decimals, isCN)}`
 }

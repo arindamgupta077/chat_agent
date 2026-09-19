@@ -677,7 +677,6 @@ const BlockCode = memo(
         if (!canDeploy) {
           return
         }
-        // 应投放侧要求改触发点为分享按钮。但注意现在语义上是 mismatch 的
         onPreviewWebpage?.()
         NiceModal.show('vibedrop-publish', { html: String(children), uniqueId, sessionId }).catch(() => null)
       },

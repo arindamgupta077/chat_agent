@@ -397,7 +397,6 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
 
     const skillMenuOpen = skillCommandQuery !== null && matchingInputSkills.length > 0 && !isAwaitingPauseDecision
 
-    // Floating UI autoUpdate：跟随 anchor（含纯 position 变化的响应式过渡），替代手写 RO/rAF 状态机
     useLayoutEffect(() => {
       if (!skillMenuOpen) return
       const reference = skillMenuAnchorRef.current
@@ -669,8 +668,7 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
         return result.changed ? { ...prev, preprocessedFiles: result.files } : prev
       })
     }, [preprocessedAttachmentStates, setPreConstructedMessage])
-    const isChatboxAI = (provider?: string) =>
-      provider === ModelProviderEnum.ChatboxAI || provider === 'chatbox-ai'
+    const isChatboxAI = (provider?: string) => provider === ModelProviderEnum.ChatboxAI || provider === 'chatbox-ai'
 
     const modelSelectorDisplayText = useMemo(() => {
       if (!model || isChatboxAI(model.provider)) {
@@ -854,7 +852,6 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
     useImperativeHandle(
       ref,
       () => ({
-        // 暂时并没有用到，还是使用了之前atom的方案
         setQuote: (data) => {
           messageInputFieldRef.current?.setValue((prev) => `${prev}\n\n${data}`)
           dom.focusMessageInput()
@@ -1087,10 +1084,8 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
         const isSendShortcut = isPressedHash[shortcuts.inputBoxSendMessage]
         const isSendWithoutResponseShortcut = isPressedHash[shortcuts.inputBoxSendMessageWithoutResponse]
 
-        // 发送消息
         if (isSendShortcut) {
           if (platform.type === 'mobile' && isSmallScreen && shortcuts.inputBoxSendMessage === 'Enter') {
-            // 移动端点击回车不会发送消息
             return
           }
           event.preventDefault()
@@ -1098,21 +1093,19 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
           return
         }
 
-        // 发送消息但不生成回复
         if (isSendWithoutResponseShortcut) {
           event.preventDefault()
           handleSubmitRef.current(false)
           return
         }
 
-        // 向上向下键翻阅历史消息
         const currentInput = latestInputRef.current
         const inputElement = messageInputFieldRef.current?.getElement()
         if (
           (event.key === 'ArrowUp' || event.key === 'ArrowDown') &&
           inputElement &&
-          inputElement === document.activeElement && // 聚焦在输入框
-          (currentInput.length === 0 || window.getSelection()?.toString() === currentInput) // 要么为空，要么输入框全选
+          inputElement === document.activeElement &&
+          (currentInput.length === 0 || window.getSelection()?.toString() === currentInput)
         ) {
           event.preventDefault()
           if (event.key === 'ArrowUp') {
@@ -1195,7 +1188,6 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
       const fileKey = StorageKeyGenerator.fileUniqKey(file)
       activeFilePreprocessingKeysRef.current.add(fileKey)
 
-      // 异步预处理文件，失败时标记为 error，并吞掉异常避免 Promise.all reject
       return sessionHelpers
         .prepareFileAttachment(
           file,
@@ -1262,16 +1254,13 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
     const insertFiles = async (files: File[], options: InsertFilesOptions = {}) => {
       const MAX_IMAGES = 8
       const MAX_ATTACHMENTS = 20
-      // 用本地累加器跟踪本次新增数量：同步循环内 state/ref 可能尚未刷新，靠它做无竞态的限额判断
       let imageCount = preConstructedMessageRef.current.pictureKeys?.length || 0
       let attachmentCount = preConstructedMessageRef.current.attachments?.length || 0
       let droppedImages = 0
       let droppedAttachments = 0
 
       for (const file of files) {
-        // 文件和图片插入方法复用，会导致 svg、gif 这类不支持的图片也被插入，但暂时没看到有什么问题
         if (file.type.startsWith('image/')) {
-          // 超过上限时直接跳过：保留最先添加的前 8 张，且不浪费转码/不产生孤儿 blob
           if (imageCount >= MAX_IMAGES) {
             droppedImages++
             continue
@@ -1281,7 +1270,7 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
           await saveBlob.mutateAsync({ key, value: base64 })
           setPreConstructedMessage((prev) => ({
             ...prev,
-            pictureKeys: [...(prev.pictureKeys || []), key].slice(0, MAX_IMAGES), // 保留最先添加的前 8 张
+            pictureKeys: [...(prev.pictureKeys || []), key].slice(0, MAX_IMAGES),
           }))
           imageCount++
         } else {
@@ -1315,7 +1304,6 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
             continue
           }
 
-          // 已存在的文件视为重复（不占新增名额），新文件超过上限时直接跳过：保留最先添加的前 20 个
           const isDuplicate = (preConstructedMessageRef.current.attachments || []).some(
             (f) => StorageKeyGenerator.fileUniqKey(f) === StorageKeyGenerator.fileUniqKey(file)
           )
@@ -1331,9 +1319,8 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
               (f) => StorageKeyGenerator.fileUniqKey(f) === StorageKeyGenerator.fileUniqKey(file)
             )
               ? prev.attachments
-              : [...(prev.attachments || []), file].slice(0, MAX_ATTACHMENTS) // 保留最先添加的前 20 个
+              : [...(prev.attachments || []), file].slice(0, MAX_ATTACHMENTS)
 
-            // 只预处理实际保留下来的文件（findIndex 返回 -1 表示已被裁剪，跳过，避免残留状态阻塞发送）
             const fileIndex = newAttachments.findIndex(
               (f) => f.name === file.name && f.lastModified === file.lastModified
             )
@@ -1391,7 +1378,6 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
         ...prev,
         pictureKeys: (prev.pictureKeys || []).filter((k) => k !== picKey),
       }))
-      // 不删除图片数据，因为可能在其他地方引用，比如通过上下键盘的历史消息快捷输入、发送的消息中引用
       // await storage.delBlob(picKey)
     }
 
@@ -1402,10 +1388,6 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
         }
 
         if (event.clipboardData?.items) {
-          // 对于 Doc/PPT/XLS 等文件中的内容，粘贴时一般会有 4 个 items，分别是 text 文本、html、某格式和图片
-          // 因为 getAsString 为异步操作，无法根据 items 中的内容来定制不同的粘贴行为，因此这里选择了最简单的做法：
-          // 保持默认的粘贴行为，这时候会粘贴从文档中复制的文本和图片。我认为应该保留图片，因为文档中的表格、图表等图片信息也很重要，很难通过文本格式来表述。
-          // 仅在只粘贴图片或文件时阻止默认行为，防止插入文件或图片的名字
           let hasText = false
           // Capture pre-paste text before async getAsString callback runs (browser will have inserted pasted text by then)
           const prePasteText = latestInputRef.current
@@ -1428,12 +1410,11 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                     type: 'text/plain',
                   })
                   insertFilesRef.current([file], { source: 'pasted-text' })
-                  messageInputFieldRef.current?.setValue(prePasteText) // 删除掉默认粘贴进去的长文本
+                  messageInputFieldRef.current?.setValue(prePasteText)
                 }
               })
             }
           }
-          // 如果没有任何文本，则说明只是复制了图片或文件。这里阻止默认行为，防止插入文件或图片的名字
           if (!hasText) {
             event.preventDefault()
           }
@@ -1442,7 +1423,6 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
       [sessionType, pasteLongTextAsAFile]
     )
 
-    // 拖拽上传
     const { getRootProps, getInputProps } = useDropzone({
       onDrop: (acceptedFiles: File[], fileRejections) => {
         insertFiles(acceptedFiles)
@@ -1458,15 +1438,12 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
       noKeyboard: true,
     })
 
-    // 引用消息
     const quote = useUIStore((state) => state.quote)
     const setQuote = useUIStore((state) => state.setQuote)
     // const [quote, setQuote] = useUIStore(state => [state]) useAtom(atoms.quoteAtom)
     // biome-ignore lint/correctness/useExhaustiveDependencies: todo
     useEffect(() => {
       if (quote !== '') {
-        // TODO: 支持引用消息中的图片
-        // TODO: 支持引用消息中的文件
         setQuote('')
         messageInputFieldRef.current?.setValue((val) => {
           const newValue = !val
@@ -1541,7 +1518,6 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
           <Box
             ref={skillMenuAnchorRef}
             className={cn(
-              // min-h + justify-between 必须同层，桌面空输入时工具栏贴底
               INPUT_SURFACE_CLASS_NAME,
               !isSmallScreen && INPUT_SURFACE_MIN_HEIGHT_CLASS_NAME,
               // Kept mounted while a pause takes over the slot so the draft,
@@ -1550,12 +1526,6 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
             )}
             style={INPUT_SURFACE_STYLE}
           >
-            {/*
-              skill 列表：Portal + Floating UI autoUpdate
-              - 不撑高 InputBox；逃出 overflow-hidden
-              - 持续跟随 anchor（含双向 resize / 纯 position 过渡）
-              - size middleware 按可用高度限 maxHeight
-            */}
             {skillMenuOpen &&
               createPortal(
                 <Box
@@ -2066,7 +2036,9 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                         (!model || isChatboxAI(model.provider)) && 'animate-pulse bg-blue-500/20'
                       )}
                     >
-                      {!!model && !isChatboxAI(model.provider) && <ProviderImageIcon size={18} provider={model.provider} />}
+                      {!!model && !isChatboxAI(model.provider) && (
+                        <ProviderImageIcon size={18} provider={model.provider} />
+                      )}
                       <Text
                         size="sm"
                         data-testid={TestId.model.selectorTrigger}

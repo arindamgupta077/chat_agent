@@ -132,7 +132,6 @@ export function migrateLegacyProviderSettings(oldSettings: LegacyFlatSettings): 
       providers[ModelProviderEnum.OpenAI] = {
         apiHost,
         apiKey: openaiKey,
-        // 将openaiCustomModelOptions和openaiCustomModel迁移过来
         models:
           openaiCustomModel || openaiCustomModelOptions
             ? uniqBy(

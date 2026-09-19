@@ -8,7 +8,7 @@ describe('formatRewardClaimDetails', () => {
     const result = formatRewardClaimDetails({
       tokenLimit: 200000,
       expiresAt: '2026-08-03T12:00:00.000000+08:00',
-      language: 'zh-Hans',
+      language: 'en',
     })
 
     expect(result.points).toBe('200,000')

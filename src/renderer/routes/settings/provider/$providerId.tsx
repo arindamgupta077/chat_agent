@@ -518,7 +518,7 @@ function ProviderSettings({ providerId }: { providerId: string }) {
           </PopoverConfirm>
         )}
       </Flex>
-      {baseInfo.isCustom && language === 'zh-Hans' && (
+      {baseInfo.isCustom && (
         <Flex>
           <ScalableIcon icon={IconHelpCircle} />
           <Text span size="xs" c="chatbox-tertiary">
@@ -596,8 +596,6 @@ function ProviderSettings({ providerId }: { providerId: string }) {
             </Text>
           </Stack>
         )}
-
-
 
         {/* API Key */}
         {!isOAuthOnlyProvider &&
@@ -987,7 +985,6 @@ function ProviderSettings({ providerId }: { providerId: string }) {
                   onClick={async () => {
                     setSelectedTestModel(model.modelId)
                     setShowTestModelSelector(false)
-                    // 执行检查
                     await handleCheckApiKey(model.modelId)
                   }}
                   styles={{

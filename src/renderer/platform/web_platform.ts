@@ -74,7 +74,6 @@ export default class WebPlatform extends IndexedDBStorage implements Platform {
     window.open(url)
   }
   public async getDeviceName(): Promise<string> {
-    // Web 平台返回浏览器名称
     return await Promise.resolve(getBrowser()!)
   }
   public async getInstanceName(): Promise<string> {

@@ -70,7 +70,7 @@ describe('SettingsService', () => {
     service.subscribe(listener)
 
     service.updateSettings((current) => ({
-      language: 'zh-Hans',
+      fontSize: 18,
       showWordCount: !current.showWordCount,
       providers: {
         ...current.providers,
@@ -82,7 +82,7 @@ describe('SettingsService', () => {
     }))
 
     expect(service.getSettings()).toMatchObject({
-      language: 'zh-Hans',
+      fontSize: 18,
       showWordCount: true,
     })
     expect(listener).toHaveBeenCalledOnce()
@@ -91,7 +91,7 @@ describe('SettingsService', () => {
     service.dispose()
     const restoredService = new SettingsService(storage, { isDesktopLike: true })
     const restored = await restoredService.hydrate()
-    expect(restored.language).toBe('zh-Hans')
+    expect(restored.fontSize).toBe(18)
     expect(restored.providers?.openai).toMatchObject({
       apiKey: 'sk-persisted',
       oauth: { accessToken: 'oauth-persisted' },
@@ -124,7 +124,7 @@ describe('SettingsService', () => {
       logger: { log },
     })
 
-    service.updateSettings({ language: 'zh-Hans' })
+    service.updateSettings({ fontSize: 16 })
 
     await expect(service.flushPersistence()).rejects.toBe(writeError)
     expect(log).toHaveBeenCalledWith('error', 'Failed to persist settings', {
@@ -134,13 +134,13 @@ describe('SettingsService', () => {
       }),
     })
 
-    service.updateSettings({ language: 'ja' })
+    service.updateSettings({ fontSize: 20 })
 
     await expect(service.flushPersistence()).resolves.toBeUndefined()
     expect(storage.write).toHaveBeenCalledTimes(2)
     expect(storage.value).toEqual(
       expect.objectContaining({
-        language: 'ja',
+        fontSize: 20,
         __version: SETTINGS_PERSIST_VERSION,
       })
     )

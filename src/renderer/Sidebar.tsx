@@ -106,8 +106,7 @@ export default function Sidebar() {
     if (!isResizing) return
 
     const handleMouseMove = (e: MouseEvent) => {
-      const isRTL = language === 'ar'
-      const deltaX = isRTL ? resizeStartX.current - e.clientX : e.clientX - resizeStartX.current
+      const deltaX = e.clientX - resizeStartX.current
       const newWidth = Math.max(200, Math.min(500, resizeStartWidth.current + deltaX))
       setSidebarWidth(newWidth)
     }
@@ -123,7 +122,7 @@ export default function Sidebar() {
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isResizing, language, setSidebarWidth])
+  }, [isResizing, setSidebarWidth])
 
   useEffect(() => {
     setIosTextInteractionEnabled(!(isSmallScreen && showSidebar))
@@ -135,14 +134,14 @@ export default function Sidebar() {
 
   return (
     <SwipeableDrawer
-      anchor={language === 'ar' ? 'right' : 'left'}
+      anchor="left"
       variant={isSmallScreen ? 'temporary' : 'persistent'}
       open={showSidebar}
       onClose={() => setShowSidebar(false)}
       onOpen={() => setShowSidebar(true)}
       ModalProps={{
         keepMounted: true, // Better open performance on mobile.
-        disableEnforceFocus: true, // 关闭 focus trap，避免在侧边栏打开时弹出的 modal 中 input 无法点击
+        disableEnforceFocus: true,
         sx: getSidebarModalSx(showSidebar),
       }}
       sx={{
@@ -155,11 +154,8 @@ export default function Sidebar() {
           maxWidth: '75vw',
         },
       }}
-      SlideProps={language === 'ar' ? { direction: 'left' } : undefined}
-      PaperProps={
-        language === 'ar' ? { sx: { direction: 'rtl', overflowY: 'initial' } } : { sx: { overflowY: 'initial' } }
-      }
-      disableSwipeToOpen={CHATBOX_BUILD_PLATFORM !== 'ios'} // 只在iOS设备上启用SwipeToOpen
+      PaperProps={{ sx: { overflowY: 'initial' } }}
+      disableSwipeToOpen={CHATBOX_BUILD_PLATFORM !== 'ios'}
     >
       <Stack
         data-testid={TestId.sidebar.root}
@@ -360,8 +356,7 @@ export default function Sidebar() {
           <Box
             onMouseDown={handleResizeStart}
             className={clsx(
-              `sidebar-resizer absolute top-0 bottom-0 w-1 cursor-col-resize z-[1] bg-chatbox-border-primary opacity-0 hover:opacity-70 transition-opacity duration-200`,
-              language === 'ar' ? '-left-1' : '-right-1'
+              'sidebar-resizer absolute top-0 bottom-0 w-1 cursor-col-resize z-[1] bg-chatbox-border-primary opacity-0 hover:opacity-70 transition-opacity duration-200 -right-1'
             )}
           />
         )}

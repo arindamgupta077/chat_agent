@@ -1,8 +1,3 @@
-/**
- * 获取图片base64，在必要时缩小到主流模型支持的尺寸，同时支持将 svg、gif 等文件转成 png 格式
- * @param file 图片文件
- * @returns 图片base64
- */
 export const MODEL_IMAGE_MAX_DIMENSION = 1568
 
 export function calculateImageResizeSize(
@@ -57,7 +52,6 @@ export async function getImageBase64AndResize(file: File, options: ImageResizeOp
     const img = new Image()
     const objectUrl = URL.createObjectURL(file)
     img.onload = () => {
-      // 释放 object URL
       URL.revokeObjectURL(objectUrl)
       let resizeSize: { width: number; height: number }
       try {
@@ -66,10 +60,8 @@ export async function getImageBase64AndResize(file: File, options: ImageResizeOp
         reject(error)
         return
       }
-      // 设置canvas尺寸为缩放后的尺寸
       canvas.width = resizeSize.width
       canvas.height = resizeSize.height
-      // 绘制缩放后的图片
       ctx.drawImage(img, 0, 0, resizeSize.width, resizeSize.height)
       // Callers may request a bounded lossy format; user-upload behavior keeps the legacy default.
       const outputType = options.outputType ?? (file.type === 'image/jpeg' ? 'image/jpeg' : 'image/png')
@@ -78,7 +70,6 @@ export async function getImageBase64AndResize(file: File, options: ImageResizeOp
       resolve(base64)
     }
     img.onerror = (error) => {
-      // 发生错误时也要释放 object URL
       URL.revokeObjectURL(objectUrl)
       reject(error)
     }
@@ -248,7 +239,6 @@ export async function svgToPngBase64(svgBase64: string, options: SvgRasterizeOpt
           if (items.length === 4) {
             const [, , viewBoxWidth, viewBoxHeight] = items.map((item) => parseFloat(item))
             if (viewBoxWidth && viewBoxHeight) {
-              // 检查NaN
               width = Math.max(viewBoxWidth, img.width)
               height = Math.max(viewBoxHeight, img.height)
               // console.log('viewBoxWidth', viewBoxWidth, 'viewBoxHeight', viewBoxHeight)
@@ -278,7 +268,7 @@ export async function svgToPngBase64(svgBase64: string, options: SvgRasterizeOpt
       }
       ctx.drawImage(img, 0, 0, rasterSize.width, rasterSize.height)
       try {
-        const pngBase64 = canvas.toDataURL('image/png', 1.0) // 使用最高质量设置
+        const pngBase64 = canvas.toDataURL('image/png', 1.0)
         resolve(pngBase64)
       } catch (error) {
         reject(error)

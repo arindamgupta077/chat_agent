@@ -118,8 +118,8 @@ interface Props {
   sessionType: SessionType
   msg: Message
   className?: string
-  collapseThreshold?: number // 文本长度阀值, 超过这个长度则会被折叠
-  buttonGroup?: MessageButtonGroup // 按钮组显示策略, auto: 只在 hover 时显示; always: 总是显示; none: 不显示
+  collapseThreshold?: number
+  buttonGroup?: MessageButtonGroup
   sessionLocks?: SessionLockState
   /**
    * Resolved once by the list container and passed down (never subscribe
@@ -210,9 +210,9 @@ const _Message: FC<Props> = (props) => {
 
   const needCollapse =
     collapseThreshold &&
-    props.sessionType !== 'picture' && // 绘图会话不折叠
+    props.sessionType !== 'picture' &&
     contentLength > collapseThreshold &&
-    contentLength - collapseThreshold > 50 // 只有折叠有明显效果才折叠，为了更好的用户体验
+    contentLength - collapseThreshold > 50
   const [isCollapsed, setIsCollapsed] = useState(needCollapse)
 
   const ref = useRef<HTMLDivElement>(null)
@@ -401,7 +401,6 @@ const _Message: FC<Props> = (props) => {
     toastActions.add(t('copied to clipboard'), 2000)
   }, [msg, t])
 
-  // 复制特定 reasoning 内容
   const onCopyReasoningContent =
     (content: string): MouseEventHandler<HTMLButtonElement> =>
     (e) => {

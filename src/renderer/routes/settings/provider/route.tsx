@@ -116,8 +116,6 @@ export function RouteComponent() {
         setImportError(t('Invalid deep link config format'))
         setDeepLinkConfig(null)
       } finally {
-        // 暂时禁用了，会导致页面路径不对，获取不到assets
-        // 保证移动端能够后退到settings页面
         // window.history.replaceState(null, '', '/settings')
         navigate({
           to: '/settings/provider',

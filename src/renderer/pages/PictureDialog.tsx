@@ -66,7 +66,6 @@ function _PictureDialog(props: {
     }
   }
 
-  // 点击 Esc 关闭
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -178,7 +177,7 @@ function _PictureDialog(props: {
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                backgroundColor: theme.palette.background.default, // 透明的流程图、线框图需要背景色
+                backgroundColor: theme.palette.background.default,
               }}
               contentProps={{
                 onClick: (e) => {
@@ -187,7 +186,6 @@ function _PictureDialog(props: {
                 },
               }}
             >
-              {/* 这里不能使用异步的 ImageInStorage，否则会导致图片位置不对 */}
               <Img
                 src={url}
                 className="max-w-[90vw] max-h-[90vh] w-auto h-auto object-contain"

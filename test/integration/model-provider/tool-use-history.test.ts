@@ -1,14 +1,3 @@
-/**
- * BDD integration tests for tool-use conversation history.
- *
- * Verifies that multi-turn tool-use conversations work correctly with Claude API
- * using the AI SDK directly. Tests the exact ModelMessage format that
- * convertToModelMessages produces after the fix.
- *
- * 运行方式：
- * 1. 创建 .env 文件，添加 TEST_CLAUDE_API_KEY=your_claude_api_key
- * 2. pnpm test:model-provider
- */
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { generateText, type ModelMessage, type ToolCallPart, type ToolResultPart } from 'ai'
 import { describe, expect, it } from 'vitest'

@@ -1041,7 +1041,7 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
         <>
           <SubPanelHeader title="MCP" settingsPath="/mcp" disabled={mcpDisabled} />
           <Divider my={4} />
-          {isPremium && (
+          {isPremium && BUILTIN_MCP_SERVERS.length > 0 && (
             <>
               {BUILTIN_MCP_SERVERS.map((server) => (
                 <MCPServerItem

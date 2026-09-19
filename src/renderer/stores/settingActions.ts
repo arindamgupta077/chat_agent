@@ -9,7 +9,6 @@ import { settingsStore } from './settingsStore'
 export function needEditSetting() {
   const settings = settingsStore.getState()
 
-  // 激活了chatbox ai
   if (settings.licenseKey) {
     return false
   }
@@ -17,7 +16,6 @@ export function needEditSetting() {
   if (settings.providers && Object.keys(settings.providers).length > 0) {
     const providers = settings.providers
     const keys = Object.keys(settings.providers)
-    // 有任何一个供应商配置了api key 或者 OAuth
     if (
       keys.filter((key) => {
         const providerSettings = mergeSharedOAuthProviderSettings(key, providers)
@@ -30,7 +28,6 @@ export function needEditSetting() {
     if (providers[ModelProviderEnum.Bedrock]?.accessKey && providers[ModelProviderEnum.Bedrock]?.secretKey) {
       return false
     }
-    // Ollama / LMStudio/ custom provider 配置了至少一个模型
     if (
       keys.filter(
         (key) =>

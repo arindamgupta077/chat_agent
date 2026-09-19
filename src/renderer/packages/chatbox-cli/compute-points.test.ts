@@ -18,7 +18,7 @@ describe('compute-point quota formatting', () => {
   })
 
   it('formats a remaining ratio as a localized percentage', () => {
-    expect(formatComputePointsRemainingRatio(0.894, 'zh-Hans')).toBe('89.4%')
+    expect(formatComputePointsRemainingRatio(0.894, 'en')).toBe('89.4%')
   })
 
   it('clamps fallback ratios to the valid percentage range', () => {

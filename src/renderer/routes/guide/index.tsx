@@ -16,13 +16,11 @@ import {
   Title,
   UnstyledButton,
 } from '@mantine/core'
-import type { Language } from '@shared/types'
 import {
   IconArrowUp,
   IconBug,
   IconCheck,
   IconChevronRight,
-  IconLanguage,
   IconLayoutSidebarLeftExpand,
   IconMenu2,
   IconPlayerSkipForward,
@@ -30,6 +28,7 @@ import {
   IconRefresh,
   IconUserCheck,
 } from '@tabler/icons-react'
+
 import { createFileRoute, useBlocker } from '@tanstack/react-router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -41,9 +40,8 @@ import WindowControls from '@/components/layout/WindowControls'
 import { getShowGuideDevButtonsFlag } from '@/dev/devToolsFlags'
 import useNeedRoomForWinControls from '@/hooks/useNeedRoomForWinControls'
 import { useIsSmallScreen } from '@/hooks/useScreenChange'
-import { languageNameMap, languages } from '@/i18n/locales'
-import { useSettingsStore } from '@/stores/settingsStore'
 import { useUIStore } from '@/stores/uiStore'
+
 import { GuideMessage } from './-components/GuideMessage'
 import { useGuideSession } from './-hooks/useGuideSession'
 
@@ -56,7 +54,6 @@ function GuidePage() {
   const [inputValue, setInputValue] = useState('')
   const viewportRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const [pendingLanguage, setPendingLanguage] = useState<Language | null>(null)
 
   const {
     messages,
@@ -85,49 +82,7 @@ function GuidePage() {
   const showSidebar = useUIStore((s) => s.showSidebar)
   const setShowSidebar = useUIStore((s) => s.setShowSidebar)
 
-  // Language switcher state
-  const { i18n } = useTranslation()
-  const currentLanguage = useSettingsStore((s) => s.language)
-  const setSettings = useSettingsStore((s) => s.setSettings)
-
-  // Check if any message is currently streaming
   const isStreaming = messages.some((m) => m.isStreaming)
-  const canSwitchLanguage = !isStreaming
-
-  const applyLanguageChange = useCallback(
-    async (newLanguage: Language) => {
-      setSettings({ language: newLanguage })
-      // Wait for i18n to update before clearing session
-      await i18n.changeLanguage(newLanguage)
-      // Small delay to ensure React re-renders with new translations
-      setTimeout(() => {
-        clearSession()
-      }, 50)
-    },
-    [setSettings, i18n, clearSession]
-  )
-
-  // Handle language change
-  const handleLanguageChange = useCallback(
-    async (newLanguage: Language) => {
-      if (newLanguage === currentLanguage || !canSwitchLanguage) return
-      // If guide already has user interaction/progress, require confirmation before reset.
-      if (isGuideInProgress) {
-        setPendingLanguage(newLanguage)
-        return
-      }
-
-      await applyLanguageChange(newLanguage)
-    },
-    [currentLanguage, canSwitchLanguage, isGuideInProgress, applyLanguageChange]
-  )
-
-  const confirmLanguageChange = useCallback(async () => {
-    if (!pendingLanguage) return
-    const languageToApply = pendingLanguage
-    setPendingLanguage(null)
-    await applyLanguageChange(languageToApply)
-  }, [pendingLanguage, applyLanguageChange])
 
   // Auto-scroll to bottom when messages change or during streaming
   // biome-ignore lint/correctness/useExhaustiveDependencies: messages.length triggers scroll on new messages
@@ -189,54 +144,6 @@ function GuidePage() {
     [handleSend]
   )
 
-  const languageSwitcher = (
-    <Menu
-      position="bottom-end"
-      shadow="md"
-      transitionProps={{ transition: 'fade-up', duration: 200 }}
-      disabled={!canSwitchLanguage}
-    >
-      <Menu.Target>
-        <UnstyledButton
-          className={`flex items-center gap-1 rounded-lg px-2 py-1 transition-colors ${
-            canSwitchLanguage ? 'hover:bg-[var(--chatbox-background-tertiary)]' : 'cursor-not-allowed opacity-50'
-          }`}
-          disabled={!canSwitchLanguage}
-          aria-label={`${t('Switch language')}: ${languageNameMap[currentLanguage]}`}
-          title={isSmallScreen ? `${t('Switch language')}: ${languageNameMap[currentLanguage]}` : undefined}
-        >
-          <ScalableIcon icon={IconLanguage} size={16} className="text-chatbox-tint-secondary" />
-          {!isSmallScreen && (
-            <Text size="sm" className="text-[var(--chatbox-tint-secondary)]">
-              {languageNameMap[currentLanguage]}
-            </Text>
-          )}
-          <ScalableIcon
-            icon={IconChevronRight}
-            size={14}
-            className="text-chatbox-tint-tertiary rotate-90 flex-shrink-0"
-          />
-        </UnstyledButton>
-      </Menu.Target>
-      <Menu.Dropdown>
-        <Menu.Label>{t('Select Language')}</Menu.Label>
-        {languages.map((lang) => (
-          <Menu.Item
-            key={lang}
-            onClick={() => handleLanguageChange(lang)}
-            rightSection={
-              lang === currentLanguage ? (
-                <ScalableIcon icon={IconCheck} size={14} className="text-chatbox-tint-brand" />
-              ) : null
-            }
-          >
-            {languageNameMap[lang]}
-          </Menu.Item>
-        ))}
-      </Menu.Dropdown>
-    </Menu>
-  )
-
   return (
     <Stack h="100%" gap={0} className="bg-chatbox-background-primary">
       {/* Header */}
@@ -263,7 +170,6 @@ function GuidePage() {
         </Flex>
 
         <Flex align="center" gap="xs" className="controls">
-          {languageSwitcher}
           {showDebug && (
             <Text size="xs" c="chatbox-tertiary">
               debug info: {onboardingStep}
@@ -442,34 +348,6 @@ function GuidePage() {
                   }}
                 >
                   {t('Leave')}
-                </Button>
-              </Flex>
-            </Stack>
-          </Box>
-        </Box>
-      )}
-
-      {/* Language Change Confirmation Dialog */}
-      {pendingLanguage && (
-        <Box
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[3000]"
-          onClick={() => setPendingLanguage(null)}
-        >
-          <Box
-            className="bg-chatbox-background-primary rounded-lg p-6 max-w-sm mx-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Stack gap="md">
-              <Title order={4}>Switch Language?</Title>
-              <Text size="sm" c="chatbox-secondary">
-                Switching language will restart the guide and clear your current progress.
-              </Text>
-              <Flex gap="sm" justify="flex-end">
-                <Button variant="subtle" onClick={() => setPendingLanguage(null)}>
-                  Cancel
-                </Button>
-                <Button color="red" onClick={confirmLanguageChange}>
-                  Switch to {languageNameMap[pendingLanguage]}
                 </Button>
               </Flex>
             </Stack>

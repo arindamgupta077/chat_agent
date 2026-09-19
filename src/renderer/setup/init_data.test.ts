@@ -12,8 +12,7 @@ const storageMock = vi.hoisted(() => ({
 }))
 
 vi.mock('@/packages/initial_data', () => ({
-  isBuiltInTemplateSessionId: (id: string) =>
-    id === 'default-template-1' || id.startsWith('chatbox-chat-demo-'),
+  isBuiltInTemplateSessionId: (id: string) => id === 'default-template-1' || id.startsWith('chatbox-chat-demo-'),
 }))
 
 vi.mock('@/storage', () => ({
@@ -46,19 +45,14 @@ describe('initData', () => {
 
     await initData()
 
-    expect(metaStorage.deleteMany).toHaveBeenCalledWith([
-      'default-template-1',
-      'chatbox-chat-demo-artifact-1-en',
-    ])
+    expect(metaStorage.deleteMany).toHaveBeenCalledWith(['default-template-1', 'chatbox-chat-demo-artifact-1-en'])
     expect(storageMock.removeItem).toHaveBeenCalledWith('session:default-template-1')
     expect(storageMock.removeItem).toHaveBeenCalledWith('session:chatbox-chat-demo-artifact-1-en')
     expect(storageMock.removeItem).not.toHaveBeenCalledWith('session:user-session-1')
   })
 
   it('does not delete anything when no template sessions exist', async () => {
-    metaStorage.getAllIncludingHidden.mockResolvedValue([
-      { id: 'user-session-1', name: 'My Real Chat' },
-    ])
+    metaStorage.getAllIncludingHidden.mockResolvedValue([{ id: 'user-session-1', name: 'My Real Chat' }])
 
     await cleanupDefaultTemplateSessions()
 

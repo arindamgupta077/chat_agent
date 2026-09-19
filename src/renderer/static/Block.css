@@ -1,8 +1,8 @@
 .msg-block {
   font-size: var(--chatbox-msg-font-size, 14px);
 
-  /* 避免用户复制时，复制到文字的样式 */
   -webkit-user-select: text;
+
   user-select: text;
 
   .msg-content h1 {

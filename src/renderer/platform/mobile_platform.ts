@@ -34,21 +34,17 @@ export default class MobilePlatform extends MobileSQLiteStorage implements Platf
   constructor() {
     super()
     mobileLogger.init().catch((e) => console.error('Failed to init mobile logger:', e))
-    // 监听深度链接 (Deep Links)
     App.addListener('appUrlOpen', (event) => {
       console.debug('App URL opened:', event.url)
       this.handleDeepLink(event.url)
     })
   }
 
-  // 处理深度链接
   private handleDeepLink(url: string): void {
     try {
-      // 支持 chatbox:// 和 chatbox-dev:// 两种协议（归一化处理）
       const normalizedUrl = url.replace(/^chatbox-dev:\/\//, 'chatbox://')
       const parsedUrl = new URL(normalizedUrl)
 
-      // 处理 provider 导入链接: chatbox://provider/import?config=<base64-encoded-config>
       if (parsedUrl.hostname === 'provider' && parsedUrl.pathname === '/import') {
         const encodedConfig = parsedUrl.searchParams.get('config') || ''
         const path = `/settings/provider?import=${encodeURIComponent(encodedConfig)}`
@@ -56,9 +52,7 @@ export default class MobilePlatform extends MobileSQLiteStorage implements Platf
         return
       }
 
-      // 处理 auth 回调链接: chatbox://auth/callback?ticket_id=xxx&status=success
       if (parsedUrl.hostname === 'auth' && parsedUrl.pathname === '/callback') {
-        // 不需要，实际跳回到 app 后业务hooks useLogin 会处理后续动作
       }
 
       console.warn('Unhandled deep link:', url)
@@ -67,7 +61,6 @@ export default class MobilePlatform extends MobileSQLiteStorage implements Platf
     }
   }
 
-  // 触发导航
   private triggerNavigation(path: string): void {
     if (this.navigationCallback) {
       this.navigationCallback(path)
@@ -76,7 +69,6 @@ export default class MobilePlatform extends MobileSQLiteStorage implements Platf
     }
   }
 
-  // 设置导航回调（类似 electronAPI.onNavigate）
   public onNavigate(callback: (path: string) => void): () => void {
     this.navigationCallback = callback
     return () => {
@@ -154,16 +146,11 @@ export default class MobilePlatform extends MobileSQLiteStorage implements Platf
   }
   public async openLink(url: string): Promise<void> {
     try {
-      // 使用 Browser.open 打开
-      // 原生插件不受 JavaScript 用户手势限制，可以在异步调用后正常工作
-      // iOS: 会使用 SFSafariViewController 而不是普通 webview
-      // Android: 使用 Chrome Custom Tabs
       await Browser.open({
         url,
       })
     } catch (error) {
       console.error('Failed to open link with Browser plugin:', error)
-      // 降级方案：使用 window.open（但在异步调用后可能被阻止）
       window.open(url)
     }
   }
@@ -171,25 +158,19 @@ export default class MobilePlatform extends MobileSQLiteStorage implements Platf
     try {
       const info = await Device.getInfo()
 
-      // iOS: 直接返回 model 型号（如 "iPhone13,4"），官网会 mapping 成 "iPhone 13 Pro Max"
       if (info.platform === 'ios') {
         return info.model
       }
 
-      // Android: 使用降级策略
-      // 优先使用 name（用户自定义的设备名称）
       if (info.name) {
         return info.name
       }
-      // 如果没有 name，返回 manufacturer + model
       if (info.manufacturer && info.model) {
         return `${info.manufacturer} ${info.model}`
       }
-      // 降级到 model 或 platform
       return info.model || info.platform || getOS()
     } catch (error) {
       console.error('Failed to get device info:', error)
-      // 降级方案：返回 OS 信息
       return getOS()
     }
   }

@@ -47,22 +47,7 @@ export function createMessage(role: MessageRole = MessageRoleEnum.User, content:
   }
 }
 
-export type Language =
-  | 'en'
-  | 'zh-Hans'
-  | 'zh-Hant'
-  | 'ja'
-  | 'ko'
-  | 'ru'
-  | 'de'
-  | 'fr'
-  | 'pt-PT'
-  | 'es'
-  | 'ar'
-  | 'it-IT'
-  | 'sv'
-  | 'nb-NO'
-  | 'tr'
+export type Language = 'en'
 
 export interface Config {
   uuid: string

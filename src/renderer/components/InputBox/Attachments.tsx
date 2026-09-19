@@ -22,7 +22,6 @@ import { ImageInStorage } from '../Image'
 
 export type AttachmentRecoveryAction = 'continue' | 'retry'
 
-// 根据错误码获取翻译后的错误消息
 function getTranslatedErrorMessage(
   errorCode: string | undefined,
   t: (key: string) => string,
@@ -50,9 +49,7 @@ function getTranslatedErrorMessage(
   }
   const errorI18nKey = getFileParseErrorI18nKey(errorCode, platform.isDesktopLike)
   if (errorI18nKey) {
-    // 使用 i18nKey 进行翻译，去掉其中的 HTML 标签以便在 Tooltip 中显示纯文本
     const translated = t(errorI18nKey)
-    // 移除 HTML/JSX 标签，只保留纯文本
     return translated.replace(/<[^>]*>/g, '')
   }
   return t('Processing failed')
@@ -156,9 +153,7 @@ export function FileMiniCard(props: {
     }
   }
 
-  // 获取翻译后的错误消息
   const translatedError = getTranslatedErrorMessage(errorMessage, t, recoveryAction)
-  // 解析完成后展示解析结果和点数消耗提示；处理中/错误时优先展示状态文案
   const miniCardParserLabel = getParserDisplayName(parserType, t)
   const parserCostLabel = getParserCostLabel(parserType, t)
   const parserLabel = [miniCardParserLabel, parserCostLabel].filter(Boolean).join('\n')
@@ -300,8 +295,6 @@ function getFileTypeLabel(filename: string, fileType?: string): string {
   return ''
 }
 
-// 展示文档使用的解析器和点数消耗提示。
-// 'sandbox-raw'（Agent 模式原文件）、'none' 及未知值不展示。
 export function getParserDisplayName(
   parserType: string | undefined,
   t: (key: string, options?: Record<string, unknown>) => string
@@ -426,7 +419,6 @@ export function MessageAttachment(props: {
       } else {
         title = t('Content')
       }
-      // 预览窗口展示完整的解析器与索引状态信息
       const metadata: Array<{ label?: string; value: string }> = []
       if (parserLabel) metadata.push({ value: parserLabel })
       if (ragStatusLabel) metadata.push({ label: String(t('Status')), value: String(ragStatusLabel) })
@@ -472,8 +464,6 @@ export function MessageAttachment(props: {
             : activeProgressLabel
       : ''
   const showStatus = ragMode === 'session-retrieval'
-  // 有索引标识（session-retrieval）时，副标题让位给索引状态，避免拥挤/截断；
-  // 完整的解析器与索引信息改在点击后的预览窗口展示。
   const subtitle = [typeLabel, sizeLabel, showStatus ? undefined : parserLabel, ragStatusLabel]
     .filter(Boolean)
     .join(' · ')

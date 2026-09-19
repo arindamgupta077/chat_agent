@@ -62,8 +62,6 @@ export function MessageMermaid(props: { source: string; theme: 'light' | 'dark';
   }, [source, theme, generating])
 
   if (generating) {
-    // 测试下来，发现这种方法是视觉效果最好的。
-    // 如果根据 mermaid 是否正常渲染来判断，有时候残缺的 mermaid 也可以渲染出部分图形，这会造成视觉上的闪屏混乱。
     return <Loading />
   }
 
@@ -107,11 +105,6 @@ export function Loading() {
   )
 }
 
-/**
- * 直接将 svg 代码注入到页面中，通过浏览器自身的修复能力处理 svg 代码，再通过 serializeToString 得到规范的 svg 代码。
- * 经过各种测试，发现有时候 mermaid 生成的 svg 代码并不规范，直接转化 base64 将无法完整显示。
- * 这里的做法是直接将 svg 代码注入到页面中，通过浏览器自身的修复能力处理 svg 代码，再通过 serializeToString 得到规范的 svg 代码。
- */
 export function MermaidSVGPreviewDangerous(props: {
   svgCode: string
   svgId: string
@@ -152,7 +145,6 @@ export function MermaidSVGPreviewDangerous(props: {
         })
       }}
     >
-      {/* 这里直接注入了 svg 代码 */}
       <div dangerouslySetInnerHTML={{ __html: svgCode }} />
     </div>
   )
@@ -164,7 +156,6 @@ export function SVGPreview(props: { xmlCode: string; className?: string; generat
     if (!xmlCode.includes('</svg') && generating) {
       return ''
     }
-    // xmlns 属性告诉浏览器该 XML 文档使用的是 SVG 命名空间，缺少该属性会导致浏览器无法正确渲染 SVG 代码。
     if (!xmlCode.includes('xmlns="http://www.w3.org/2000/svg"')) {
       xmlCode = xmlCode.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"')
     }
@@ -251,9 +242,6 @@ async function mermaidCodeToSvgCode(source: string, theme: 'light' | 'dark') {
   mermaid.initialize({ theme: theme === 'light' ? 'default' : 'dark', suppressErrorRendering: true })
   const id = `mermaidtmp${Math.random().toString(36).substring(2, 15)}`
   const result = await mermaid.render(id, source)
-  // 考虑到 mermaid 工具内部本身已经使用了 dompurify 进行处理，因此可以先假设它的输出是安全的
-  // 经过测试，发现 dompurify.sanitize 有时候会导致最终的 svg 显示不完整
-  // 考虑到现代浏览器都不会执行 svg 中的 script 标签，所以这里不进行 sanitize。参考：https://stackoverflow.com/questions/7917008/xss-when-loading-untrusted-svg-using-img-tag
   // return dompurify.sanitize(result.svg, { USE_PROFILES: { svg: true, svgFilters: true } })
   return { id, svg: result.svg }
 }

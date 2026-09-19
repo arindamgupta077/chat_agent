@@ -81,7 +81,6 @@ export function getThemeDesign(
       ...(realTheme === 'light'
         ? {}
         : {
-            // MUI 内部无法处理 css 变量，需要使用具体颜色值
             background: {
               default: '#242424',
               paper: '#242424',
@@ -99,20 +98,14 @@ export function getThemeDesign(
       },
     },
     typography: {
-      // In Chinese and Japanese the characters are usually larger,
-      // so a smaller fontsize may be appropriate.
-      ...(language === 'ar'
-        ? {
-            fontFamily: 'Cairo, Arial, sans-serif',
-          }
-        : {}),
       fontSize: 14,
     },
-    direction: language === 'ar' ? 'rtl' : 'ltr',
+    direction: 'ltr',
+
     breakpoints: {
       values: {
         xs: 0,
-        sm: 640, // 修改sm的值与tailwindcss保持一致
+        sm: 640,
         md: 900,
         lg: 1200,
         xl: 1536,

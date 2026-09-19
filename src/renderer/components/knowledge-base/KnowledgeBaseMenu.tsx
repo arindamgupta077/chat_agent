@@ -29,7 +29,6 @@ const KnowledgeBaseMenu: FC<Props> = (props) => {
       position="top"
       shadow="md"
       keepMounted
-      // 使用动画延迟消失，保证点击后能看到选中状态
       transitionProps={{
         transition: 'pop',
         duration: 200,

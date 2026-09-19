@@ -19,8 +19,6 @@ export const MESSAGE_ERROR_CODES = {
   CHATBOX_AI_FREE_OCR_QUOTA_EXHAUSTED: 20045,
 } as const
 
-// 10000 - 19999 为通用网络接口错误
-
 export class ApiError extends BaseError {
   public code = 10001
   public responseBody: string | undefined
@@ -78,21 +76,14 @@ export class OCRError extends BaseError {
   }
 }
 
-// 20000 - 29999 为 Chatbox AI 服务错误
-
-// Chatbox AI 服务错误
-// 注意，在开发时 i18nKey 中的标签和参数，都需要在 MessageErrTips 中定义
-// NOTE： 这个文件不会被 translate script 扫描到，`pnpm translate` 会先同步这里的 key 到 `src/renderer/i18n/for-key-scan.ts`
 export class ChatboxAIAPIError extends BaseError {
   static codeNameMap: { [codename: string]: ChatboxAIAPIErrorDetail } = {
-    // 超出配额
     token_quota_exhausted: {
       name: 'token_quota_exhausted',
-      code: MESSAGE_ERROR_CODES.CHATBOX_AI_QUOTA_EXHAUSTED, // 小于 20000 是为了兼容旧版本
+      code: MESSAGE_ERROR_CODES.CHATBOX_AI_QUOTA_EXHAUSTED,
       i18nKey:
         'You have used up your monthly Chatbox AI quota. Please <OpenSettingButton>go to Settings</OpenSettingButton> to view your quota usage or upgrade your plan.',
     },
-    // 超出每日免费配额
     free_token_quota_exhausted: {
       name: 'free_token_quota_exhausted',
       code: MESSAGE_ERROR_CODES.CHATBOX_AI_FREE_QUOTA_EXHAUSTED,
@@ -105,73 +96,62 @@ export class ChatboxAIAPIError extends BaseError {
       i18nKey:
         'You have used up your daily Chatbox AI quota. Please <OpenSettingButton>go to Settings</OpenSettingButton> to view your quota usage or upgrade your plan.',
     },
-    // 当前套餐不支持该模型
     license_upgrade_required: {
       name: 'license_upgrade_required',
       code: 20001,
       i18nKey:
         'Your current License (Chatbox AI Free/Lite) does not support the {{model}} model. To use this model, please <OpenMorePlanButton>upgrade</OpenMorePlanButton> to Chatbox AI Pro or a higher-tier package. Alternatively, you can switch to a different model by <OpenSettingButton>accessing the settings</OpenSettingButton>.',
     },
-    // license 过期
     expired_license: {
       name: 'expired_license',
       code: 20002,
       i18nKey: 'Your license has expired. Please check your subscription or purchase a new one.',
     },
-    // 未输入 license
     license_key_required: {
       name: 'license_key_required',
       code: 20003,
       i18nKey:
         'You have selected Chatbox AI as the model provider, but a license key has not been entered yet. Please <OpenSettingButton>click here to open Settings</OpenSettingButton> and enter your license key, or choose a different model provider.',
     },
-    // 输入的 license 未找到
     license_not_found: {
       name: 'license_not_found',
       code: 20004,
       i18nKey: 'The license key you entered is invalid. Please check your license key and try again.',
     },
-    // 超出配额
     rate_limit_exceeded: {
       name: 'rate_limit_exceeded',
       code: 20005,
       i18nKey: 'You have exceeded the rate limit for the Chatbox AI service. Please try again later.',
     },
-    // 参数错误
     bad_params: {
       name: 'bad_params',
       code: 20006,
       i18nKey:
         'Invalid request parameters detected. Please try again later. Persistent failures may indicate an outdated software version. Consider upgrading to access the latest performance improvements and features.',
     },
-    // 文件类型不支持。不同解析器支持的格式不同；旧版 Office 格式可能需要 Chatbox AI 云端解析。
     file_type_not_supported: {
       name: 'file_type_not_supported',
       code: 20007,
       i18nKey:
         'File type not supported. Supported formats vary by parser. Try PDF, modern Office files, EPUB, CSV/TSV, HTML/Markdown, or non-binary text/code files. Legacy Office formats may require Chatbox AI cloud parsing.',
     },
-    // 发送的文件已经超过七天，为了保护您的隐私，所有文件相关的缓存数据已经清理。您需要重新创建对话或刷新上下文，然后再次发送文件。
     file_expired: {
       name: 'file_expired',
       code: 20008,
       i18nKey:
         'The file you sent has expired. To protect your privacy, all file-related cache data has been cleared. You need to create a new conversation or refresh the context, and then send the file again.',
     },
-    // 未找到文件的缓存数据。请重新创建对话或刷新上下文，然后再次发送文件。
     file_not_found: {
       name: 'file_not_found',
       code: 20009,
       i18nKey:
         'The cache data for the file was not found. Please create a new conversation or refresh the context, and then send the file again.',
     },
-    // 文件大小超过 50MB
     file_too_large: {
       name: 'file_too_large',
       code: 20010,
       i18nKey: 'The file size exceeds the limit of 50MB. Please reduce the file size and try again.',
     },
-    // 当前模型不支持发送文件。目前支持的模型有 Chatbox AI 4
     model_not_support_file: {
       name: 'model_not_support_file',
       code: 20011,
@@ -184,7 +164,6 @@ export class ChatboxAIAPIError extends BaseError {
       i18nKey:
         "The {{model}} API doesn't support document understanding. You can download <LinkToHomePage>Chatbox Desktop App</LinkToHomePage> for local document analysis.",
     },
-    // 当前模型不支持发送图片，推荐模型：Chatbox AI 4
     model_not_support_image: {
       name: 'model_not_support_image',
       code: 20013,
@@ -197,7 +176,6 @@ export class ChatboxAIAPIError extends BaseError {
       i18nKey:
         'Vision capability is not enabled for Model {{model}}. Please enable it or set a default OCR model in <OpenSettingButton>Settings</OpenSettingButton>',
     },
-    // 当前模型不支持发送链接
     // 'model_not_support_link': {
     //     name: 'model_not_support_link',
     //     code: 20015,
@@ -361,7 +339,6 @@ export class ChatboxAIAPIError extends BaseError {
       code: MESSAGE_ERROR_CODES.EMPTY_ATTACHMENT_CONTENT,
       i18nKey: 'No readable content was found in this attachment. Please check the file and try again.',
     },
-    // Free 用户在工作模式中点数耗尽，但仍可领取一次奖励额度继续当前任务
     free_agent_mode_token_quota_exhausted: {
       name: 'free_agent_mode_token_quota_exhausted',
       code: MESSAGE_ERROR_CODES.CHATBOX_AI_FREE_AGENT_MODE_QUOTA_EXHAUSTED,

@@ -13,13 +13,11 @@ export function normalizeOpenAIApiHostAndPath(
   }
   const DEFAULT_HOST = defaults?.apiHost ?? 'https://api.openai.com/v1'
   const DEFAULT_PATH = defaults?.apiPath ?? '/chat/completions'
-  // 如果 apiHost 为空，直接返回默认的 apiHost 和 apiPath
   if (!apiHost) {
     apiHost = DEFAULT_HOST
     apiPath = DEFAULT_PATH
     return { apiHost, apiPath }
   }
-  // 处理前后 '/' 的干扰
   if (apiHost.endsWith('/')) {
     apiHost = apiHost.slice(0, -1)
   }
@@ -34,32 +32,26 @@ export function normalizeOpenAIApiHostAndPath(
   } else {
     apiHost = `https://${apiHost}`
   }
-  // 如果用户在 host 配置了完整的 host+path 接口地址
-  // 可以兼容的输入情况有：
   //   apiHost=https://my.proxy.com/v1/chat/completions
   if (apiHost.endsWith(DEFAULT_PATH)) {
     apiHost = apiHost.replace(DEFAULT_PATH, '')
     apiPath = DEFAULT_PATH
   }
-  // 如果当前配置的是 OpenAI 的 API，统一为默认的 apiHost 和 apiPath
   if (apiHost.endsWith('://api.openai.com') || apiHost.endsWith('://api.openai.com/v1')) {
     apiHost = DEFAULT_HOST
     apiPath = DEFAULT_PATH
     return { apiHost, apiPath }
   }
-  // 如果当前配置的是 OpenRouter 的 API，统一 apiHost 和 apiPath
   if (apiHost.endsWith('://openrouter.ai') || apiHost.endsWith('://openrouter.ai/api')) {
     apiHost = 'https://openrouter.ai/api/v1'
     apiPath = DEFAULT_PATH
     return { apiHost, apiPath }
   }
-  // 如果当前配置的是 x 的 API，统一 apiHost 和 apiPath
   if (apiHost.endsWith('://api.x.com') || apiHost.endsWith('://api.x.com/v1')) {
     apiHost = 'https://api.x.com/v1'
     apiPath = DEFAULT_PATH
     return { apiHost, apiPath }
   }
-  // 如果只配置 apiHost，且 apiHost 不以 /v1 结尾
   if (!apiHost.endsWith('/v1') && !apiPath) {
     apiHost = apiHost + '/v1'
     apiPath = DEFAULT_PATH

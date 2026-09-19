@@ -20,7 +20,6 @@ import {
   ViewLicenseButton,
 } from './ActionButton'
 import { ClaimWaitingCard } from './ClaimWaitingCard'
-import { SuggestedQuestions } from './SuggestedQuestions'
 import { UserTypeCards } from './UserTypeCards'
 
 interface GuideMessageProps {
@@ -81,9 +80,6 @@ function ToolPartRenderer({
       return <NewChatTip />
 
     case 'show_suggested_questions':
-      if (!onQuestionClick) return null
-      return <SuggestedQuestions onQuestionClick={onQuestionClick} disabled={disabled} />
-
     case 'show_view_license_button':
     case 'show_free_trial_link':
     case 'show_claim_waiting':
@@ -177,18 +173,15 @@ export function GuideMessage({
                   // Always render certain tools regardless of message position:
                   // - show_user_type_cards: selection state persists
                   // - show_login_button: maintains its own success state
-                  // - show_suggested_questions: users can continue clicking questions
                   // Only hide other tools for non-last messages
                   if (
                     !isLastMessage &&
                     toolPart.toolName !== 'show_user_type_cards' &&
-                    toolPart.toolName !== 'show_login_button' &&
-                    toolPart.toolName !== 'show_suggested_questions'
+                    toolPart.toolName !== 'show_login_button'
                   ) {
                     return null
                   }
-                  // Suggested questions should always be clickable (not disabled)
-                  const shouldDisable = !isLastMessage && toolPart.toolName !== 'show_suggested_questions'
+                  const shouldDisable = !isLastMessage
                   return (
                     <ToolPartRenderer
                       key={toolPart.toolCallId}

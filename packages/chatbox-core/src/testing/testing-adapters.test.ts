@@ -44,13 +44,14 @@ describe('portable testing adapters', () => {
     const settings = new InMemorySettingsRepository(initialSettings)
     const listener = vi.fn()
     settings.subscribe(listener)
-    settings.updateSettings({ language: 'zh-Hans' })
+    settings.updateSettings({ fontSize: 18 })
 
     const model = { name: 'Mock', modelId: 'mock' } as ModelInterface
     const models = new MockModelFactory(model, { runtime: 'test' })
     const created = await models.createContext({ provider: 'openai', modelId: 'mock' })
 
-    expect(settings.getSettings().language).toBe('zh-Hans')
+    expect(settings.getSettings().fontSize).toBe(18)
+
     expect(listener).toHaveBeenCalledOnce()
     expect(created).toEqual({ model, context: { runtime: 'test' } })
     expect(models.requestedSettings).toHaveLength(1)

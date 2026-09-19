@@ -14,7 +14,6 @@ export type Props = {
   inputTestId?: string
 }
 
-// SliderChangeEnd触发 或者 input blur的时候才触发onChange
 export default function SliderWithInput({
   value,
   onChange,
@@ -33,7 +32,6 @@ export default function SliderWithInput({
   }, [])
   const handleSliderChangeEnd = useCallback(
     (v: number) => {
-      // 有概率会出现SliderChangeEnd事件之后又产生一个SliderChange，所以延时处理
       setTimeout(() => {
         setTempSliderValue(undefined)
         onChange?.(v)

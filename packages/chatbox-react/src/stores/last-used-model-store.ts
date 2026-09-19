@@ -29,8 +29,7 @@ export interface CreateLastUsedModelStoreOptions {
   skipHydration?: boolean
 }
 
-const isChatboxAIProvider = (provider?: string) =>
-  provider === 'chatbox-ai' || provider === 'ChatboxAI'
+const isChatboxAIProvider = (provider?: string) => provider === 'chatbox-ai' || provider === 'ChatboxAI'
 
 export function createLastUsedModelStore(options: CreateLastUsedModelStoreOptions) {
   return createStore<LastUsedModelStoreState>()(

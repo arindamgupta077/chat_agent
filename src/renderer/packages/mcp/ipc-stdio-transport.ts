@@ -1,5 +1,3 @@
-// 由于stdio transport只能在main进程使用，这里实现一个代理transport，通过ipc控制main进程中的stdio transport
-
 import type { JSONRPCMessage, Transport, TransportSendOptions } from '@modelcontextprotocol/client'
 import type { StdioServerParameters } from '@modelcontextprotocol/sdk/client/stdio.js'
 

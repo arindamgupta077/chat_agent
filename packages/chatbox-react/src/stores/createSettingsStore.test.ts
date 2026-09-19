@@ -29,7 +29,7 @@ describe('createSettingsStore', () => {
     await store.getState().hydrate()
     expect(store.getState().hydrationStatus).toBe('hydrated')
 
-    store.setState({ language: 'ja' })
+    store.setState({ fontSize: 18 })
     store.setState((state) => {
       state.showWordCount = true
     })
@@ -39,12 +39,12 @@ describe('createSettingsStore', () => {
     await service.flushPersistence()
 
     expect(service.getSettings()).toMatchObject({
-      language: 'ja',
+      fontSize: 18,
       showWordCount: true,
       theme: 1,
     })
     expect(storage.value).toMatchObject({
-      language: 'ja',
+      fontSize: 18,
       showWordCount: true,
       theme: 1,
       __version: 6,
@@ -61,15 +61,16 @@ describe('createSettingsStore', () => {
     const getSettings = store.getState().getSettings
     const hydrate = store.getState().hydrate
 
-    service.updateSettings({ ...store.getState(), language: 'ja' })
+    service.updateSettings({ ...store.getState(), fontSize: 20 })
 
     expect(store.getState().getSettings).toBe(getSettings)
     expect(store.getState().hydrate).toBe(hydrate)
-    expect(store.getState().getSettings().language).toBe('ja')
+    expect(store.getState().getSettings().fontSize).toBe(20)
     store.getState().setSettings({ theme: 1 })
     expect(store.getState().getSettings().theme).toBe(1)
     expect(store.getState().hydrationStatus).toBe('hydrated')
     await service.flushPersistence()
+
     store.getState().destroy()
     service.dispose()
   })

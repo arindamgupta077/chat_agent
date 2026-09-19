@@ -1,11 +1,9 @@
 import React, { useState } from 'react'
 
-// 组件内部的错误测试工具
 export function ErrorTestPanel() {
   const [shouldError, setShouldError] = useState(false)
 
   if (shouldError) {
-    // 模拟常见的 "cannot read properties of undefined" 错误
     const obj: any = null
     return <div>{obj.nonExistentProperty.anotherProperty}</div>
   }

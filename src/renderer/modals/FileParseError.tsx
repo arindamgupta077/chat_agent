@@ -38,10 +38,8 @@ const FileParseError = NiceModal.create(({ errorCode, fileName }: FileParseError
     modal.hide()
   }
 
-  // 根据错误码和平台能力获取错误文案
   const errorI18nKey = getFileParseErrorI18nKey(errorCode, platform.isDesktopLike)
 
-  // 错误提示内容
   const renderErrorTips = () => {
     if (errorCode === LOCAL_PARSER_PDF_PASSWORD_PROTECTED_ERROR) {
       return (
@@ -98,7 +96,6 @@ const FileParseError = NiceModal.create(({ errorCode, fileName }: FileParseError
     }
 
     if (!errorI18nKey) {
-      // 未知错误
       return <Text>{t('Failed to parse file. Please try again or use a different file format.')}</Text>
     }
 

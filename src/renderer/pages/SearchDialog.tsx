@@ -73,8 +73,8 @@ export default function SearchDialog(props: Props) {
     if (open) {
       setTimeout(() => {
         ref.current?.focus()
-        ref.current?.select() // 全选
-      }, 200) // 延迟200毫秒，等待组件元素挂载完成
+        ref.current?.select()
+      }, 200)
     }
   }, [open])
   const onSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,7 +96,7 @@ export default function SearchDialog(props: Props) {
     })
     setSearchResultMarks([searchInput])
     setLoading(false)
-    ref.current?.select() // 搜索后全选输入框，方便删除回退
+    ref.current?.select()
   }
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (globalOnly && e.key === 'Enter' && searchInput.trim()) {
@@ -157,34 +157,6 @@ export default function SearchDialog(props: Props) {
                   </span>
                 </CommandItem>
               </CommandGroup>
-              {/* <CommandGroup heading="对话">
-                            <CommandItem>
-                                <ScanSearch className="mr-2 h-4 w-4" />
-                                <span>创建新对话</span>
-                            </CommandItem>
-                            <CommandItem>
-                                <ScanSearch className="mr-2 h-4 w-4" />
-                                <span>清空当前对话</span>
-                            </CommandItem>
-                        </CommandGroup>
-                        <CommandSeparator />
-                        <CommandGroup heading="Settings">
-                            <CommandItem>
-                                <User className="mr-2 h-4 w-4" />
-                                <span>Profile</span>
-                                <CommandShortcut>⌘P</CommandShortcut>
-                            </CommandItem>
-                            <CommandItem>
-                                <CreditCard className="mr-2 h-4 w-4" />
-                                <span>Billing</span>
-                                <CommandShortcut>⌘B</CommandShortcut>
-                            </CommandItem>
-                            <CommandItem>
-                                <Settings className="mr-2 h-4 w-4" />
-                                <span>Settings</span>
-                                <CommandShortcut>⌘S</CommandShortcut>
-                            </CommandItem>
-                        </CommandGroup> */}
             </CommandList>
           )}
           {mode === 'search-result' && loading && (
@@ -240,9 +212,6 @@ export default function SearchDialog(props: Props) {
                             tryScroll()
                           }}
                         >
-                          {/* 下面这个隐藏元素，是为了避免这个问题：
-                                                        当搜索结果列表中出现重复的元素（相同的消息），此时键盘上下键选中第二条重复消息，继续按向下键会错误切换到第一条重复消息；并且当选中其中一条消息时，重复的消息同样会有选中的显示样式。
-                                                        这些异常都会影响使用。我猜测可能和默认行为是根据元素内容进行判断的，因此加上这个唯一的隐藏元素可以规避问题。 */}
                           <span className="hidden">
                             {result.id}-{message.id}-{i}-{j}
                           </span>

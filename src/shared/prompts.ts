@@ -18,9 +18,7 @@ Just provide the name, nothing else.
 Here's the conversation:
 
 \`\`\`
-${
-  format(msgs.slice(0, 5).map((msg) => getMessageText(msg, true, false).slice(0, 100))) // 限制长度以节省 tokens
-}
+${format(msgs.slice(0, 5).map((msg) => getMessageText(msg, true, false).slice(0, 100)))}
 \`\`\`
 
 Name this conversation in 10 words or less.

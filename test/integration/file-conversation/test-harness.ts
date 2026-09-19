@@ -1,13 +1,3 @@
-/**
- * 文件对话集成测试框架
- *
- * 用于测试 AI 通过 tools (read_file, search_file_content) 读取文件内容的机制
- *
- * 使用方式：
- * 1. 设置环境变量 CHATBOX_LICENSE_KEY
- * 2. 运行 npm run test:file-conversation
- */
-
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import type { ModelMessage } from 'ai'
@@ -18,23 +8,16 @@ import type { ModelDependencies } from '../../../src/shared/types/adapters'
 import { createMockModelDependencies } from '../mocks/model-dependencies'
 import { MockSentryAdapter } from '../mocks/sentry'
 
-// ============ 类型定义 ============
-
 export interface TestFile {
-  /** 存储键名，用于在 platform.getStoreBlob 中查找 */
   storageKey: string
-  /** 文件名 */
   fileName: string
-  /** 文件类型 */
   fileType: string
-  /** 文件内容 */
   content: string
 }
 
 export interface TestMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
-  /** 附带的文件（仅 user 消息有效） */
   files?: Array<{
     storageKey: string
     fileName: string
@@ -43,36 +26,22 @@ export interface TestMessage {
 }
 
 export interface FileConversationTestCase {
-  /** 测试用例名称 */
   name: string
-  /** 测试描述 */
   description?: string
-  /** 预加载的文件 */
   files: TestFile[]
-  /** 对话消息序列 */
   messages: TestMessage[]
-  /** 模型设置覆盖 */
   modelSettings?: Partial<SessionSettings>
-  /** 验证函数 */
   validate?: (result: TestResult) => void
 }
 
 export interface TestResult {
-  /** 测试用例名称 */
   testName: string
-  /** 是否成功 */
   success: boolean
-  /** 错误信息 */
   error?: string
-  /** 最终的会话消息 */
   messages: Message[]
-  /** AI SDK 消息 */
   coreMessages?: ModelMessage[]
-  /** AI 响应结果 */
   response?: StreamTextResult
-  /** 执行时间（毫秒） */
   duration: number
-  /** 工具调用记录 */
   toolCalls: Array<{
     toolName: string
     args: any
@@ -80,13 +49,6 @@ export interface TestResult {
   }>
 }
 
-// ============ 测试上下文 ============
-
-/**
- * 创建带文件引用的用户消息
- * 只创建基础的消息结构，包含文件引用（storageKey）
- * 实际的 ATTACHMENT_FILE 标记由 genMessageContext 在运行时生成
- */
 export function createUserMessageWithFiles(content: string, files: TestFile[]): Message {
   const message: Message = {
     id: uuidv4(),
@@ -114,26 +76,16 @@ export class FileConversationTestContext {
     this.sentry = new MockSentryAdapter()
   }
 
-  /**
-   * 创建模型依赖
-   * 使用真实的请求适配器，mock sentry，使用 TestPlatform 的存储
-   */
   async createModelDependencies(): Promise<ModelDependencies> {
     return createMockModelDependencies(this.platform, this.sentry)
   }
 
-  /**
-   * 加载测试文件到 platform
-   */
   loadFiles(files: TestFile[]): void {
     for (const file of files) {
       this.platform.loadFile(file.storageKey, file.content)
     }
   }
 
-  /**
-   * 创建 Message 对象
-   */
   createMessage(msg: TestMessage): Message {
     const message: Message = {
       id: uuidv4(),
@@ -154,27 +106,18 @@ export class FileConversationTestContext {
     return message
   }
 
-  /**
-   * 清理测试上下文
-   */
   clear(): void {
     this.platform.clear()
     this.sentry.clear()
   }
 }
 
-// ============ 测试运行器 ============
-
 export interface TestRunnerOptions {
   /** License key for ChatboxAI */
   licenseKey: string
-  /** 输出目录 */
   outputDir: string
-  /** 默认模型设置 */
   defaultModelSettings?: Partial<SessionSettings>
-  /** 全局设置 */
   globalSettings?: Partial<Settings>
-  /** 是否打印详细日志 */
   verbose?: boolean
 }
 
@@ -187,15 +130,11 @@ export class FileConversationTestRunner {
     this.options = options
     this.context = new FileConversationTestContext()
 
-    // 确保输出目录存在
     if (!fs.existsSync(options.outputDir)) {
       fs.mkdirSync(options.outputDir, { recursive: true })
     }
   }
 
-  /**
-   * 运行单个测试用例
-   */
   async runTest(testCase: FileConversationTestCase): Promise<TestResult> {
     const startTime = Date.now()
     const toolCalls: TestResult['toolCalls'] = []
@@ -206,37 +145,28 @@ export class FileConversationTestRunner {
     }
 
     try {
-      // 清理之前的状态
       this.context.clear()
 
-      // 加载测试文件
       this.context.loadFiles(testCase.files)
       console.log(`  Loaded ${testCase.files.length} file(s)`)
 
-      // 创建消息序列（原始消息，不含 ATTACHMENT 标记）
       const rawMessages: Message[] = testCase.messages.map((m) => this.context.createMessage(m))
       console.log(`  Created ${rawMessages.length} message(s)`)
 
-      // 准备模型设置
       const globalSettings = this.buildGlobalSettings()
       const sessionSettings = this.buildSessionSettings(testCase.modelSettings)
 
-      // 创建模型依赖
       const dependencies = await this.context.createModelDependencies()
 
-      // 动态导入模型相关模块（避免在模块加载时就初始化 platform）
       const { getModel } = await import('../../../src/shared/models')
       const { streamText } = await import('../../../src/renderer/packages/model-calls/stream-text')
       const { genMessageContext } = await import('../../../src/renderer/stores/session/generation')
 
-      // 获取配置
       const config = await this.context.platform.getConfig()
 
-      // 创建模型实例
       const model = getModel(sessionSettings, globalSettings, config, dependencies)
       console.log(`  Using model: ${model.modelId}`)
 
-      // 创建存储适配器，用于 genMessageContext 读取文件内容
       const testPlatform = this.context.platform
       const storageAdapter = {
         getBlob: async (key: string): Promise<string> => {
@@ -245,7 +175,6 @@ export class FileConversationTestRunner {
         },
       }
 
-      // 使用真实的 genMessageContext 处理消息
       const modelSupportToolUseForFile = model.isSupportToolUse('read-file')
       const promptMessages = await genMessageContext(
         sessionSettings,
@@ -257,10 +186,8 @@ export class FileConversationTestRunner {
         `  genMessageContext: modelSupportToolUseForFile=${modelSupportToolUseForFile}, messages=${promptMessages.length}`
       )
 
-      // 执行对话
       let streamResult: { result: StreamTextResult; coreMessages: ModelMessage[] } | undefined
 
-      // 替换 platform 实例（用于 file tool set 访问）
       const originalPlatform = await this.replacePlatformForTest()
 
       const processedToolCallIds = new Set<string>()
@@ -270,12 +197,10 @@ export class FileConversationTestRunner {
           {
             messages: promptMessages,
             onResultChangeWithCancel: (result) => {
-              // 收集工具调用
               if (result.contentParts) {
                 for (const part of result.contentParts) {
                   if (part.type === 'tool-call' && part.state === 'result') {
                     const tc = part as any
-                    // 使用 toolCallId 避免重复添加
                     if (tc.toolCallId && !processedToolCallIds.has(tc.toolCallId)) {
                       processedToolCallIds.add(tc.toolCallId)
                       toolCalls.push({
@@ -292,12 +217,10 @@ export class FileConversationTestRunner {
           undefined
         )
       } finally {
-        // 恢复原始 platform
         await this.restorePlatform(originalPlatform)
       }
       const { result: response, coreMessages } = streamResult!
 
-      // 添加响应到消息列表
       const finalMessages = [...promptMessages]
       if (response) {
         const assistantMessage: Message = {
@@ -320,7 +243,6 @@ export class FileConversationTestRunner {
         toolCalls,
       }
 
-      // 运行验证函数
       if (testCase.validate) {
         try {
           testCase.validate(result)
@@ -351,9 +273,6 @@ export class FileConversationTestRunner {
     }
   }
 
-  /**
-   * 运行多个测试用例
-   */
   async runTests(testCases: FileConversationTestCase[]): Promise<TestResult[]> {
     console.log(`\n${'='.repeat(60)}`)
     console.log(`Running ${testCases.length} file conversation test(s)`)
@@ -364,18 +283,13 @@ export class FileConversationTestRunner {
       this.results.push(result)
     }
 
-    // 输出汇总
     this.printSummary()
 
-    // 导出结果
     await this.exportResults()
 
     return this.results
   }
 
-  /**
-   * 打印测试汇总
-   */
   private printSummary(): void {
     const passed = this.results.filter((r) => r.success).length
     const failed = this.results.length - passed
@@ -397,9 +311,6 @@ export class FileConversationTestRunner {
     }
   }
 
-  /**
-   * 导出测试结果到文件
-   */
   async exportResults(): Promise<void> {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
     const outputPath = path.join(this.options.outputDir, `results-${timestamp}.json`)
@@ -408,7 +319,7 @@ export class FileConversationTestRunner {
       timestamp: new Date().toISOString(),
       options: {
         ...this.options,
-        licenseKey: '***', // 隐藏敏感信息
+        licenseKey: '***',
       },
       summary: {
         total: this.results.length,
@@ -417,7 +328,6 @@ export class FileConversationTestRunner {
       },
       results: this.results.map((r) => ({
         ...r,
-        // 简化消息内容以便阅读
         messages: r.messages.map((m) => ({
           id: m.id,
           role: m.role,
@@ -434,9 +344,6 @@ export class FileConversationTestRunner {
     console.log(`\nResults exported to: ${outputPath}`)
   }
 
-  /**
-   * 构建全局设置
-   */
   private buildGlobalSettings(): Settings {
     const baseSettings = {
       licenseKey: this.options.licenseKey,
@@ -444,13 +351,9 @@ export class FileConversationTestRunner {
       ...this.options.globalSettings,
     }
 
-    // 确保 providers 配置存在
     return baseSettings as Settings
   }
 
-  /**
-   * 构建会话设置
-   */
   private buildSessionSettings(overrides?: Partial<SessionSettings>): SessionSettings {
     return {
       provider: 'ChatboxAI',
@@ -464,59 +367,28 @@ export class FileConversationTestRunner {
     } as SessionSettings
   }
 
-  /**
-   * 替换 platform 用于测试
-   * 返回原始 platform 以便恢复
-   */
   private async replacePlatformForTest(): Promise<any> {
-    // 这里需要动态修改 platform 模块的默认导出
-    // 由于 ES modules 的限制，我们通过修改 file tool set 使用的 platform 来实现
-    // 实际上 file tool set 直接 import platform，所以我们需要确保在测试时使用 TestPlatform
-
-    // 方案：在测试运行前，将文件内容预加载到 TestPlatform，
-    // 然后通过 mock platform 模块来使用 TestPlatform
-    // 这在 vitest 中通过 vi.mock 实现
-
     return null
   }
 
-  /**
-   * 恢复原始 platform
-   */
   private async restorePlatform(original: any): Promise<void> {
     // no-op for now
   }
 }
 
-// ============ 便捷函数 ============
-
 export interface RunConversationTestOptions {
-  /** 测试名称 */
   testName: string
-  /** 测试文件 */
   files: TestFile[]
-  /** 用户消息 */
   userMessage: string
   /** License key */
   licenseKey: string
-  /** 预设的 system prompt（可选） */
   systemPrompt?: string
-  /** 验证函数 */
   validate?: (result: TestResult) => void
-  /** 模型设置 */
   sessionSettings?: Partial<SessionSettings>
-  /** 全局设置 */
   globalSettings?: Partial<Settings>
-  /** Platform 实例（用于 mock） */
   platform?: TestPlatform
 }
 
-/**
- * 运行单个对话测试（便捷函数）
- * 用于在测试文件中直接调用，无需创建 TestRunner 实例
- *
- * 使用真实的 genMessageContext 来构造消息上下文（包括文件附件处理）
- */
 export async function runConversationTest(options: RunConversationTestOptions): Promise<TestResult> {
   const { testName, files, userMessage, licenseKey, validate, platform } = options
   const startTime = Date.now()
@@ -526,19 +398,15 @@ export async function runConversationTest(options: RunConversationTestOptions): 
   console.log(`\n[Test] ${testName}`)
 
   try {
-    // 使用传入的 platform 或创建新的
     const testPlatform = platform || new TestPlatform()
 
-    // 加载文件到 platform
     for (const file of files) {
       testPlatform.loadFile(file.storageKey, file.content)
     }
     console.log(`  Loaded ${files.length} file(s)`)
 
-    // 创建原始消息列表
     const rawMessages: Message[] = []
 
-    // 如果有 system prompt，添加 system 消息
     if (options.systemPrompt) {
       const { createMessage } = await import('../../../src/shared/types')
       const systemMsg = createMessage('system', options.systemPrompt)
@@ -546,11 +414,9 @@ export async function runConversationTest(options: RunConversationTestOptions): 
       console.log(`  Added system prompt (${options.systemPrompt.length} chars)`)
     }
 
-    // 创建用户消息（只包含文件引用，不包含 ATTACHMENT 标记）
     const userMsg = createUserMessageWithFiles(userMessage, files)
     rawMessages.push(userMsg)
 
-    // 准备设置
     const globalSettings: Settings = {
       licenseKey,
       language: 'en',
@@ -567,22 +433,18 @@ export async function runConversationTest(options: RunConversationTestOptions): 
       ...options.sessionSettings,
     } as SessionSettings
 
-    // 创建模型依赖
     const context = new FileConversationTestContext()
     context.platform = testPlatform
     const dependencies = await context.createModelDependencies()
     const config = await testPlatform.getConfig()
 
-    // 动态导入模型相关模块
     const { getModel } = await import('../../../src/shared/models')
     const { streamText } = await import('../../../src/renderer/packages/model-calls/stream-text')
     const { genMessageContext } = await import('../../../src/renderer/stores/session/generation')
 
-    // 创建模型
     const model = getModel(sessionSettings, globalSettings, config, dependencies)
     console.log(`  Using model: ${model.modelId}`)
 
-    // 创建存储适配器，用于 genMessageContext 读取文件内容
     const storageAdapter = {
       getBlob: async (key: string): Promise<string> => {
         const blob = await testPlatform.getStoreBlob(key)
@@ -590,8 +452,6 @@ export async function runConversationTest(options: RunConversationTestOptions): 
       },
     }
 
-    // 使用真实的 genMessageContext 处理消息
-    // 这会：1) 读取文件内容 2) 添加 ATTACHMENT_FILE 标记
     const modelSupportToolUseForFile = model.isSupportToolUse('read-file')
     const promptMessages = await genMessageContext(
       sessionSettings,
@@ -603,18 +463,15 @@ export async function runConversationTest(options: RunConversationTestOptions): 
       `  genMessageContext: modelSupportToolUseForFile=${modelSupportToolUseForFile}, messages=${promptMessages.length}`
     )
 
-    // 执行对话
     const streamResult = await streamText(
       model,
       {
         messages: promptMessages,
         onResultChangeWithCancel: (result) => {
-          // 收集工具调用
           if (result.contentParts) {
             for (const part of result.contentParts) {
               if (part.type === 'tool-call' && (part as any).state === 'result') {
                 const tc = part as any
-                // 使用 toolCallId 避免重复添加
                 if (tc.toolCallId && !processedToolCallIds.has(tc.toolCallId)) {
                   processedToolCallIds.add(tc.toolCallId)
                   toolCalls.push({
@@ -632,7 +489,6 @@ export async function runConversationTest(options: RunConversationTestOptions): 
     )
     const { result: response, coreMessages } = streamResult!
 
-    // 添加响应到消息
     const finalMessages = [...promptMessages]
     if (response) {
       const assistantMsg: Message = {
@@ -655,7 +511,6 @@ export async function runConversationTest(options: RunConversationTestOptions): 
       toolCalls,
     }
 
-    // 运行验证
     if (validate) {
       try {
         validate(result)
@@ -686,9 +541,6 @@ export async function runConversationTest(options: RunConversationTestOptions): 
   }
 }
 
-/**
- * 创建测试文件对象
- */
 export function createTestFile(fileName: string, content: string, fileType: string = 'text/plain'): TestFile {
   return {
     storageKey: `file:test:${uuidv4()}`,
@@ -698,9 +550,6 @@ export function createTestFile(fileName: string, content: string, fileType: stri
   }
 }
 
-/**
- * 从实际文件加载测试文件
- */
 export function loadTestFileFromDisk(filePath: string, fileType?: string): TestFile {
   const content = fs.readFileSync(filePath, 'utf-8')
   const fileName = path.basename(filePath)
@@ -709,9 +558,6 @@ export function loadTestFileFromDisk(filePath: string, fileType?: string): TestF
   return createTestFile(fileName, content, detectedType)
 }
 
-/**
- * 检测文件类型
- */
 function detectFileType(fileName: string): string {
   const ext = path.extname(fileName).toLowerCase()
   const typeMap: Record<string, string> = {

@@ -3,25 +3,8 @@ import { authInfoStore } from '@/stores/authInfoStore'
 import { getChatboxOrigin, getWebAuthToken } from './remote'
 
 const DEFAULT_LOCALE = 'en'
-const LOCALE_ALIASES: Record<string, string> = {
-  'zh-Hans': 'zh',
-  'zh-Hant': 'zh-TW',
-}
-const SUPPORTED_LOCALES = new Set([
-  'en',
-  'zh',
-  'zh-TW',
-  'ja',
-  'de',
-  'fr',
-  'ru',
-  'pt-PT',
-  'es',
-  'it-IT',
-  'ar',
-  'nb-NO',
-  'sv',
-])
+const LOCALE_ALIASES: Record<string, string> = {}
+const SUPPORTED_LOCALES = new Set(['en'])
 
 function normalizeTargetUrl(url: string) {
   return new URL(url, getChatboxOrigin())

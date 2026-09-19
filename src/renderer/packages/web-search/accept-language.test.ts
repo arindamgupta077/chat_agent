@@ -16,15 +16,9 @@ describe('getSearchAcceptLanguage', () => {
     expect(getSearchAcceptLanguage()).toBe('en-US,en;q=0.9')
   })
 
-  it('maps Simplified Chinese app language to zh-CN search preference', () => {
-    mockSettings.language = 'zh-Hans'
+  it('falls back to English search preference for unknown language', () => {
+    mockSettings.language = 'unknown' as any
 
-    expect(getSearchAcceptLanguage()).toBe('zh-CN,zh;q=0.9,en;q=0.8')
-  })
-
-  it('maps Traditional Chinese app language to zh-TW search preference', () => {
-    mockSettings.language = 'zh-Hant'
-
-    expect(getSearchAcceptLanguage()).toBe('zh-TW,zh-HK;q=0.9,zh;q=0.8,en;q=0.7')
+    expect(getSearchAcceptLanguage()).toBe('en-US,en;q=0.9')
   })
 })

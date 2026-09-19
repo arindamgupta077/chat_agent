@@ -29,12 +29,7 @@ export function getChatboxAPIOrigin() {
   return API_ORIGIN
 }
 
-/**
- * 按顺序测试 API 的可用性，只要有一个 API 域名可用，就终止测试并切换所有流量到该域名。
- * 在测试过程中，会根据服务器返回添加新的 API 域名，并缓存到本地
- */
 export async function testApiOrigins() {
-  // 按顺序测试 API 的可用性
   const result = await cache(
     'api_origins',
     async () => {
@@ -44,19 +39,17 @@ export async function testApiOrigins() {
         try {
           const origin: string = pool[i]
           const controller = new AbortController()
-          setTimeout(() => controller.abort(), 2000) // 2秒超时
+          setTimeout(() => controller.abort(), 2000)
           const res = await ofetch<{ data: { api_origins: string[] } }>(`${origin}/api/api_origins`, {
             // ofetch and React Native expose compatible signals through different declarations.
             signal: controller.signal as unknown as NonNullable<Parameters<typeof ofetch>[1]>['signal'],
             retry: 1,
           })
-          // 如果服务器返回了新的 API 域名，则更新缓存
           if (res.data.api_origins.length > 0) {
             pool = uniq([...pool, ...res.data.api_origins])
           }
-          // 如果当前 API 可用，则切换所有流量到该域名
           API_ORIGIN = origin
-          pool = uniq([origin, ...pool]) // 将当前 API 域名添加到列表顶部
+          pool = uniq([origin, ...pool])
           POOL = pool
           return pool
         } catch (e) {
@@ -65,7 +58,7 @@ export async function testApiOrigins() {
       }
       return POOL
     },
-    { ttl: 1000 * 60 * 60, refreshFallbackToCache: true } // 1小时缓存，失败时使用旧缓存
+    { ttl: 1000 * 60 * 60, refreshFallbackToCache: true }
   )
 
   return result

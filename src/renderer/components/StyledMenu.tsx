@@ -4,10 +4,9 @@ import { alpha, styled } from '@mui/material/styles'
 import { useLanguage } from '@/stores/settingsStore'
 
 const StyledMenu = styled((props: MenuProps) => {
-  const language = useLanguage()
   return (
     <Menu
-      dir={language === 'ar' ? 'rtl' : 'ltr'}
+      dir="ltr"
       elevation={0}
       anchorOrigin={{
         vertical: 'bottom',

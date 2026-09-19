@@ -5,15 +5,6 @@ import platform from '@/platform'
 import { useDbSchemaGuardStore } from '@/storage/db-schema-guard'
 import { installUpdate, useUpdateStore } from '@/stores/updateStore'
 
-/**
- * Blocking guidance for the two IndexedDB schema-mismatch situations
- * (see docs/technical/storage.md, "IndexedDB 版本策略"):
- * - schema-too-new: the user downgraded across a schema bump; data cannot be
- *   read by this build but is intact — guide them through an in-app update
- *   (the updater runs in the main process and is unaffected).
- * - upgraded-elsewhere: another window/tab bumped the schema while this one
- *   held a connection; a reload picks up the new state.
- */
 export default function DbSchemaGuardDialog() {
   const { t, i18n } = useTranslation()
   const schemaTooNewDbName = useDbSchemaGuardStore((s) => s.schemaTooNewDbName)

@@ -275,13 +275,11 @@ const MessageEditModal = ({
     const ctrlOrCmd = event.ctrlKey || event.metaKey
     const shift = event.shiftKey
 
-    // ctrl + shift + enter 保存并生成 (skip if hideSaveAndResend is true)
     if (event.key === 'Enter' && ctrlOrCmd && shift && (!hideSaveAndResend || resendOnly)) {
       event.preventDefault()
       void onSaveAndReply()
       return
     }
-    // ctrl + enter 保存（resend-only 模式下等同保存并生成）
     if (event.key === 'Enter' && ctrlOrCmd && !shift) {
       event.preventDefault()
       void (resendOnly ? onSaveAndReply() : onSave())

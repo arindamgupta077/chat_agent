@@ -42,7 +42,6 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 // Storage data type
 type StorageData = { [key: string]: string }
 
-// 只导入需要的类型
 const StorageKey = {
   ConfigVersion: 'configVersion',
   ChatSessions: 'chat-sessions',

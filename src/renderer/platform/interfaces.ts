@@ -34,8 +34,6 @@ export interface Platform extends Storage {
 
   exporter: Exporter
 
-  // 系统相关
-
   getVersion(): Promise<string>
   getPlatform(): Promise<string>
   getArch(): Promise<string>
@@ -72,31 +70,23 @@ export interface Platform extends Storage {
   ensureProxyConfig(config: { proxy?: string }): Promise<void>
   relaunch(): Promise<void>
 
-  // 数据配置
-
   getConfig(): Promise<Config>
   getSettings(): Promise<Settings>
-
-  // Blob 存储
 
   getStoreBlob(key: string): Promise<string | null>
   setStoreBlob(key: string, value: string): Promise<void>
   delStoreBlob(key: string): Promise<void>
   listStoreBlobKeys(): Promise<string[]>
 
-  // 追踪
-
   initTracking(): Promise<void> | void
   trackingEvent(name: string, params: AnalyticsEventParams): Promise<void> | void
 
-  // 通知
   shouldShowAboutDialogWhenStartUp(): Promise<boolean>
 
   appLog(level: string, message: string): Promise<void>
 
-  // 日志导出与管理
-  exportLogs(): Promise<string> // 返回日志内容
-  clearLogs(): Promise<void> // 清空日志
+  exportLogs(): Promise<string>
+  clearLogs(): Promise<void>
 
   ensureAutoLaunch(enable: boolean): Promise<void>
 

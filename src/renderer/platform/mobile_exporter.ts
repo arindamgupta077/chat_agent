@@ -296,12 +296,10 @@ export default class MobileExporter implements Exporter {
     try {
       for await (const chunk of generator) {
         tempContent += chunk
-        // 如果内容太长，分批写入文件
         if (tempContent.length > CHUNK_SIZE) {
           chunkCount++
           totalBytesWritten += tempContent.length
           if (isFirstWrite) {
-            // 第一次写入创建文件，获取实际路径
             log.info('writeStreamingContent:firstChunk:start', {
               filename,
               chunkIndex: chunkCount,
@@ -316,7 +314,6 @@ export default class MobileExporter implements Exporter {
             })
             isFirstWrite = false
           } else {
-            // 后续写入追加内容，使用实际路径
             log.info('writeStreamingContent:appendChunk:start', {
               filename,
               chunkIndex: chunkCount,
@@ -335,11 +332,9 @@ export default class MobileExporter implements Exporter {
         }
       }
 
-      // 写入剩余内容
       if (tempContent.length > 0) {
         totalBytesWritten += tempContent.length
         if (isFirstWrite) {
-          // 如果所有内容都小于1MB，直接创建完整文件
           log.info('writeStreamingContent:writeCompleteFile:start', {
             filename,
             contentLength: tempContent.length,
@@ -350,7 +345,6 @@ export default class MobileExporter implements Exporter {
             contentLength: tempContent.length,
           })
         } else {
-          // 追加最后一块内容并完成，使用实际路径
           chunkCount++
           log.info('writeStreamingContent:finishWriting:start', {
             filename,
@@ -367,7 +361,6 @@ export default class MobileExporter implements Exporter {
           })
         }
       } else if (!isFirstWrite) {
-        // 没有剩余内容但之前已经写入过，需要完成操作
         log.info('writeStreamingContent:completeExport:start', {
           filename,
           actualPath,

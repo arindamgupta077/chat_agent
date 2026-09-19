@@ -26,7 +26,7 @@ vi.mock('react-i18next', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-i18next')>()),
   useTranslation: () => ({
     t: (key: string) => key,
-    i18n: { language: 'zh-Hans' },
+    i18n: { language: 'en' },
   }),
 }))
 
@@ -64,7 +64,7 @@ const licenseDetail: ChatboxAILicenseDetail = {
 }
 
 test('shows the quota reset time precisely to the minute', () => {
-  const expectedResetTime = new Date(licenseDetail.token_next_refresh_time as string).toLocaleString('zh-Hans', {
+  const expectedResetTime = new Date(licenseDetail.token_next_refresh_time as string).toLocaleString('en', {
     year: 'numeric',
     month: 'numeric',
     day: 'numeric',
@@ -74,7 +74,7 @@ test('shows the quota reset time precisely to the minute', () => {
 
   render(
     <MantineProvider>
-      <LicenseDetailCard licenseDetail={licenseDetail} language="zh-Hans" utmContent="test" />
+      <LicenseDetailCard licenseDetail={licenseDetail} language="en" utmContent="test" />
     </MantineProvider>
   )
 

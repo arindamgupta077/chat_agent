@@ -424,7 +424,6 @@ export class MCPServer extends Emittery<{ status: MCPServerStatus }> {
   }
 }
 
-// 根据用户配置管理MCP服务器的实际运行
 export const mcpController = {
   servers: new Map<string, { instance: MCPServer; config: MCPServerConfig }>(),
   _statusSubscribers: new Map<string, Set<(status: MCPServerStatus) => void>>(),
@@ -444,7 +443,6 @@ export const mcpController = {
     const server = new MCPServer(serverConfig)
     this.servers.set(serverConfig.id, { instance: server, config: serverConfig })
 
-    // 如果有订阅者，重新连接他们
     const subscribers = this._statusSubscribers.get(serverConfig.id)
     if (subscribers) {
       subscribers.forEach((subscriber) => {
@@ -520,9 +518,6 @@ export const mcpController = {
             try {
               return await rawExecute?.(args, options)
             } catch (err) {
-              // 返回而非抛出，否则会导致流程中断。
-              // 必须返回可 JSON 序列化的结构：直接返回原始 Error/MCPClientError 会把脏数据写进对话历史，
-              // 下次组装 ModelMessage[] 时 AI SDK 本地校验会抛 AI_InvalidPromptError，导致请求发不出去。
               return {
                 isError: true,
                 content: [{ type: 'text', text: err instanceof Error ? err.message : String(err) }],

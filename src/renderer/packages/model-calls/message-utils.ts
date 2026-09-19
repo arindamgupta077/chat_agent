@@ -54,12 +54,6 @@ export function buildModelSystemPrompt(
   return `Additional info for this conversation: ${additionalInfo}\n\n## Runtime\nCurrent model: ${model}\nConversation started: ${startedAt}\n${SYSTEM_REMINDER_PROMPT_INSTRUCTION}`
 }
 
-/**
- * 在 system prompt 中注入模型信息
- * @param model
- * @param messages
- * @returns
- */
 export function injectModelSystemPrompt(
   model: string,
   messages: Message[],
@@ -70,7 +64,7 @@ export function injectModelSystemPrompt(
   let hasInjected = false
   const injectedMessages = messages.map((m) => {
     if (m.role === role && !hasInjected) {
-      m = cloneMessage(m) // 复制，防止原始数据在其他地方被直接渲染使用
+      m = cloneMessage(m)
       // Metadata goes BELOW the session's own prompt: stable content keeps the
       // byte-0 position and the volatile model/date block sits last, so the
       // prompt-cache prefix survives model switches and day rollovers.

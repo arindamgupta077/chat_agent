@@ -83,7 +83,6 @@ export default function useShortcut() {
       keyboardShortcut(e)
     }
     const focusMessageInput = () => {
-      // 大屏幕下，窗口显示时自动聚焦输入框
       if (!isSmallScreen && shouldAutoFocusMessageInput()) {
         dom.focusMessageInput()
       }
@@ -99,7 +98,6 @@ export default function useShortcut() {
   }, [isSmallScreen])
 
   function keyboardShortcut(e: KeyboardEvent) {
-    // 这里不用 e.key 是因为 alt、 option、shift 都会改变 e.key 的值
     const shift = e.shiftKey
     const shortcuts = settingsStore.getState().shortcuts
 
@@ -117,14 +115,12 @@ export default function useShortcut() {
       return
     }
 
-    // 创建新会话 CmdOrCtrl + N
     if (e.key === 'n' && ctrlKey && !shift) {
       router.navigate({
         to: '/',
       })
       return
     }
-    // 创建新话题 CmdOrCtrl + Shift + N
     if (isShortcutPressed(e, shortcuts.messageListRefreshContext)) {
       e.preventDefault()
       const sid = getRouteSessionId()
@@ -133,7 +129,6 @@ export default function useShortcut() {
       }
       return
     }
-    // 创建新图片会话
     if (isShortcutPressed(e, shortcuts.newPictureChat)) {
       e.preventDefault()
       router.navigate({

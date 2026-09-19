@@ -306,8 +306,6 @@ function cleanupEmptyForkBranches(
     const forkIndexInMessages = resultMessages.findIndex((m) => m.id === forkMessageId)
 
     if (forkIndexInMessages >= 0) {
-      // Fork is in main messages - check if tail is empty fork point 是 user msg，之后的 bot msg 是具体的分叉
-      // 当用户这条消息(fork point)是最后一条消息，后面没了 bot msg，则当前分支是空的
       const currentBranchIsEmpty = forkIndexInMessages === resultMessages.length - 1
 
       if (currentBranchIsEmpty) {

@@ -223,8 +223,7 @@ export const ModelSelectorV2 = forwardRef<HTMLDivElement, ModelSelectorV2Props>(
     }
 
     const isFavorited = useCallback(
-      (providerId: string, modelId: string) =>
-        isFavoritedModel(providerId, modelId),
+      (providerId: string, modelId: string) => isFavoritedModel(providerId, modelId),
       [isFavoritedModel]
     )
 

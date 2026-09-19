@@ -28,7 +28,6 @@ import {
   checkHasValidConfig,
   createAutoNewChatLoadingToolPart,
   createNewChatButtonToolPart,
-  createSuggestedQuestionsToolPart,
   generateMessageId,
   isGuideLanguageReady,
   shouldGuideEnterCompleted,
@@ -179,7 +178,6 @@ export function useGuideSession(): UseGuideSessionReturn {
             createNewChatButtonToolPart(`new-chat-btn-${Date.now()}`, {
               label: t('Click here to start a new chat') ?? undefined,
             }),
-            createSuggestedQuestionsToolPart(`suggested-${Date.now()}`),
           ],
         },
       ])
@@ -539,7 +537,6 @@ AgentLab is an **all-in-one AI chat client** that supports 30+ mainstream models
           createNewChatButtonToolPart(`new-chat-btn-${Date.now()}`, {
             label: t('Click here to start a new chat') ?? undefined,
           }),
-          createSuggestedQuestionsToolPart(`suggested-${Date.now()}`),
         ]
       )
     }

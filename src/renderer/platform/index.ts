@@ -18,7 +18,6 @@ function initPlatform(): Platform {
 }
 
 function createPlatform(): Platform {
-  // 测试环境使用 TestPlatform
   if (process.env.NODE_ENV === 'test') {
     return new TestPlatform()
   }

@@ -41,7 +41,6 @@ export const useProviders = () => {
             return {
               ...p,
               ...providerSettings,
-              // 如果没有自定义 models 列表，使用 defaultSettings，否则被自定义的列表（可能有添加或删除部分 model）覆盖, 不能包含用户排除过的 models
               models: enrichModelsFromRegistry(baseModels, p.id),
             } as ProviderInfo
           } else {

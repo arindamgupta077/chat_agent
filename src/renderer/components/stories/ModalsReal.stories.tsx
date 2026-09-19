@@ -90,13 +90,13 @@ export const AgentModeRewardClaimSuccessStates: StoryObj = {
 }
 
 function AgentModeRewardClaimSuccessFixture() {
-  const [ready, setReady] = useState(i18n.language === 'zh-Hans')
+  const [ready, setReady] = useState(i18n.language === 'en')
 
   useEffect(() => {
     const previousLanguage = i18n.language
     const previousSettingsLanguage = settingsStore.getState().language
-    settingsStore.setState({ language: 'zh-Hans' })
-    void i18n.changeLanguage('zh-Hans').then(() => setReady(true))
+    settingsStore.setState({ language: 'en' })
+    void i18n.changeLanguage('en').then(() => setReady(true))
     return () => {
       settingsStore.setState({ language: previousSettingsLanguage })
       void i18n.changeLanguage(previousLanguage)

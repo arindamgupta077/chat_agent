@@ -50,13 +50,12 @@ export default class WebExporter implements Exporter {
   }
 
   exportImageFile(basename: string, base64Data: string): Promise<void> {
-    // 解析 base64 数据
     let { type, data } = base64.parseImage(base64Data)
     if (type === '') {
       type = 'image/png'
       data = base64Data
     }
-    const ext = (type.split('/')[1] || 'png').split('+')[0] // 处理 svg+xml 的情况
+    const ext = (type.split('/')[1] || 'png').split('+')[0]
     const filename = `${basename}.${ext}`
 
     const raw = window.atob(data)

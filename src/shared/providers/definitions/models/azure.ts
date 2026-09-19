@@ -37,7 +37,7 @@ function createAzureV1Fetch(apiVersion: string): typeof globalThis.fetch {
 interface Options {
   azureEndpoint: string
   model: ProviderModelInfo
-  azureDalleDeploymentName: string // dall-e-3 的部署名称
+  azureDalleDeploymentName: string
   azureApikey: string
   azureApiVersion: string
 
@@ -47,7 +47,7 @@ interface Options {
   maxOutputTokens?: number
 
   dalleStyle: 'vivid' | 'natural'
-  imageGenerateNum: number // 生成图片的数量
+  imageGenerateNum: number
 
   injectDefaultMetadata: boolean
   stream?: boolean

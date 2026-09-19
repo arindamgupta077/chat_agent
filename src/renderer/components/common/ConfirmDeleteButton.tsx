@@ -66,7 +66,6 @@ export function ConfirmDeleteMenuItem({ onDelete, label, color = 'error', icon }
       disableRipple
       onClick={() => {
         setConfirmDelete(true)
-        // 按住 shift 键可以跳过确认直接删除
         const shiftKeyPressed = isHotkeyPressed('shift')
         if (shiftKeyPressed) {
           onDelete()
@@ -135,7 +134,6 @@ export function ConfirmDeleteButton({ onDelete, icon, label, color = 'error' }: 
       variant="text"
       onClick={() => {
         setConfirmDelete(true)
-        // 按住 shift 键可以跳过确认直接删除
         const shiftKeyPressed = isHotkeyPressed('shift')
         if (shiftKeyPressed) {
           onDelete()

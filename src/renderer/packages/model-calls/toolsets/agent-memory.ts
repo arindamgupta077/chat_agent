@@ -66,7 +66,6 @@ function buildDeleteMemoryTool(scope: MemoryScope): ToolSet[string] {
 }
 
 export interface AgentMemoryToolsOptions {
-  /** Native name of the user's UI language (for example 简体中文); memories are written in it. */
   languageName?: string
   /** Memory store the tools read and write; defaults to the global one. */
   scope?: MemoryScope

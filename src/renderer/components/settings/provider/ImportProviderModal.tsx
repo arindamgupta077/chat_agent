@@ -69,7 +69,6 @@ export function ImportProviderModal({ opened, onClose, importedConfig, existingP
     if (!importedConfig) return
 
     try {
-      // 如果有 existing provider， 可能是 built-in 也可能是 custom provider，如果没有，一定是 custom provider
       setSettings(
         buildImportedProviderSettingsUpdate({
           importedConfig,

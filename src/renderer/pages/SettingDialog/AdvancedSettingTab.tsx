@@ -162,9 +162,9 @@ function ExportAndImport(props: { onCancel: () => void }) {
   const [importTips, setImportTips] = useState('')
   const onExport = async () => {
     const data = await storage.getAll()
-    delete data[StorageKey.Configs] // 不导出 uuid
-    ;(data[StorageKey.Settings] as Settings).licenseDetail = undefined // 不导出license认证数据
-    ;(data[StorageKey.Settings] as Settings).licenseInstances = undefined // 不导出license设备数据，导入数据的新设备也应该计入设备数
+    delete data[StorageKey.Configs]
+    ;(data[StorageKey.Settings] as Settings).licenseDetail = undefined
+    ;(data[StorageKey.Settings] as Settings).licenseInstances = undefined
     if (!exportItems.includes(ExportDataItem.Key)) {
       delete (data[StorageKey.Settings] as Settings).licenseKey
       delete (data[StorageKey.Settings] as Settings).providers
@@ -206,7 +206,6 @@ function ExportAndImport(props: { onCancel: () => void }) {
             throw new Error('FileReader result is not string')
           }
           const importData = JSON.parse(result)
-          // 如果导入数据中包含了老的版本号，应该仅仅针对老的版本号进行迁移
           await migrateOnData(
             {
               getData: async (key, defaultValue) => {
@@ -223,9 +222,8 @@ function ExportAndImport(props: { onCancel: () => void }) {
           )
 
           const previousData = await storage.getAll()
-          // FIXME: 这里缺少了数据校验
           await storage.setAll({
-            ...previousData, // 有时候 importData 在导出时没有包含一些数据，这些数据应该保持原样
+            ...previousData,
             ...importData,
             [StorageKey.ChatSessionsList]: uniqBy(
               [
@@ -235,8 +233,8 @@ function ExportAndImport(props: { onCancel: () => void }) {
               'id'
             ),
           })
-          props.onCancel() // 导出成功后立即关闭设置窗口，防止用户点击保存、导致设置数据被覆盖
-          platform.relaunch() // 重启应用以生效
+          props.onCancel()
+          platform.relaunch()
         } catch (err) {
           setImportTips(errTip)
 

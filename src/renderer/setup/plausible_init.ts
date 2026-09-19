@@ -14,9 +14,7 @@ export async function initPlausibleTracking(subscribeToNavigation?: PlausibleNav
     const settings = await initSettingsStore()
     const version = normalizePlausibleVersion(await platform.getVersion().catch(() => 'unknown'))
 
-    // 设置 Plausible 全局属性
     if (window.plausible) {
-      // 统一使用脱敏 URL，并只为功能事件补充低基数版本属性。
       const originalPlausible = window.plausible
       const enhancedPlausible: Plausible = (event, options) => {
         if (!settingsStore.getState().allowReportingAndTracking) {
@@ -36,7 +34,6 @@ export async function initPlausibleTracking(subscribeToNavigation?: PlausibleNav
         return originalPlausible(event, enhancedOptions)
       }
 
-      // 复制原始函数的队列属性
       if ('q' in originalPlausible && (originalPlausible as unknown as { q: unknown[] }).q) {
         ;(enhancedPlausible as unknown as { q: unknown[] }).q = (originalPlausible as unknown as { q: unknown[] }).q
       }

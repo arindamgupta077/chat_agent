@@ -170,7 +170,7 @@ Content: ${it.snippet}
       role: 'system',
       contentParts: [{ type: 'text', text: systemPrompt }],
     },
-    ...messages.slice(0, -1), // 最新一条用户消息和搜索结果放在一起了
+    ...messages.slice(0, -1),
     {
       id: '',
       role: 'user',
@@ -212,7 +212,7 @@ Content: ${it.text}
       role: 'system',
       contentParts: [{ type: 'text', text: systemPrompt }],
     },
-    ...messages.slice(0, -1), // 最新一条用户消息和搜索结果放在一起了
+    ...messages.slice(0, -1),
     {
       id: '',
       role: 'user',

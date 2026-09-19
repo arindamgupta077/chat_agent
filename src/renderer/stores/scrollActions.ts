@@ -3,12 +3,11 @@ import { rendererApplication } from '@/app/renderer-application'
 import { getAllMessageList } from './sessionHelpers'
 import { uiStore } from './uiStore'
 
-// scrollToMessage 滚动到指定消息，如果消息不存在则返回 false
 export async function scrollToMessage(
   sessionId: string,
   msgId: string,
   align: 'start' | 'center' | 'end' = 'start',
-  behavior: 'auto' | 'smooth' = 'auto' // 'auto' 立即滚动到指定位置，'smooth' 平滑滚动到指定位置
+  behavior: 'auto' | 'smooth' = 'auto'
 ): Promise<boolean> {
   const session = await rendererApplication.sessionQueryBridge.getSession(sessionId)
   if (!session) {
@@ -33,7 +32,7 @@ export async function scrollToMessage(
 export function scrollToIndex(
   index: number | 'LAST',
   align: 'start' | 'center' | 'end' = 'start',
-  behavior: 'auto' | 'smooth' = 'auto' // 'auto' 立即滚动到指定位置，'smooth' 平滑滚动到指定位置
+  behavior: 'auto' | 'smooth' = 'auto'
 ) {
   const virtuoso = uiStore.getState().messageScrolling
   virtuoso?.current?.scrollToIndex({ index, align, behavior })
@@ -61,7 +60,7 @@ let autoScrollTask: {
 export function startAutoScroll(
   msgId: string,
   align: 'start' | 'center' | 'end' = 'start',
-  behavior: 'auto' | 'smooth' = 'auto' // 'auto' 立即滚动到指定位置，'smooth' 平滑滚动到指定位置
+  behavior: 'auto' | 'smooth' = 'auto'
 ): string {
   const newTask = { msgId, align, behavior }
   const newId = JSON.stringify(newTask)

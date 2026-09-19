@@ -294,13 +294,11 @@ const MessageList = forwardRef<MessageListRef, MessageListProps>((props, ref) =>
     if (messageListRef?.current && virtuoso?.current) {
       const containerRect = messageListRef.current.getBoundingClientRect()
       for (let i = 0; i < renderItems.length; i++) {
-        // 此处原本判断 role 的逻辑已在 renderItems 中处理
         const msgElement = messageListRef.current.querySelector(
           `[data-testid="virtuoso-item-list"] > [data-index="${i}"]`
         )
         if (msgElement) {
           const rect = msgElement.getBoundingClientRect()
-          // 找到第一个出现在可视区域顶部的元素，滚动到上一条用户消息
           // +2 tolerance: smooth scroll + virtuoso height estimation can leave
           // the previous element's bottom a sub-pixel into the viewport,
           // causing the anchor to land one item too early.
@@ -328,7 +326,6 @@ const MessageList = forwardRef<MessageListRef, MessageListProps>((props, ref) =>
                 return
               }
             }
-            // 没有上一条用户消息了，滚动到顶部
             virtuoso.current.scrollToIndex({ index: 0, align: 'start', behavior: 'smooth' })
             return
           }
@@ -347,7 +344,6 @@ const MessageList = forwardRef<MessageListRef, MessageListProps>((props, ref) =>
         )
         if (msgElement) {
           const rect = msgElement.getBoundingClientRect()
-          // 找到第一个出现在可视区域顶部的元素，滚动到下一条用户消息
           // +2 tolerance: see handleScrollToPrev comment
           if (rect.bottom > containerRect.top + 2) {
             for (let j = i + 1; j < renderItems.length; j++) {
@@ -356,7 +352,6 @@ const MessageList = forwardRef<MessageListRef, MessageListProps>((props, ref) =>
                 return
               }
             }
-            // 没有下一条用户消息了，滚动到底部
             virtuoso.current.scrollToIndex({ index: renderItems.length - 1, align: 'end', behavior: 'smooth' })
             return
           }
@@ -385,7 +380,6 @@ const MessageList = forwardRef<MessageListRef, MessageListProps>((props, ref) =>
   const handleScrollTopThrottled = useThrottledCallback((scrollTop?: number) => {
     if (typeof scrollTop === 'number' && typeof lastScrollTop.current === 'number') {
       if (scrollTop > 0 && scrollTop < lastScrollTop.current) {
-        // 是向上滚动
         setShowScrollToPrev(true)
         if (timerRef.current) {
           clearTimeout(timerRef.current)
@@ -420,20 +414,17 @@ const MessageList = forwardRef<MessageListRef, MessageListProps>((props, ref) =>
   )
   // message navigation handlers end
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 仅执行一次
   useEffect(() => {
     setMessageScrolling(virtuoso)
-    const currentVirtuoso = virtuoso.current // 清理时 virtuoso.current 已经为 null
+    const currentVirtuoso = virtuoso.current
     return () => {
       currentVirtuoso?.getState((state) => {
         if (state.ranges.length > 0) {
-          // useEffect 可能执行两次，这里根据 ranges 判断是否为第一次 useEffect 严格测试导致的执行
           setScrollPosition(currentSession.id, state)
         }
       })
     }
   }, [])
-  // biome-ignore lint/correctness/useExhaustiveDependencies: 仅执行一次
   useEffect(() => {
     setMessageListElement(messageListRef)
   }, [])
@@ -636,7 +627,6 @@ const MessageList = forwardRef<MessageListRef, MessageListProps>((props, ref) =>
             {...(sessionScrollPositionCache.has(currentSession.id)
               ? {
                   restoreStateFrom: sessionScrollPositionCache.get(currentSession.id),
-                  // 需要额外设置 initialScrollTop，否则恢复位置后 scrollTop 为 0。这时如果用户没有滚动，那么下次保存时 scrollTop 将记为 0，导致下一次恢复时位置始终为顶部。
                   initialScrollTop: sessionScrollPositionCache.get(currentSession.id)?.scrollTop,
                 }
               : {

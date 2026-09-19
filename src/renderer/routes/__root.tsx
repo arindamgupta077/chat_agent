@@ -241,8 +241,6 @@ function Root() {
         return
       }
 
-      // 是否需要弹出关于窗口（更新后首次启动）
-      // 目前仅在桌面版本更新后首次启动、且网络环境为"外网"的情况下才自动弹窗
       const shouldShowAboutDialogWhenStartUp = await platform.shouldShowAboutDialogWhenStartUp()
       if (shouldShowAboutDialogWhenStartUp && remoteConfig.setting_chatboxai_first) {
         setOpenAboutDialog(true)
@@ -290,12 +288,8 @@ function Root() {
 
   useEffect(() => {
     if (platform.onNavigate) {
-      // 移动端和其他平台的导航监听器
       return platform.onNavigate((path) => {
-        // 如果是 settings 路径，使用 navigateToSettings 以保持与主页面设置按钮一致的行为
-        // 在桌面端会打开 Modal，在移动端会正常导航
         if (path.startsWith('/settings')) {
-          // 提取 settings 之后的路径部分（包含查询参数）
           const settingsPath = path.substring('/settings'.length)
           navigateToSettings(settingsPath || '/')
         } else {
@@ -312,7 +306,6 @@ function Root() {
     const shouldTrackPageView = pageViewVisitGate.current.shouldTrack(pathname, settingsSearch)
     let pageName: string | undefined
 
-    // 桌面端 settings 以 modal 方式打开，pathname 不变，通过 search.settings 控制
     if (settingsSearch) {
       pageName = JK_PAGE_NAMES.SETTING_PAGE
     } else if (pathname === '/' || pathname.startsWith('/session/')) {
@@ -361,11 +354,7 @@ function Root() {
   }, [needRoomForMacWindowControls])
 
   return (
-    <Box
-      className="box-border App relative bg-chatbox-background-primary"
-      spellCheck={spellCheck}
-      dir={language === 'ar' ? 'rtl' : 'ltr'}
-    >
+    <Box className="box-border App relative bg-chatbox-background-primary" spellCheck={spellCheck} dir="ltr">
       <BackgroundImageOverlay />
       {platform.isDesktopLike && (getOS() === 'Windows' || getOS() === 'Linux') && <ExitFullscreenButton />}
       <Grid container className="h-full relative z-[1]">
@@ -381,11 +370,7 @@ function Root() {
                   ? theme.transitions.duration.enteringScreen
                   : theme.transitions.duration.leavingScreen,
               }),
-            ...(showSidebar
-              ? language === 'ar'
-                ? { paddingRight: { sm: `${sidebarWidth}px` } }
-                : { paddingLeft: { sm: `${sidebarWidth}px` } }
-              : {}),
+            ...(showSidebar ? { paddingLeft: { sm: `${sidebarWidth}px` } } : {}),
           }}
         >
           <Box
@@ -421,33 +406,19 @@ function Root() {
           </Box>
         </Box>
       </Grid>
-      {/* 对话设置 */}
       {/* <AppStoreRatingDialog /> */}
-      {/* 代码预览 */}
       {/* <ArtifactDialog /> */}
-      {/* 对话列表清理 */}
       {/* <ChatConfigWindow /> */}
-      {/* 似乎未使用 */}
       {/* <CleanWidnow /> */}
-      {/* 对话列表清理 */}
       {/* <ClearConversationListWindow /> */}
-      {/* 导出聊天记录 */}
       {/* <ExportChatDialog /> */}
-      {/* 编辑消息 */}
       {/* <MessageEditDialog /> */}
-      {/* 添加链接 */}
       {/* <OpenAttachLinkDialog /> */}
-      {/* 图片预览 */}
       <PictureDialog />
-      {/* 似乎是从后端拉一个弹窗的配置 */}
       <RemoteDialogWindow />
-      {/* IndexedDB schema 与当前版本不匹配时的升级/刷新引导 */}
       <DbSchemaGuardDialog />
-      {/* 手机端举报内容 */}
       {/* <ReportContentDialog /> */}
-      {/* 搜索 */}
       <SearchDialog />
-      {/* 没有配置模型时的欢迎弹窗 */}
       {/* <WelcomeDialog /> */}
       <Toasts /> {/* mui */}
       <ErrorBoundary name="settings-modal" fallback={SettingsModalErrorFallback}>

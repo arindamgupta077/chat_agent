@@ -41,12 +41,12 @@ export const InAgentMessage: StoryObj<typeof AgentModeRewardQuotaCard> = {
 }
 
 function AgentMessageFixture() {
-  const [ready, setReady] = useState(i18n.language === 'zh-Hans')
+  const [ready, setReady] = useState(i18n.language === 'en')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const previousLanguage = i18n.language
-    void i18n.changeLanguage('zh-Hans').then(() => setReady(true))
+    void i18n.changeLanguage('en').then(() => setReady(true))
     return () => {
       void i18n.changeLanguage(previousLanguage)
     }

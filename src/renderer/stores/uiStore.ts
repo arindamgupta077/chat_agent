@@ -35,7 +35,6 @@ function updateSessionWebBrowsingMap(
 }
 
 // UI store for managing UI-related state
-// 不能使用immer middleware，会导致RefObject出问题
 export const uiStore = createStore(
   persist(
     combine(
@@ -49,8 +48,8 @@ export const uiStore = createStore(
         messageScrollingAtBottom: false,
         showSidebar: platform.type !== 'mobile' && !isSmallScreenViewport(),
         openSearchDialog: false,
-        searchDialogGlobalOnly: false, // 是否只显示全局搜索（用于对话列表）
-        openAboutDialog: false, // 是否展示相关信息的窗口
+        searchDialogGlobalOnly: false,
+        openAboutDialog: false,
         inputBoxWebBrowsingMode: false,
         sessionWebBrowsingMap: {} as Record<string, boolean | undefined>,
         // Explicit Web Search preference for future new chats. Undefined keeps

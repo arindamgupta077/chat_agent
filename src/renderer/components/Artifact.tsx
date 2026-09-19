@@ -193,7 +193,6 @@ export function Artifact(props: { htmlCode: string; previewUrl?: string; reloadS
     }
     ref.current.contentWindow?.postMessage({ type, code }, '*')
   }, [])
-  // 当 reloadSign 改变时，重新加载 iframe 内容
   useEffect(() => {
     if (previewUrl) return
     void (async () => {
@@ -204,7 +203,6 @@ export function Artifact(props: { htmlCode: string; previewUrl?: string; reloadS
     })()
   }, [htmlCode, previewUrl, reloadSign, sendIframeMsg])
 
-  // 当 htmlCode 改变时，防抖地刷新 iframe 内容
   const updateIframe = useMemo(
     () =>
       debounce(() => {
@@ -262,7 +260,6 @@ function generateHtml(markdowns: string[]): string {
       }
     }
   }
-  // 仅保留最后一个
   // const htmlWholes = codeBlocks.html.filter(c => c.includes('</html>'))
   // codeBlocks.html = [
   //     htmlWholes[htmlWholes.length - 1],
