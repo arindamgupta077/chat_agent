@@ -3,6 +3,7 @@ import i18n from '@/i18n'
 import { getLogger } from '@/lib/utils'
 import { router } from '@/router'
 import { initSessionPresentationBindings } from '@/session-bootstrap'
+import { cleanupDefaultTemplateSessions } from '@/setup/init_data'
 import { initGoogleAnalyticsTracking } from '@/setup/ga_init'
 import { initJkTracking } from '@/setup/jk_analytics_init'
 import { initPlausibleTracking } from '@/setup/plausible_init'
@@ -31,6 +32,8 @@ export async function initializeRenderer(): Promise<void> {
     log.error('migrate error', error)
     migrationError = error
   }
+
+  await cleanupDefaultTemplateSessions()
 
   // Migrate persisted consent before any settings-backed telemetry initializes.
   await initSentry()

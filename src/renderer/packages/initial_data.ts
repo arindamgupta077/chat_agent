@@ -1028,3 +1028,35 @@ mindmap
 
 defaultSessionsForCN.unshift(artifactSessionCN, mermaidSessionCN)
 defaultSessionsForEN.unshift(artifactSessionEN, mermaidSessionEN)
+
+export const builtInTemplateSessionIds = new Set<string>([
+  'justchat-b612-406a-985b-3ab4d2c482ff',
+  '6dafa15e-c72f-4036-ac89-33c09e875bdc',
+  'e22ab364-4681-4e24-aaba-461ed0fccfd3',
+  '55d92e88-02af-4c3b-a378-aa0a1970abb1',
+  '35df5a96-b612-406a-985b-3ab4d2c481ff',
+  '776eac23-7b4a-40da-91cd-f233bb4742ed',
+  '81cfc426-48b4-4a13-ad42-bfcfc4544299',
+  '8732ec08-b23c-4b5e-8f65-d63d808f970f',
+  'a709fc22-7773-455b-a7e8-4cbef4873133',
+  'chatbox-chat-demo-artifact-1-cn',
+  'chatbox-chat-demo-artifact-1-en',
+  'artifact-demo-1-cn',
+  'artifact-demo-1-en',
+  'mermaid-demo-1-cn',
+  'mermaid-demo-1-en',
+  'chatbox-chat-demo-image-creator',
+  'chatbox-chat-demo-image-creator-en',
+  ...defaultSessionsForEN.map((s) => s.id),
+  ...defaultSessionsForCN.map((s) => s.id),
+])
+
+export function isBuiltInTemplateSessionId(id: string | null | undefined): boolean {
+  if (!id) return false
+  return (
+    builtInTemplateSessionIds.has(id) ||
+    id.startsWith('chatbox-chat-demo-') ||
+    id.startsWith('mermaid-demo-') ||
+    id.startsWith('artifact-demo-')
+  )
+}

@@ -1,30 +1,27 @@
-import { defaultSessionsForCN, defaultSessionsForEN } from '@/packages/initial_data'
-import platform from '@/platform'
+import { isBuiltInTemplateSessionId } from '@/packages/initial_data'
 import storage from '@/storage'
 import { StorageKeyGenerator } from '@/storage/StoreStorage'
 import { getMetaStorage } from '@/stores/sessionHelpers'
-import { getSessionMeta } from '@/stores/sessionHelpers'
-import { createSessionMetaRecordsFromLegacyList } from '@/utils/session-utils'
 
-export async function initData() {
-  await initSessionsIfNeeded()
+export async function cleanupDefaultTemplateSessions(): Promise<void> {
+  try {
+    const metaStorage = await getMetaStorage()
+    const allRecords = await metaStorage.getAllIncludingHidden()
+    const toDelete = allRecords
+      .filter((s) => isBuiltInTemplateSessionId(s.id))
+      .map((s) => s.id)
+
+    if (toDelete.length > 0) {
+      await metaStorage.deleteMany(toDelete)
+      for (const id of toDelete) {
+        await storage.removeItem(StorageKeyGenerator.session(id)).catch(() => {})
+      }
+    }
+  } catch (err) {
+    console.error('Failed to cleanup default template sessions', err)
+  }
 }
 
-async function initSessionsIfNeeded() {
-  const metaStorage = await getMetaStorage()
-  const total = await metaStorage.getAllTotal()
-  if (total > 0) {
-    return
-  }
-
-  const lang = await platform.getLocale().catch(() => 'en')
-  const defaultSessions = lang.startsWith('zh') ? defaultSessionsForCN : defaultSessionsForEN
-
-  for (const session of defaultSessions) {
-    await storage.setItemNow(StorageKeyGenerator.session(session.id), session)
-  }
-
-  const records = createSessionMetaRecordsFromLegacyList(defaultSessions.map(getSessionMeta))
-
-  await metaStorage.createMany(records)
+export async function initData() {
+  await cleanupDefaultTemplateSessions()
 }

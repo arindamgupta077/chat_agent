@@ -216,4 +216,20 @@ describe('SessionList mobile reorder mode', () => {
 
     expect(reorderSessionsMock).not.toHaveBeenCalled()
   })
+
+  test('filters out default example template sessions from the sidebar list', () => {
+    sessionListState.sessions = [
+      { id: '6dafa15e-c72f-4036-ac89-33c09e875bdc', name: 'Markdown 101 (Example)', sortOrder: 1, starred: true, createdAt: 1 },
+      { id: '35df5a96-b612-406a-985b-3ab4d2c481ff', name: 'Software Developer (Example)', sortOrder: 2, starred: true, createdAt: 2 },
+      { id: 'chatbox-chat-demo-artifact-1-en', name: 'Snake Game', sortOrder: 3, starred: false, createdAt: 3 },
+      { id: 'user-session-1', name: 'User Chat', sortOrder: 4, starred: false, createdAt: 4 },
+    ]
+
+    renderList()
+
+    expect(screen.queryByTestId('session-content-6dafa15e-c72f-4036-ac89-33c09e875bdc')).toBeNull()
+    expect(screen.queryByTestId('session-content-35df5a96-b612-406a-985b-3ab4d2c481ff')).toBeNull()
+    expect(screen.queryByTestId('session-content-chatbox-chat-demo-artifact-1-en')).toBeNull()
+    expect(screen.getByTestId('session-content-user-session-1')).toBeDefined()
+  })
 })

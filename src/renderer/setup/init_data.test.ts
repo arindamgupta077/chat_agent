@@ -1,32 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SessionMetaStorage } from '@/storage/SessionMetaStorage'
-import { initData } from './init_data'
+import { cleanupDefaultTemplateSessions, initData } from './init_data'
 
 const metaStorage = vi.hoisted(() => ({
-  getAllTotal: vi.fn(),
-  createMany: vi.fn(),
+  getAllIncludingHidden: vi.fn(),
+  deleteMany: vi.fn(),
 }))
 
 const storageMock = vi.hoisted(() => ({
-  setItemNow: vi.fn(),
+  removeItem: vi.fn(),
 }))
 
 vi.mock('@/packages/initial_data', () => ({
-  defaultSessionsForCN: [],
-  defaultSessionsForEN: [
-    {
-      id: 'default-session',
-      name: 'Default Session',
-      messages: [],
-      type: 'chat',
-    },
-  ],
-}))
-
-vi.mock('@/platform', () => ({
-  default: {
-    getLocale: vi.fn(() => Promise.resolve('en')),
-  },
+  isBuiltInTemplateSessionId: (id: string) =>
+    id === 'default-template-1' || id.startsWith('chatbox-chat-demo-'),
 }))
 
 vi.mock('@/storage', () => ({
@@ -41,38 +28,43 @@ vi.mock('@/storage/StoreStorage', () => ({
 
 vi.mock('@/stores/sessionHelpers', () => ({
   getMetaStorage: vi.fn(() => Promise.resolve(metaStorage)),
-  getSessionMeta: (session: { id: string; name: string; type: 'chat' | 'picture' }) => ({
-    id: session.id,
-    name: session.name,
-    type: session.type,
-  }),
 }))
 
 describe('initData', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    metaStorage.createMany.mockResolvedValue(undefined)
-    storageMock.setItemNow.mockResolvedValue(undefined)
+    metaStorage.deleteMany.mockResolvedValue(undefined)
+    storageMock.removeItem.mockResolvedValue(undefined)
   })
 
-  it('uses all session meta records to decide whether default sessions are needed', async () => {
-    metaStorage.getAllTotal.mockResolvedValue(1)
+  it('removes default template sessions when present', async () => {
+    metaStorage.getAllIncludingHidden.mockResolvedValue([
+      { id: 'default-template-1', name: 'Markdown 101 (Example)' },
+      { id: 'user-session-1', name: 'My Real Chat' },
+      { id: 'chatbox-chat-demo-artifact-1-en', name: 'Snake Game' },
+    ])
 
     await initData()
 
-    expect(metaStorage.getAllTotal).toHaveBeenCalledTimes(1)
-    expect(storageMock.setItemNow).not.toHaveBeenCalled()
-    expect(metaStorage.createMany).not.toHaveBeenCalled()
+    expect(metaStorage.deleteMany).toHaveBeenCalledWith([
+      'default-template-1',
+      'chatbox-chat-demo-artifact-1-en',
+    ])
+    expect(storageMock.removeItem).toHaveBeenCalledWith('session:default-template-1')
+    expect(storageMock.removeItem).toHaveBeenCalledWith('session:chatbox-chat-demo-artifact-1-en')
+    expect(storageMock.removeItem).not.toHaveBeenCalledWith('session:user-session-1')
   })
 
-  it('creates default sessions when session meta storage is empty', async () => {
-    metaStorage.getAllTotal.mockResolvedValue(0)
+  it('does not delete anything when no template sessions exist', async () => {
+    metaStorage.getAllIncludingHidden.mockResolvedValue([
+      { id: 'user-session-1', name: 'My Real Chat' },
+    ])
 
-    await initData()
+    await cleanupDefaultTemplateSessions()
 
-    expect(storageMock.setItemNow).toHaveBeenCalled()
-    expect(metaStorage.createMany).toHaveBeenCalled()
+    expect(metaStorage.deleteMany).not.toHaveBeenCalled()
+    expect(storageMock.removeItem).not.toHaveBeenCalled()
   })
 })
 
-metaStorage satisfies Pick<SessionMetaStorage, 'getAllTotal' | 'createMany'>
+metaStorage satisfies Pick<SessionMetaStorage, 'getAllIncludingHidden' | 'deleteMany'>

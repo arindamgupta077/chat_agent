@@ -27,6 +27,7 @@ import { type CSSProperties, type MutableRefObject, useCallback, useMemo, useSta
 import { useTranslation } from 'react-i18next'
 import { Virtuoso } from 'react-virtuoso'
 import { useIsSmallScreen } from '@/hooks/useScreenChange'
+import { isBuiltInTemplateSessionId } from '@/packages/initial_data'
 import platform from '@/platform'
 import { rendererApplication } from '@/app/renderer-application'
 
@@ -74,9 +75,15 @@ export default function SessionList(props: Props) {
   const onDragStart = (event: DragStartEvent) => {
     setActiveDragId(String(event.active.id))
   }
+  const visibleSessions = useMemo(() => {
+    if (!sortedSessions) {
+      return undefined
+    }
+    return sortedSessions.filter((session) => !isBuiltInTemplateSessionId(session.id))
+  }, [sortedSessions])
   const onDragEnd = async (event: DragEndEvent) => {
     setActiveDragId(null)
-    if (!event.over || !sortedSessions) {
+    if (!event.over || !sortedSessions || !visibleSessions) {
       return
     }
     const activeId = String(event.active.id)
@@ -96,17 +103,17 @@ export default function SessionList(props: Props) {
     setActiveDragId(null)
   }
   const activeDragSession = useMemo(
-    () => sortedSessions?.find((session) => session.id === activeDragId),
-    [activeDragId, sortedSessions]
+    () => visibleSessions?.find((session) => session.id === activeDragId),
+    [activeDragId, visibleSessions]
   )
-  const sortableSessionIds = useMemo(() => sortedSessions?.map((session) => session.id) ?? [], [sortedSessions])
+  const sortableSessionIds = useMemo(() => visibleSessions?.map((session) => session.id) ?? [], [visibleSessions])
   const displayItems = useMemo<SessionListItem[]>(() => {
-    if (!sortedSessions) {
+    if (!visibleSessions) {
       return []
     }
 
-    const pinnedSessions = sortedSessions.filter((session) => session.starred)
-    const otherSessions = sortedSessions.filter((session) => !session.starred)
+    const pinnedSessions = visibleSessions.filter((session) => session.starred)
+    const otherSessions = visibleSessions.filter((session) => !session.starred)
     if (pinnedSessions.length === 0) {
       return otherSessions.map((session) => ({ type: 'session', id: session.id, session }))
     }
@@ -121,7 +128,7 @@ export default function SessionList(props: Props) {
           ]
         : []),
     ]
-  }, [sortedSessions, t])
+  }, [visibleSessions, t])
   const routerState = useRouterState()
   const onEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -147,7 +154,7 @@ export default function SessionList(props: Props) {
       onDragEnd={onDragEnd}
       onDragCancel={onDragCancel}
     >
-      {sortedSessions && (
+      {visibleSessions && (
         <SortableContext items={sortableSessionIds} strategy={verticalListSortingStrategy}>
           {isSmallScreen && isReordering && (
             <Flex

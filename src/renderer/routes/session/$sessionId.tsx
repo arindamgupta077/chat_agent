@@ -18,7 +18,7 @@ import { useGenerationStop } from '@/hooks/useGenerationStop'
 import { useProviders } from '@/hooks/useProviders'
 import { useIsSmallScreen } from '@/hooks/useScreenChange'
 import useVersion from '@/hooks/useVersion'
-import { defaultSessionsForCN, defaultSessionsForEN } from '@/packages/initial_data'
+import { builtInTemplateSessionIds, isBuiltInTemplateSessionId } from '@/packages/initial_data'
 import * as remote from '@/packages/remote'
 import {
   sessionStartupRecovery,
@@ -55,14 +55,16 @@ function SessionRouteWithErrorBoundary() {
   )
 }
 
-const builtInTemplateSessionIds = new Set(
-  [...defaultSessionsForEN, ...defaultSessionsForCN].map((session) => session.id)
-)
-
 function RouteComponent() {
   const { t } = useTranslation()
   const { sessionId: currentSessionId } = Route.useParams()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (isBuiltInTemplateSessionId(currentSessionId)) {
+      navigate({ to: '/', replace: true })
+    }
+  }, [currentSessionId, navigate])
   const sessionLoadTarget = useSessionStartupLoadTarget(currentSessionId)
   const recovering = sessionLoadTarget === null
   const { session: currentSession, isFetching, isError } = useSession(sessionLoadTarget)
