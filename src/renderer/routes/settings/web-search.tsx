@@ -1,20 +1,12 @@
-import { Button, Flex, PasswordInput, Select, Stack, Text, TextInput, Title } from '@mantine/core'
+import { Button, Flex, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core'
 import { IconCheck, IconX } from '@tabler/icons-react'
 import { createFileRoute } from '@tanstack/react-router'
 import { ofetch } from 'ofetch'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { trackJkClickEvent } from '@/analytics/jk'
-import { JK_EVENTS, JK_PAGE_NAMES } from '@/analytics/jk-events'
 import { AdaptiveSelect } from '@/components/AdaptiveSelect'
-import { TooltipInfoTrigger } from '@/components/common/TooltipInfoTrigger'
-import { AppTooltip as Tooltip } from '@/components/ui/tooltip'
 import { PROVIDERS_WITH_PARSE_LINK } from '@/packages/web-search'
-import { BochaSearch } from '@/packages/web-search/bocha'
 import { WEB_SEARCH_PROVIDERS, type WebSearchProviderValue } from '@/packages/web-search/constants'
-import { QUERIT_SEARCH_URL } from '@/packages/web-search/querit'
-import { SearxngSearch } from '@/packages/web-search/searxng'
-import platform from '@/platform'
 import { useSettingsStore } from '@/stores/settingsStore'
 
 export const Route = createFileRoute('/settings/web-search')({
@@ -26,89 +18,27 @@ export function RouteComponent() {
   const setSettings = useSettingsStore((state) => state.setSettings)
   const extension = useSettingsStore((state) => state.extension)
 
-  const [checkingQuerit, setCheckingQuerit] = useState(false)
-  const [queritAvailable, setQueritAvailable] = useState<boolean>()
-  const checkQuerit = async () => {
-    if (extension.webSearch.queritApiKey) {
-      setCheckingQuerit(true)
-      setQueritAvailable(undefined)
+  const [checkingGoogle, setCheckingGoogle] = useState(false)
+  const [googleAvailable, setGoogleAvailable] = useState<boolean>()
+  const checkGoogle = async () => {
+    if (extension.webSearch.googleApiKey && extension.webSearch.googleCx) {
+      setCheckingGoogle(true)
+      setGoogleAvailable(undefined)
       try {
-        await ofetch(QUERIT_SEARCH_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${extension.webSearch.queritApiKey}`,
-          },
-          body: { query: 'Chatbox' },
-        })
-        setQueritAvailable(true)
-      } catch (e) {
-        setQueritAvailable(false)
-      } finally {
-        setCheckingQuerit(false)
-      }
-    }
-  }
-
-  const [checkingBocha, setCheckingBocha] = useState(false)
-  const [bochaAvailable, setBochaAvailable] = useState<boolean>()
-  const checkBocha = async () => {
-    if (extension.webSearch.bochaApiKey) {
-      setCheckingBocha(true)
-      setBochaAvailable(undefined)
-      try {
-        await new BochaSearch(extension.webSearch.bochaApiKey).search('Chatbox')
-        setBochaAvailable(true)
-      } catch (e) {
-        setBochaAvailable(false)
-      } finally {
-        setCheckingBocha(false)
-      }
-    }
-  }
-
-  const [checkingTavily, setCheckingTavily] = useState(false)
-  const [tavilyAvaliable, setTavilyAvaliable] = useState<boolean>()
-  const checkTavily = async () => {
-    if (extension.webSearch.tavilyApiKey) {
-      setCheckingTavily(true)
-      setTavilyAvaliable(undefined)
-      try {
-        await ofetch('https://api.tavily.com/search', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${extension.webSearch.tavilyApiKey}`,
-          },
-          body: {
-            query: 'Chatbox',
-            search_depth: 'basic',
-            include_domains: [],
-            exclude_domains: [],
+        await ofetch('https://www.googleapis.com/customsearch/v1', {
+          method: 'GET',
+          query: {
+            key: extension.webSearch.googleApiKey,
+            cx: extension.webSearch.googleCx,
+            q: 'Chatbox',
+            num: '1',
           },
         })
-        setTavilyAvaliable(true)
-      } catch (e) {
-        setTavilyAvaliable(false)
+        setGoogleAvailable(true)
+      } catch {
+        setGoogleAvailable(false)
       } finally {
-        setCheckingTavily(false)
-      }
-    }
-  }
-
-  const [checkingSearxng, setCheckingSearxng] = useState(false)
-  const [searxngAvailable, setSearxngAvailable] = useState<boolean>()
-  const checkSearxng = async () => {
-    if (extension.webSearch.searxngBaseUrl?.trim()) {
-      setCheckingSearxng(true)
-      setSearxngAvailable(undefined)
-      try {
-        await new SearxngSearch(extension.webSearch.searxngBaseUrl).search('Chatbox')
-        setSearxngAvailable(true)
-      } catch (e) {
-        setSearxngAvailable(false)
-      } finally {
-        setCheckingSearxng(false)
+        setCheckingGoogle(false)
       }
     }
   }
@@ -160,327 +90,90 @@ export function RouteComponent() {
           ))
         })()}
       </Stack>
-      {extension.webSearch.provider === 'build-in' && (
-        <Text size="xs" c="chatbox-gray">
-          {t('AgentLab Search is a paid feature with advanced capabilities and better performance.')}
-        </Text>
-      )}
+
       {extension.webSearch.provider === 'bing' && (
         <Text size="xs" c="chatbox-gray">
           {t(
-            'Bing Search is provided for free use, but it may have limitations and is subject to change by Microsoft.'
+            'Bing Search is provided for free use without requiring an API key. It uses a local proxy to ensure compatibility across platforms.'
           )}
         </Text>
       )}
-      {extension.webSearch.provider === 'searxng' && (
-        <Stack gap="xs">
-          <Text fw="600">{t('SearXNG Instance URL')}</Text>
-          <Flex align="center" gap="xs">
-            <TextInput
-              flex={1}
-              maw={320}
-              value={extension.webSearch.searxngBaseUrl}
-              onChange={(e) => {
-                setSearxngAvailable(undefined)
-                setSettings({
-                  extension: {
-                    ...extension,
-                    webSearch: {
-                      ...extension.webSearch,
-                      searxngBaseUrl: e.currentTarget.value,
-                    },
-                  },
-                })
-              }}
-              placeholder="https://searx.example.com"
-              error={searxngAvailable === false}
-            />
-            <Button
-              color="blue"
-              variant="light"
-              onClick={checkSearxng}
-              loading={checkingSearxng}
-              disabled={!extension.webSearch.searxngBaseUrl?.trim()}
-            >
-              {t('Check')}
-            </Button>
-          </Flex>
+
+      {extension.webSearch.provider === 'google' && (
+        <Stack gap="md">
           <Text size="xs" c="chatbox-gray">
-            {t('The SearXNG instance must enable JSON output format in search settings.')}
+            {t(
+              'Google Search uses the Google Custom Search JSON API. You can get a free API key (100 free queries/day) and Search Engine ID (CX) from Google Cloud and Programmable Search Engine.'
+            )}
           </Text>
 
-          {typeof searxngAvailable === 'boolean' ? (
-            searxngAvailable ? (
-              <Text size="xs" c="chatbox-success">
-                {t('Connection successful!')}
-              </Text>
-            ) : (
-              <Text size="xs" c="chatbox-error">
-                {t('Connection failed!')}
-              </Text>
-            )
-          ) : null}
-        </Stack>
-      )}
-      {/* Tavily API Key */}
-      {extension.webSearch.provider === 'tavily' && (
-        <Stack gap="xs">
-          <Text fw="600">{t('Tavily API Key')}</Text>
-          <Flex align="center" gap="xs">
+          {/* Google API Key */}
+          <Stack gap="xs">
+            <Text fw="600">{t('Google API Key')}</Text>
             <PasswordInput
-              flex={1}
               maw={320}
-              value={extension.webSearch.tavilyApiKey}
+              value={extension.webSearch.googleApiKey || ''}
+              placeholder="AIzaSy..."
               onChange={(e) => {
-                setTavilyAvaliable(undefined)
+                setGoogleAvailable(undefined)
                 setSettings({
                   extension: {
                     ...extension,
                     webSearch: {
                       ...extension.webSearch,
-                      tavilyApiKey: e.currentTarget.value,
+                      googleApiKey: e.currentTarget.value,
                     },
                   },
                 })
               }}
-              error={tavilyAvaliable === false}
+              error={googleAvailable === false}
             />
-            <Button
-              color="blue"
-              variant="light"
-              onClick={checkTavily}
-              loading={checkingTavily}
-              disabled={!extension.webSearch.tavilyApiKey?.trim()}
-            >
-              {t('Check')}
-            </Button>
-          </Flex>
+          </Stack>
 
-          {typeof tavilyAvaliable === 'boolean' ? (
-            tavilyAvaliable ? (
-              <Text size="xs" c="chatbox-success">
-                {t('Connection successful!')}
-              </Text>
-            ) : (
-              <Text size="xs" c="chatbox-error">
-                {t('API key invalid!')}
-              </Text>
-            )
-          ) : null}
-          <Button
-            variant="transparent"
-            size="compact-xs"
-            px={0}
-            className="self-start"
-            onClick={() => platform.openLink('https://app.tavily.com?utm_source=chatbox')}
-          >
-            {t('Get API Key')}
-          </Button>
-        </Stack>
-      )}
-      {/* BoCha API Key */}
-      {extension.webSearch.provider === 'bocha' && (
-        <Stack gap="xs">
-          <Text fw="600">{t('BoCha API Key')}</Text>
-          <Flex align="center" gap="xs">
-            <PasswordInput
-              flex={1}
-              maw={320}
-              value={extension.webSearch.bochaApiKey}
-              onChange={(e) => {
-                setBochaAvailable(undefined)
-                setSettings({
-                  extension: {
-                    ...extension,
-                    webSearch: {
-                      ...extension.webSearch,
-                      bochaApiKey: e.currentTarget.value,
-                    },
-                  },
-                })
-              }}
-              error={bochaAvailable === false}
-            />
-            <Button
-              color="blue"
-              variant="light"
-              onClick={checkBocha}
-              loading={checkingBocha}
-              disabled={!extension.webSearch.bochaApiKey?.trim()}
-            >
-              {t('Check')}
-            </Button>
-          </Flex>
-
-          {typeof bochaAvailable === 'boolean' ? (
-            bochaAvailable ? (
-              <Text size="xs" c="chatbox-success">
-                {t('Connection successful!')}
-              </Text>
-            ) : (
-              <Text size="xs" c="chatbox-error">
-                {t('API key invalid!')}
-              </Text>
-            )
-          ) : null}
-          <Button
-            variant="transparent"
-            size="compact-xs"
-            px={0}
-            className="self-start"
-            onClick={() => platform.openLink('https://open.bochaai.com')}
-          >
-            {t('Get API Key')}
-          </Button>
-        </Stack>
-      )}
-      {/* Querit API Key */}
-      {extension.webSearch.provider === 'querit' && (
-        <Stack gap="xs">
-          <Text fw="600">{t('Querit API Key')}</Text>
-          <Flex align="center" gap="xs">
-            <PasswordInput
-              flex={1}
-              maw={320}
-              value={extension.webSearch.queritApiKey}
-              onChange={(e) => {
-                setQueritAvailable(undefined)
-                setSettings({
-                  extension: {
-                    ...extension,
-                    webSearch: {
-                      ...extension.webSearch,
-                      queritApiKey: e.currentTarget.value,
-                    },
-                  },
-                })
-              }}
-              placeholder={t('Enter your Querit API Key') || 'Enter your Querit API Key'}
-              error={queritAvailable === false}
-            />
-            <Button
-              color="blue"
-              variant="light"
-              onClick={checkQuerit}
-              loading={checkingQuerit}
-              disabled={!extension.webSearch.queritApiKey?.trim()}
-            >
-              {t('Check')}
-            </Button>
-          </Flex>
-
-          {typeof queritAvailable === 'boolean' ? (
-            queritAvailable ? (
-              <Text size="xs" c="chatbox-success">
-                {t('Connection successful!')}
-              </Text>
-            ) : (
-              <Text size="xs" c="chatbox-error">
-                {t('API key invalid!')}
-              </Text>
-            )
-          ) : null}
-
-          <Button
-            variant="transparent"
-            size="compact-xs"
-            px={0}
-            className="self-start"
-            onClick={() => platform.openLink('https://www.querit.ai')}
-          >
-            {t('Get API Key')}
-          </Button>
-
-          {/* Querit Configuration Options */}
-          <Stack mt="md" gap="sm">
-            <Title order={6}>{t('Querit Search Options')}</Title>
-
-            {/* Max Results */}
-            <Stack gap="xs">
-              <Flex align="center" gap="xs">
-                <Text size="sm">{t('Max Results')}</Text>
-                <Tooltip
-                  label={t('Maximum number of results to return.')}
-                  withArrow
-                  maw={320}
-                  className="!whitespace-normal"
-                  zIndex={3000}
-                  openOnTouch
-                >
-                  <TooltipInfoTrigger label={t('Max Results')} />
-                </Tooltip>
-              </Flex>
-              <Select
-                comboboxProps={{ withinPortal: true, withArrow: true }}
-                data={[
-                  { value: '1', label: '1' },
-                  { value: '2', label: '2' },
-                  { value: '3', label: '3' },
-                  { value: '4', label: '4' },
-                  { value: '5', label: '5' },
-                  { value: '6', label: '6' },
-                  { value: '7', label: '7' },
-                  { value: '8', label: '8' },
-                  { value: '9', label: '9' },
-                  { value: '10', label: '10' },
-                ]}
-                value={String(extension.webSearch.queritMaxResults || 5)}
-                onChange={(e) =>
-                  e &&
+          {/* Google Search Engine ID (CX) */}
+          <Stack gap="xs">
+            <Text fw="600">{t('Search Engine ID (CX)')}</Text>
+            <Flex align="center" gap="xs">
+              <TextInput
+                flex={1}
+                maw={320}
+                value={extension.webSearch.googleCx || ''}
+                placeholder="a1b2c3d4e5f6..."
+                onChange={(e) => {
+                  setGoogleAvailable(undefined)
                   setSettings({
                     extension: {
                       ...extension,
                       webSearch: {
                         ...extension.webSearch,
-                        queritMaxResults: parseInt(e),
+                        googleCx: e.currentTarget.value,
                       },
                     },
                   })
-                }
-                maw={320}
+                }}
+                error={googleAvailable === false}
               />
-            </Stack>
-
-            {/* Time Range */}
-            <Stack gap="xs">
-              <Flex align="center" gap="xs">
-                <Text size="sm">{t('Time Range')}</Text>
-                <Tooltip
-                  label={t('Time range of the search. For example, the last month.')}
-                  withArrow
-                  maw={320}
-                  className="!whitespace-normal"
-                  zIndex={3000}
-                  openOnTouch
-                >
-                  <TooltipInfoTrigger label={t('Time Range')} />
-                </Tooltip>
-              </Flex>
-              <Select
-                comboboxProps={{ withinPortal: true, withArrow: true }}
-                data={[
-                  { value: 'none', label: 'None' },
-                  { value: 'd1', label: 'Day' },
-                  { value: 'w1', label: 'Week' },
-                  { value: 'm1', label: 'Month' },
-                  { value: 'y1', label: 'Year' },
-                ]}
-                value={extension.webSearch.queritTimeRange || 'none'}
-                onChange={(e) =>
-                  e &&
-                  setSettings({
-                    extension: {
-                      ...extension,
-                      webSearch: {
-                        ...extension.webSearch,
-                        queritTimeRange: e,
-                      },
-                    },
-                  })
-                }
-                maw={320}
-              />
-            </Stack>
+              <Button
+                color="blue"
+                variant="light"
+                onClick={checkGoogle}
+                loading={checkingGoogle}
+                disabled={!extension.webSearch.googleApiKey?.trim() || !extension.webSearch.googleCx?.trim()}
+              >
+                {t('Check')}
+              </Button>
+            </Flex>
+            {typeof googleAvailable === 'boolean' ? (
+              googleAvailable ? (
+                <Text size="xs" c="chatbox-success">
+                  {t('Connection successful!')}
+                </Text>
+              ) : (
+                <Text size="xs" c="chatbox-error">
+                  {t('Connection failed!')}
+                </Text>
+              )
+            ) : null}
           </Stack>
         </Stack>
       )}

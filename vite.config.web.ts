@@ -92,6 +92,18 @@ export default defineConfig({
         ws: true,
         rewrite: (path) => path.replace(/^\/n8n-mcp/, ''),
       },
+      '/proxy/bing': {
+        target: 'https://www.bing.com',
+        changeOrigin: true,
+        secure: false,
+        followRedirects: true,
+        rewrite: (path) => path.replace(/^\/proxy\/bing/, ''),
+        headers: {
+          Referer: 'https://www.bing.com/',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        },
+      },
     },
   },
   define: {

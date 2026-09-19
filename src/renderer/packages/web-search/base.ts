@@ -97,7 +97,11 @@ abstract class WebSearch {
       })
       return response.data
     } else {
-      return ofetch(url, options)
+      let targetUrl = url
+      if (platform.type === 'web' && /^https?:\/\/(www\.|cn\.)?bing\.com/i.test(targetUrl)) {
+        targetUrl = targetUrl.replace(/^https?:\/\/(www\.|cn\.)?bing\.com/i, '/proxy/bing')
+      }
+      return ofetch(targetUrl, options)
     }
   }
 }

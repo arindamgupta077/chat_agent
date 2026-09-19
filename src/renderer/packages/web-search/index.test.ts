@@ -26,36 +26,17 @@ vi.mock('./bing-news', () => {
   }
 })
 
-vi.mock('./tavily', () => {
+vi.mock('./google', () => {
   return {
-    TavilySearch: class {
-      constructor(private readonly apiKey: string) {}
+    GoogleSearch: class {
+      constructor(
+        private readonly apiKey: string,
+        private readonly cx: string
+      ) {}
       search = vi.fn().mockImplementation(async () => {
-        if (this.apiKey === 'failing-key') throw new Error('Tavily unavailable')
-        return { items: [{ title: 'Tavily Result', snippet: 'test', link: 'https://example.com' }] }
-      })
-    },
-  }
-})
-
-vi.mock('./searxng', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./searxng')>()
-  return {
-    ...actual,
-    SearxngSearch: class {
-      constructor(private readonly baseUrl: string) {}
-      search = vi.fn().mockImplementation(async () => ({
-        items: [{ title: `SearXNG Result ${this.baseUrl}`, snippet: 'test', link: 'https://example.com' }],
-      }))
-    },
-  }
-})
-
-vi.mock('./chatbox-search', () => {
-  return {
-    ChatboxSearch: class {
-      search = vi.fn().mockResolvedValue({
-        items: [{ title: 'Chatbox Result', snippet: 'test', link: 'https://example.com' }],
+        await Promise.resolve()
+        if (this.apiKey === 'failing-key') throw new Error('Google unavailable')
+        return { items: [{ title: 'Google Result', snippet: 'test', link: 'https://google.com' }] }
       })
     },
   }
@@ -74,7 +55,7 @@ describe('webSearchExecutor', () => {
   it('returns different results for different providers with same query', async () => {
     // First call with bing
     mockGetExtensionSettings.mockReturnValue({
-      webSearch: { provider: 'bing', tavilyApiKey: '' },
+      webSearch: { provider: 'bing' },
     } as ReturnType<typeof getExtensionSettings>)
 
     const bingResult = await webSearchExecutor({ query: 'test query' }, {})
@@ -83,17 +64,17 @@ describe('webSearchExecutor', () => {
 
     // Same query but different provider should NOT return cached bing results
     mockGetExtensionSettings.mockReturnValue({
-      webSearch: { provider: 'tavily', tavilyApiKey: 'test-key' },
+      webSearch: { provider: 'google', googleApiKey: 'test-key', googleCx: 'test-cx' },
     } as ReturnType<typeof getExtensionSettings>)
 
-    const tavilyResult = await webSearchExecutor({ query: 'test query' }, {})
-    expect(tavilyResult.searchResults).toHaveLength(1)
-    expect(tavilyResult.searchResults[0].title).toBe('Tavily Result')
+    const googleResult = await webSearchExecutor({ query: 'test query' }, {})
+    expect(googleResult.searchResults).toHaveLength(1)
+    expect(googleResult.searchResults[0].title).toBe('Google Result')
   })
 
   it('returns cached results for same provider and query', async () => {
     mockGetExtensionSettings.mockReturnValue({
-      webSearch: { provider: 'bing', tavilyApiKey: '' },
+      webSearch: { provider: 'bing' },
     } as ReturnType<typeof getExtensionSettings>)
 
     const result1 = await webSearchExecutor({ query: 'cached query' }, {})
@@ -103,63 +84,21 @@ describe('webSearchExecutor', () => {
     expect(result1.searchResults).toEqual(result2.searchResults)
   })
 
-  it('uses a distinct cache key for the SearXNG provider', async () => {
+  it('throws an error if google credentials are missing', async () => {
     mockGetExtensionSettings.mockReturnValue({
-      webSearch: { provider: 'searxng', searxngBaseUrl: 'https://searx.example.com' },
+      webSearch: { provider: 'google', googleApiKey: '', googleCx: '' },
     } as ReturnType<typeof getExtensionSettings>)
 
-    const searxngResult = await webSearchExecutor({ query: 'searxng query' }, {})
-
-    expect(searxngResult.searchResults).toHaveLength(1)
-    expect(searxngResult.searchResults[0].title).toBe('SearXNG Result https://searx.example.com')
+    await expect(webSearchExecutor({ query: 'missing credentials' }, {})).rejects.toThrow(
+      'Google Search requires an API Key and Search Engine ID (CX).'
+    )
   })
 
-  it('does not reuse cache when the SearXNG instance URL changes', async () => {
+  it('propagates the provider error when configured provider fails', async () => {
     mockGetExtensionSettings.mockReturnValue({
-      webSearch: { provider: 'searxng', searxngBaseUrl: 'https://searx-a.example.com/' },
+      webSearch: { provider: 'google', googleApiKey: 'failing-key', googleCx: 'cx' },
     } as ReturnType<typeof getExtensionSettings>)
 
-    const first = await webSearchExecutor({ query: 'instance query' }, {})
-    expect(first.searchResults[0].title).toBe('SearXNG Result https://searx-a.example.com')
-
-    mockGetExtensionSettings.mockReturnValue({
-      webSearch: { provider: 'searxng', searxngBaseUrl: 'https://searx-b.example.com' },
-    } as ReturnType<typeof getExtensionSettings>)
-
-    const second = await webSearchExecutor({ query: 'instance query' }, {})
-    expect(second.searchResults[0].title).toBe('SearXNG Result https://searx-b.example.com')
-  })
-
-  it('reuses cache when the same SearXNG instance is written with a trailing slash', async () => {
-    mockGetExtensionSettings.mockReturnValue({
-      webSearch: { provider: 'searxng', searxngBaseUrl: 'https://searx-cache.example.com/' },
-    } as ReturnType<typeof getExtensionSettings>)
-
-    const first = await webSearchExecutor({ query: 'normalized instance query' }, {})
-
-    mockGetExtensionSettings.mockReturnValue({
-      webSearch: { provider: 'searxng', searxngBaseUrl: 'https://searx-cache.example.com' },
-    } as ReturnType<typeof getExtensionSettings>)
-
-    const second = await webSearchExecutor({ query: 'normalized instance query' }, {})
-    expect(second.searchResults).toEqual(first.searchResults)
-  })
-
-  it('rejects a whitespace-only SearXNG instance URL', async () => {
-    mockGetExtensionSettings.mockReturnValue({
-      webSearch: { provider: 'searxng', searxngBaseUrl: '   ' },
-    } as ReturnType<typeof getExtensionSettings>)
-
-    await expect(webSearchExecutor({ query: 'missing url' }, {})).rejects.toMatchObject({
-      code: 20036,
-    })
-  })
-
-  it('propagates the provider error when every configured provider fails', async () => {
-    mockGetExtensionSettings.mockReturnValue({
-      webSearch: { provider: 'tavily', tavilyApiKey: 'failing-key' },
-    } as ReturnType<typeof getExtensionSettings>)
-
-    await expect(webSearchExecutor({ query: 'provider failure' }, {})).rejects.toThrow('Tavily unavailable')
+    await expect(webSearchExecutor({ query: 'provider failure' }, {})).rejects.toThrow('Google unavailable')
   })
 })

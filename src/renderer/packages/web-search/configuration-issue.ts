@@ -2,6 +2,8 @@ import type { WebSearchProviderValue } from './constants'
 
 type WebSearchConfiguration = {
   provider: WebSearchProviderValue
+  googleApiKey?: string
+  googleCx?: string
   tavilyApiKey?: string
   bochaApiKey?: string
   queritApiKey?: string
@@ -9,6 +11,7 @@ type WebSearchConfiguration = {
 }
 
 export type WebSearchConfigurationIssue =
+  | 'google-credentials'
   | 'chatbox-ai-sign-in'
   | 'tavily-api-key'
   | 'bocha-api-key'
@@ -22,15 +25,9 @@ export function getWebSearchConfigurationIssue(
   switch (configuration.provider) {
     case 'build-in':
       return licenseKey ? null : 'chatbox-ai-sign-in'
-    case 'tavily':
-      return configuration.tavilyApiKey ? null : 'tavily-api-key'
-    case 'bocha':
-      return configuration.bochaApiKey ? null : 'bocha-api-key'
-    case 'querit':
-      return configuration.queritApiKey ? null : 'querit-api-key'
-    case 'searxng':
-      return configuration.searxngBaseUrl?.trim() ? null : 'searxng-instance'
-    case 'bing':
+    case 'google':
+      return configuration.googleApiKey?.trim() && configuration.googleCx?.trim() ? null : 'google-credentials'
+    default:
       return null
   }
 }

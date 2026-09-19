@@ -77,7 +77,9 @@ export function createDefaultSettings(): Settings {
     },
     extension: {
       webSearch: {
-        provider: 'build-in',
+        provider: 'bing',
+        googleApiKey: '',
+        googleCx: '',
         tavilyApiKey: '',
         bochaApiKey: '',
         queritApiKey: '',
