@@ -18,6 +18,7 @@ import SettingsKnowledgeBaseRouteComponent from '@/components/knowledge-base/Kno
 import { Modal } from '@/components/layout/Overlay'
 import useNeedRoomForWinControls from '@/hooks/useNeedRoomForWinControls'
 import { getSettingsSearchParam, navigateToDynamicPath, router } from '@/router'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import { RouteComponent as SettingsAgentRouteComponent } from '@/routes/settings/agent'
 import { RouteComponent as SettingsArchiveRouteComponent } from '@/routes/settings/archive'
 import { RouteComponent as SettingsChatRouteComponent } from '@/routes/settings/chat'
@@ -185,12 +186,24 @@ export const SettingsModal: FC<SettingsModalProps> = (props) => {
   const location = useLocation()
   const { needRoomForMacWindowControls } = useNeedRoomForWinControls()
 
+  const user = useAppAuthStore((s) => s.user)
+  const isAdmin = user?.role === 'admin'
   const settingsPath = getSettingsSearchParam(location.search)
+
   useEffect(() => {
     if (settingsPath) {
-      settingsModalHistory.replace(settingsPath)
+      let effectivePath = settingsPath
+      if (
+        !isAdmin &&
+        (effectivePath.startsWith('/settings/provider') ||
+          effectivePath.startsWith('/settings/mcp') ||
+          effectivePath === '/settings')
+      ) {
+        effectivePath = '/settings/general'
+      }
+      settingsModalHistory.replace(effectivePath)
     }
-  }, [settingsPath])
+  }, [settingsPath, isAdmin])
 
   const onClose = useCallback(() => {
     const { settings: _closed, ...otherSearch } = router.state.location.search as Record<string, unknown>

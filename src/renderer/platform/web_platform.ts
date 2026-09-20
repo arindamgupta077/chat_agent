@@ -4,18 +4,22 @@ import type { Config, Settings, ShortcutSetting } from '@shared/types'
 import localforage from 'localforage'
 import { v4 as uuidv4 } from 'uuid'
 import { parseLocale } from '@/i18n/parser'
-import { type ImageGenerationStorage, IndexedDBImageGenerationStorage } from '@/storage/ImageGenerationStorage'
-import { IndexedDBSessionMetaStorage, type SessionMetaStorage } from '@/storage/SessionMetaStorage'
+import {
+  PostgresImageGenerationStorage,
+  PostgresSessionMetaStorage,
+  PostgresStorage,
+} from './postgres_storage'
+import { type ImageGenerationStorage } from '@/storage/ImageGenerationStorage'
+import { type SessionMetaStorage } from '@/storage/SessionMetaStorage'
 import { getBrowser, getOS } from '../packages/navigator'
 import type { Platform, PlatformType } from './interfaces'
 import type { KnowledgeBaseController } from './knowledge-base/interface'
 import type { SessionAttachmentRagController } from './session-attachment-rag/interface'
-import { IndexedDBStorage } from './storages'
 import WebExporter from './web_exporter'
 import webLogger from './web_logger'
 import { parseFileLocallyInBrowser } from './web_platform_utils'
 
-export default class WebPlatform extends IndexedDBStorage implements Platform {
+export default class WebPlatform extends PostgresStorage implements Platform {
   public type: PlatformType = 'web'
   public readonly isDesktopLike = false
 
@@ -89,7 +93,14 @@ export default class WebPlatform extends IndexedDBStorage implements Platform {
   public async ensureProxyConfig(config: { proxy?: string }): Promise<void> {
     return
   }
+  private lastRelaunchTime = 0
   public async relaunch(): Promise<void> {
+    const now = Date.now()
+    if (now - this.lastRelaunchTime < 15000) {
+      console.warn('[WebPlatform] Suppressing rapid relaunch loop')
+      return
+    }
+    this.lastRelaunchTime = now
     location.reload()
   }
 
@@ -199,14 +210,14 @@ export default class WebPlatform extends IndexedDBStorage implements Platform {
 
   public getImageGenerationStorage(): ImageGenerationStorage {
     if (!this.imageGenerationStorage) {
-      this.imageGenerationStorage = new IndexedDBImageGenerationStorage()
+      this.imageGenerationStorage = new PostgresImageGenerationStorage()
     }
     return this.imageGenerationStorage
   }
 
   public getSessionMetaStorage(): SessionMetaStorage {
     if (!this.sessionMetaStorage) {
-      this.sessionMetaStorage = new IndexedDBSessionMetaStorage()
+      this.sessionMetaStorage = new PostgresSessionMetaStorage()
     }
     return this.sessionMetaStorage
   }

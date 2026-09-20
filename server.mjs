@@ -16,6 +16,8 @@ import { fileURLToPath } from 'node:url'
 import zlib from 'node:zlib'
 import net from 'node:net'
 
+import { handleApiRequest } from './server/api.mjs'
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
@@ -270,6 +272,25 @@ const server = http.createServer((req, res) => {
       'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     })
+    return
+  }
+
+  // 4. PostgreSQL Database & Auth REST APIs
+  if (pathname.startsWith('/api/')) {
+    handleApiRequest(req, res)
+      .then((handled) => {
+        if (!handled && !res.headersSent) {
+          res.writeHead(404, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: 'API route not found' }))
+        }
+      })
+      .catch((err) => {
+        console.error('[API Server Error]:', err)
+        if (!res.headersSent) {
+          res.writeHead(500, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ error: 'Internal server error: ' + err.message }))
+        }
+      })
     return
   }
 

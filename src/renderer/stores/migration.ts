@@ -43,6 +43,9 @@ import { getSessionMeta } from './sessionHelpers'
 const log = getLogger('migration')
 
 export async function migrate() {
+  if (storage.getStorageType() === 'POSTGRES_REMOTE') {
+    return
+  }
   await migrateStorage()
   await migrateOnData(
     {

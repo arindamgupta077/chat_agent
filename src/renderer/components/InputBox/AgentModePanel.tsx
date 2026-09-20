@@ -67,6 +67,7 @@ import { setSessionAgentMode, useSessionAgentMode } from '@/stores/session/agent
 import { useMcpSettings, useSettingsStore } from '@/stores/settingsStore'
 import * as toastActions from '@/stores/toastActions'
 import { useUIStore } from '@/stores/uiStore'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import { featureFlags } from '@/utils/feature-flags'
 import { ScalableIcon } from '../common/ScalableIcon'
 import MCPStatus from '../mcp/MCPStatus'
@@ -221,6 +222,8 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
   const isTouchLayout = layout === 'touch'
   const showModeSwitcher = platform.isDesktopLike
   const showDesktopCapabilityHint = !platform.isDesktopLike
+  const user = useAppAuthStore((s) => s.user)
+  const isAdmin = user?.role === 'admin'
   const showCodeExecution = featureFlags.agentMode
   const showSkills = featureFlags.skills
   const showMcp = featureFlags.mcp
@@ -1039,7 +1042,7 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
       const mcpDisabled = platform.isDesktopLike ? workModeCapabilitiesDisabled : false
       return (
         <>
-          <SubPanelHeader title="MCP" settingsPath="/mcp" disabled={mcpDisabled} />
+          <SubPanelHeader title="MCP" settingsPath={isAdmin ? '/mcp' : undefined} disabled={mcpDisabled} />
           <Divider my={4} />
           {isPremium && BUILTIN_MCP_SERVERS.length > 0 && (
             <>
@@ -1068,19 +1071,25 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
           ))}
           {!mcp.servers.length && !mcp.enabledBuiltinServers.length && (
             <Group justify="center" py="md">
-              <Button
-                size="xs"
-                variant="light"
-                disabled={mcpDisabled}
-                onClick={() => {
-                  if (mcpDisabled) return
-                  onClose()
-                  navigateToSettings('/mcp')
-                }}
-              >
-                <PlusIcon size={14} className="mr-1" />
-                {t('Add your first MCP server')}
-              </Button>
+              {isAdmin ? (
+                <Button
+                  size="xs"
+                  variant="light"
+                  disabled={mcpDisabled}
+                  onClick={() => {
+                    if (mcpDisabled) return
+                    onClose()
+                    navigateToSettings('/mcp')
+                  }}
+                >
+                  <PlusIcon size={14} className="mr-1" />
+                  {t('Add your first MCP server')}
+                </Button>
+              ) : (
+                <Text size="xs" c="dimmed" p="sm" ta="center">
+                  {t('No MCP servers configured by administrator.')}
+                </Text>
+              )}
             </Group>
           )}
         </>

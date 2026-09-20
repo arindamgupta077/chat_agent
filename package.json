@@ -157,6 +157,7 @@
     "@types/markdown-it": "^12.2.3",
     "@types/markdown-it-link-attributes": "^3.0.1",
     "@types/node": "20.2.5",
+    "@types/pg": "^8.23.1",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.2.4",
     "@types/react-swipeable-views": "^0.13.6",
@@ -324,6 +325,7 @@
     "lodash": "^4.17.21",
     "ofetch": "^1.0.1",
     "officeparser": "5.0.0",
+    "pg": "^8.23.0",
     "sanitize-filename": "^1.6.3",
     "ua-parser-js": "^2.0.10",
     "uuid": "^9.0.0"

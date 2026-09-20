@@ -78,7 +78,8 @@ import * as settingActions from '@/stores/settingActions'
 import { initSettingsStore, settingsStore, useLanguage, useSettingsStore, useTheme } from '@/stores/settingsStore'
 import { add as addToast } from '@/stores/toastActions'
 import { useUIStore } from '@/stores/uiStore'
-import { CHATBOX_BUILD_CHANNEL, CHATBOX_BUILD_PLATFORM } from '@/variables'
+import LoginPage from '@/components/auth/LoginPage'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import { blobToDataUrl } from './image-creator/-components/constants'
 
 function BackgroundImageOverlay() {
@@ -177,6 +178,13 @@ function Root() {
   useScreenChange()
   const { t } = useTranslation()
   const startupTranslation = useRef(t)
+
+  const isAuthenticated = useAppAuthStore((s) => s.isAuthenticated)
+  const checkAuth = useAppAuthStore((s) => s.checkAuth)
+
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
 
   const { isExceeded, isExceededResolved } = useVersion()
   const location = useLocation()
@@ -332,6 +340,10 @@ function Root() {
       document.documentElement.removeAttribute('data-need-room-for-mac-controls')
     }
   }, [needRoomForMacWindowControls])
+
+  if (!isAuthenticated) {
+    return <LoginPage />
+  }
 
   return (
     <Box className="box-border App relative bg-chatbox-background-primary" spellCheck={spellCheck} dir="ltr">

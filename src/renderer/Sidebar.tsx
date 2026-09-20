@@ -1,6 +1,6 @@
 import { registerPlugin } from '@capacitor/core'
 import NiceModal from '@ebay/nice-modal-react'
-import { ActionIcon, Box, Button, Flex, Image, NavLink, Stack, Text } from '@mantine/core'
+import { ActionIcon, Badge, Box, Button, Flex, Image, NavLink, Stack, Text } from '@mantine/core'
 import SwipeableDrawer from '@mui/material/SwipeableDrawer'
 import { TestId } from '@shared/automation/testids'
 import {
@@ -8,11 +8,17 @@ import {
   IconCirclePlus,
   IconDownload,
   IconLayoutSidebarLeftCollapse,
+  IconLogout,
   IconMessageChatbot,
   IconPhotoPlus,
   IconSearch,
   IconSettingsFilled,
+  IconShieldCheck,
+  IconUser,
+  IconUsers,
 } from '@tabler/icons-react'
+import { useAppAuthStore } from './stores/appAuthStore'
+import { AdminUserModal } from './components/admin/AdminUserModal'
 import { useNavigate } from '@tanstack/react-router'
 import clsx from 'clsx'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -58,11 +64,15 @@ export default function Sidebar() {
 
   const sessionListViewportRef = useRef<HTMLDivElement>(null)
 
+  const user = useAppAuthStore((s) => s.user)
+  const logout = useAppAuthStore((s) => s.logout)
+
   const sidebarWidth = useSidebarWidth()
 
   const isSmallScreen = useIsSmallScreen()
 
   const [isResizing, setIsResizing] = useState(false)
+  const [adminModalOpened, setAdminModalOpened] = useState(false)
   const resizeStartX = useRef<number>(0)
   const resizeStartWidth = useRef<number>(0)
 
@@ -296,6 +306,67 @@ export default function Sidebar() {
                 variant="light"
                 p="xs"
               />
+              {user && (
+                <Box
+                  p="xs"
+                  className="rounded-lg border border-solid mt-2"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                    borderColor: 'var(--chatbox-border-primary, rgba(255, 255, 255, 0.1))',
+                  }}
+                >
+                  <Flex justify="space-between" align="center" gap="xs">
+                    <Flex align="center" gap="xs" style={{ minWidth: 0 }}>
+                      <ScalableIcon
+                        icon={user.role === 'admin' ? IconShieldCheck : IconUser}
+                        size={16}
+                        className={user.role === 'admin' ? 'text-amber-400' : 'text-blue-400'}
+                      />
+                      <Box style={{ minWidth: 0 }}>
+                        <Flex align="center" gap="xs">
+                          <Text size="xs" fw={600} truncate style={{ maxWidth: '85px' }}>
+                            {user.username}
+                          </Text>
+                          <Badge size="xs" color={user.role === 'admin' ? 'yellow' : 'blue'} variant="light">
+                            {user.role.toUpperCase()}
+                          </Badge>
+                        </Flex>
+                      </Box>
+                    </Flex>
+                    <ActionIcon
+                      variant="subtle"
+                      color="gray"
+                      size="sm"
+                      onClick={logout}
+                      title="Sign Out"
+                    >
+                      <ScalableIcon icon={IconLogout} size={15} />
+                    </ActionIcon>
+                  </Flex>
+
+                  {user.role === 'admin' && (
+                    <Button
+                      size="compact-xs"
+                      variant="light"
+                      color="yellow"
+                      fullWidth
+                      leftSection={<ScalableIcon icon={IconUsers} size={13} />}
+                      onClick={() => setAdminModalOpened(true)}
+                      mt="xs"
+                      style={{ fontSize: '11px', fontWeight: 600 }}
+                    >
+                      Manage Users & SQL
+                    </Button>
+                  )}
+                </Box>
+              )}
+
+              {user?.role === 'admin' && (
+                <AdminUserModal
+                  opened={adminModalOpened}
+                  onClose={() => setAdminModalOpened(false)}
+                />
+              )}
             </>
           )}
         </Stack>

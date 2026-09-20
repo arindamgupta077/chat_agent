@@ -61,6 +61,30 @@ function dvhToVh(): Plugin {
   }
 }
 
+function apiDevServerPlugin(): Plugin {
+  return {
+    name: 'agentlab-api-dev-server',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (req.url && req.url.startsWith('/api/')) {
+          try {
+            const { handleApiRequest } = await import('./server/api.mjs')
+            const handled = await handleApiRequest(req, res)
+            if (!handled && !res.headersSent) {
+              next()
+            }
+          } catch (err) {
+            console.error('[Vite Dev API Middleware Error]:', err)
+            next(err)
+          }
+        } else {
+          next()
+        }
+      })
+    },
+  }
+}
+
 export default defineConfig({
   root: 'src/renderer',
   plugins: [
@@ -74,6 +98,7 @@ export default defineConfig({
     dvhToVh(),
     injectViewportContent(false),
     injectBaseTag(),
+    apiDevServerPlugin(),
   ],
   resolve: {
     alias: {

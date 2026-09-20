@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next'
 import { useProviders } from '@/hooks/useProviders'
 import { navigateToSettings } from '@/modals/settings-navigation'
 import { collapsedProvidersAtom } from '@/stores/atoms/uiAtoms'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import { ScalableIcon } from '../common/ScalableIcon'
 import { ProviderHeader } from './ProviderHeader'
 import { groupFavoriteModels, ModelItem, SELECTED_BG_CLASS } from './shared'
@@ -118,6 +119,8 @@ export const DesktopModelSelector = forwardRef<HTMLDivElement, DesktopModelSelec
     ref
   ) => {
     const { t } = useTranslation()
+    const user = useAppAuthStore((s) => s.user)
+    const isAdmin = user?.role === 'admin'
     const { favoritedModels: allFavoritedModels, favoriteModel, unfavoriteModel, isFavoritedModel } = useProviders()
     const [collapsedProviders, setCollapsedProviders] = useAtom(collapsedProvidersAtom)
 
@@ -244,9 +247,15 @@ export const DesktopModelSelector = forwardRef<HTMLDivElement, DesktopModelSelec
                   {activeTab === 'favorite' ? t('No favorite models') : t('No eligible models available')}
                 </Text>
                 {activeTab === 'all' && (
-                  <Button variant="transparent" size="xs" onClick={() => navigateToSettings('/provider')}>
-                    {t('Click here to set up')}
-                  </Button>
+                  isAdmin ? (
+                    <Button variant="transparent" size="xs" onClick={() => navigateToSettings('/provider')}>
+                      {t('Click here to set up')}
+                    </Button>
+                  ) : (
+                    <Text c="chatbox-tertiary" size="xs">
+                      {t('Models are configured by your administrator')}
+                    </Text>
+                  )
                 )}
               </Stack>
             ) : activeTab === 'favorite' ? (

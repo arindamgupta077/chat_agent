@@ -1,4 +1,4 @@
-import { ActionIcon, Box, Flex, Stack, Text } from '@mantine/core'
+import { ActionIcon, Box, Flex, Stack, Text, Title } from '@mantine/core'
 import { TestId } from '@shared/automation/testids'
 import {
   IconAdjustmentsHorizontal,
@@ -12,6 +12,7 @@ import {
   IconFileText,
   IconMessages,
   IconRobotFace,
+  IconShieldCheck,
   IconWand,
   IconWorldWww,
 } from '@tabler/icons-react'
@@ -23,6 +24,7 @@ import Divider from '@/components/common/Divider'
 import { ScalableIcon } from '@/components/common/ScalableIcon'
 import Page from '@/components/layout/Page'
 import { useIsSmallScreen } from '@/hooks/useScreenChange'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import platform from '@/platform'
 import { featureFlags } from '@/utils/feature-flags'
 
@@ -137,6 +139,15 @@ export function SettingsRoot() {
   const routerState = useRouterState()
   const key = routerState.location.pathname.split('/')[2]
   const isSmallScreen = useIsSmallScreen()
+  const user = useAppAuthStore((s) => s.user)
+  const isAdmin = user?.role === 'admin'
+
+  const visibleItems = ITEMS.filter((item) => {
+    if (!isAdmin && (item.key === 'provider' || item.key === 'mcp')) {
+      return false
+    }
+    return true
+  })
 
   return (
     <Flex flex={1} h="100%" miw={isSmallScreen ? undefined : 800}>
@@ -150,7 +161,7 @@ export function SettingsRoot() {
             isSmallScreen ? 'w-full border-r-0' : 'flex-[1_0_auto]'
           )}
         >
-          {ITEMS.map((item) => (
+          {visibleItems.map((item) => (
             <Link
               disabled={
                 routerState.location.pathname === `/settings/${item.key}` ||
@@ -206,7 +217,19 @@ export function SettingsRoot() {
       )}
       {!(isSmallScreen && routerState.location.pathname === '/settings') && (
         <Box flex="1 1 80%" className="overflow-auto">
-          <Outlet />
+          {!isAdmin &&
+          (routerState.location.pathname.startsWith('/settings/provider') ||
+            routerState.location.pathname.startsWith('/settings/mcp')) ? (
+            <Stack p="xl" align="center" justify="center" h="100%" gap="md" ta="center">
+              <ScalableIcon icon={IconShieldCheck} size={48} className="text-amber-400" />
+              <Title order={4}>Admin Configuration Only</Title>
+              <Text size="sm" c="dimmed" maw={450}>
+                AI model providers and MCP servers are configured centrally by administrators. Normal users cannot view or modify these settings.
+              </Text>
+            </Stack>
+          ) : (
+            <Outlet />
+          )}
         </Box>
       )}
     </Flex>
