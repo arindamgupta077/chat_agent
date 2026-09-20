@@ -74,10 +74,10 @@ export async function handleApiRequest(req, res) {
 
         let val = result.rows[0]?.value ?? null
 
-        // If reading settings, merge admin-configured global LLM and MCP credentials!
+        // If reading settings, merge admin-configured global LLM API credentials!
         if (key === 'settings') {
           try {
-            const adminConfigRes = await query('SELECT llm_providers, mcp_servers FROM admin_global_config WHERE id = $1', ['global'])
+            const adminConfigRes = await query('SELECT llm_providers FROM admin_global_config WHERE id = $1', ['global'])
             const globalConfig = adminConfigRes.rows[0]
             if (globalConfig) {
               if (!val) val = {}
@@ -85,23 +85,9 @@ export async function handleApiRequest(req, res) {
               if (globalConfig.llm_providers && Object.keys(globalConfig.llm_providers).length > 0) {
                 val.providers = { ...(val.providers || {}), ...globalConfig.llm_providers }
               }
-              // Merge global MCP servers while respecting user's enabled status
-              if (Array.isArray(globalConfig.mcp_servers) && globalConfig.mcp_servers.length > 0) {
-                val.mcpServers = globalConfig.mcp_servers
-                if (!val.mcp) {
-                  val.mcp = { servers: [], enabledBuiltinServers: [] }
-                }
-                const existingUserServers = val.mcp.servers || []
-                const userStatusMap = new Map(existingUserServers.map((s) => [s.id, s.enabled]))
-
-                val.mcp.servers = globalConfig.mcp_servers.map((server) => ({
-                  ...server,
-                  enabled: userStatusMap.has(server.id) ? userStatusMap.get(server.id) : (server.enabled ?? false),
-                }))
-              }
             }
           } catch (e) {
-            console.warn('[Storage] Failed to merge global admin credentials:', e.message)
+            console.warn('[Storage] Failed to merge global admin LLM credentials:', e.message)
           }
         }
 
@@ -116,35 +102,19 @@ export async function handleApiRequest(req, res) {
 
         let finalValue = value
         if (key === 'settings' && user.role !== 'admin' && value && typeof value === 'object') {
-          // Normal users cannot configure models or MCP servers.
-          // Enforce the administrator's global model providers and MCP server definitions,
-          // while preserving the user's individual server enabled toggles.
+          // Normal users cannot configure LLM API models; enforce the administrator's global model providers.
+          // Note: Each user has their own unique MCP server configuration and can freely configure it!
           try {
-            const adminConfigRes = await query('SELECT llm_providers, mcp_servers FROM admin_global_config WHERE id = $1', ['global'])
+            const adminConfigRes = await query('SELECT llm_providers FROM admin_global_config WHERE id = $1', ['global'])
             const globalConfig = adminConfigRes.rows[0]
-            if (globalConfig) {
-              const globalServers = globalConfig.mcp_servers || []
-              const userMcpServers = value.mcp?.servers || []
-              const userStatusMap = new Map(userMcpServers.map((s) => [s.id, s.enabled]))
-
-              const preservedMcpServers = globalServers.map((adminServer) => ({
-                ...adminServer,
-                enabled: userStatusMap.has(adminServer.id) ? userStatusMap.get(adminServer.id) : (adminServer.enabled ?? false),
-              }))
-
+            if (globalConfig?.llm_providers) {
               finalValue = {
                 ...value,
-                providers: globalConfig.llm_providers || {},
-                mcpServers: globalServers,
-                mcp: {
-                  ...(value.mcp || {}),
-                  servers: preservedMcpServers,
-                  enabledBuiltinServers: value.mcp?.enabledBuiltinServers || [],
-                },
+                providers: globalConfig.llm_providers,
               }
             }
           } catch (err) {
-            console.warn('[Storage] Failed to preserve global admin config on normal user update:', err.message)
+            console.warn('[Storage] Failed to preserve global admin LLM config on normal user update:', err.message)
           }
         }
 
@@ -156,22 +126,20 @@ export async function handleApiRequest(req, res) {
           [userId, key, JSON.stringify(finalValue)]
         )
 
-        // If admin updates settings, propagate providers and MCP servers to global config for all users
+        // If admin updates settings, propagate ONLY LLM providers to global config for all users (MCP is user-unique)
         if (key === 'settings' && user.role === 'admin' && value && typeof value === 'object') {
           try {
             const providers = value.providers || {}
-            const mcpServers = value.mcp?.servers || value.mcpServers || []
             await query(
-              `INSERT INTO admin_global_config (id, llm_providers, mcp_servers, updated_by)
-               VALUES ('global', $1, $2, $3)
+              `INSERT INTO admin_global_config (id, llm_providers, updated_by)
+               VALUES ('global', $1, $2)
                ON CONFLICT (id) DO UPDATE SET
                  llm_providers = EXCLUDED.llm_providers,
-                 mcp_servers = EXCLUDED.mcp_servers,
                  updated_by = EXCLUDED.updated_by,
                  updated_at = CURRENT_TIMESTAMP`,
-              [JSON.stringify(providers), JSON.stringify(mcpServers), userId]
+              [JSON.stringify(providers), userId]
             )
-            console.log('[Admin] Automatically synchronized global LLM providers & MCP servers for all users.')
+            console.log('[Admin] Automatically synchronized global LLM providers for all users.')
           } catch (adminSyncErr) {
             console.warn('[Admin] Failed to update global config:', adminSyncErr.message)
           }
@@ -214,6 +182,17 @@ export async function handleApiRequest(req, res) {
         for (const row of result.rows) {
           valuesMap[row.key] = row.value
         }
+        if (valuesMap.settings) {
+          try {
+            const adminConfigRes = await query('SELECT llm_providers FROM admin_global_config WHERE id = $1', ['global'])
+            const globalConfig = adminConfigRes.rows[0]
+            if (globalConfig?.llm_providers && Object.keys(globalConfig.llm_providers).length > 0) {
+              valuesMap.settings.providers = { ...(valuesMap.settings.providers || {}), ...globalConfig.llm_providers }
+            }
+          } catch (e) {
+            console.warn('[Storage] Failed to merge global admin LLM credentials in getAll:', e.message)
+          }
+        }
         sendJson(200, valuesMap)
         return true
       }
@@ -221,7 +200,16 @@ export async function handleApiRequest(req, res) {
       // POST /api/storage/values/batch (setAll)
       if (pathname === '/api/storage/values/batch' && req.method === 'POST') {
         const data = await parseJsonBody(req)
-        for (const [key, value] of Object.entries(data || {})) {
+        for (let [key, value] of Object.entries(data || {})) {
+          if (key === 'settings' && user.role !== 'admin' && value && typeof value === 'object') {
+            try {
+              const adminConfigRes = await query('SELECT llm_providers FROM admin_global_config WHERE id = $1', ['global'])
+              const globalConfig = adminConfigRes.rows[0]
+              if (globalConfig?.llm_providers) {
+                value = { ...value, providers: globalConfig.llm_providers }
+              }
+            } catch (err) {}
+          }
           await query(
             `INSERT INTO app_key_value (user_id, key, value, updated_at)
              VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
@@ -229,6 +217,20 @@ export async function handleApiRequest(req, res) {
              SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
             [userId, key, JSON.stringify(value)]
           )
+          if (key === 'settings' && user.role === 'admin' && value && typeof value === 'object') {
+            try {
+              const providers = value.providers || {}
+              await query(
+                `INSERT INTO admin_global_config (id, llm_providers, updated_by)
+                 VALUES ('global', $1, $2)
+                 ON CONFLICT (id) DO UPDATE SET
+                   llm_providers = EXCLUDED.llm_providers,
+                   updated_by = EXCLUDED.updated_by,
+                   updated_at = CURRENT_TIMESTAMP`,
+                [JSON.stringify(providers), userId]
+              )
+            } catch (adminSyncErr) {}
+          }
         }
         sendJson(200, { success: true })
         return true
@@ -292,56 +294,27 @@ export async function handleApiRequest(req, res) {
 
       // GET /api/session-meta/page
       if (pathname === '/api/session-meta/page' && req.method === 'GET') {
-        const cursor = parsedUrl.searchParams.get('cursor') ? Number(parsedUrl.searchParams.get('cursor')) : null
+        const cursor = parsedUrl.searchParams.get('cursor') ? Number(parsedUrl.searchParams.get('cursor')) : 0
         const limit = Number(parsedUrl.searchParams.get('limit')) || 50
         const isArchived = parsedUrl.searchParams.get('archived') === 'true'
-
-        let rowsQuery
-        let queryParams
-        if (isArchived) {
-          if (cursor !== null && !isNaN(cursor)) {
-            rowsQuery = `
-              SELECT * FROM session_meta 
-              WHERE user_id = $1 AND archived_at IS NOT NULL AND archived_at < $2
-              ORDER BY archived_at DESC LIMIT $3`
-            queryParams = [userId, cursor, limit + 1]
-          } else {
-            rowsQuery = `
-              SELECT * FROM session_meta 
-              WHERE user_id = $1 AND archived_at IS NOT NULL
-              ORDER BY archived_at DESC LIMIT $2`
-            queryParams = [userId, limit + 1]
-          }
-        } else {
-          if (cursor !== null && !isNaN(cursor)) {
-            rowsQuery = `
-              SELECT * FROM session_meta 
-              WHERE user_id = $1 AND hidden = 0 AND archived_at IS NULL AND sort_order < $2
-              ORDER BY sort_order DESC LIMIT $3`
-            queryParams = [userId, cursor, limit + 1]
-          } else {
-            rowsQuery = `
-              SELECT * FROM session_meta 
-              WHERE user_id = $1 AND hidden = 0 AND archived_at IS NULL
-              ORDER BY sort_order DESC LIMIT $2`
-            queryParams = [userId, limit + 1]
-          }
-        }
-
-        const rowsRes = await query(rowsQuery, queryParams)
-        const hasMore = rowsRes.rows.length > limit
-        const items = hasMore ? rowsRes.rows.slice(0, limit) : rowsRes.rows
-        const nextCursor = hasMore
-          ? isArchived
-            ? Number(items[items.length - 1].archived_at)
-            : Number(items[items.length - 1].sort_order)
-          : null
 
         const countQuery = isArchived
           ? 'SELECT COUNT(*) as total FROM session_meta WHERE user_id = $1 AND archived_at IS NOT NULL'
           : 'SELECT COUNT(*) as total FROM session_meta WHERE user_id = $1 AND hidden = 0 AND archived_at IS NULL'
         const countRes = await query(countQuery, [userId])
         const total = Number(countRes.rows[0]?.total || 0)
+
+        const rowsQuery = isArchived
+          ? `SELECT * FROM session_meta 
+             WHERE user_id = $1 AND archived_at IS NOT NULL
+             ORDER BY archived_at DESC LIMIT $2 OFFSET $3`
+          : `SELECT * FROM session_meta 
+             WHERE user_id = $1 AND hidden = 0 AND archived_at IS NULL
+             ORDER BY starred DESC, sort_order DESC LIMIT $2 OFFSET $3`
+
+        const rowsRes = await query(rowsQuery, [userId, limit, cursor])
+        const items = rowsRes.rows
+        const nextCursor = cursor + items.length < total ? cursor + items.length : null
 
         sendJson(200, {
           items: items.map(formatSessionMetaRow),
@@ -457,26 +430,23 @@ export async function handleApiRequest(req, res) {
 
       // GET /api/image-generations/page
       if (pathname === '/api/image-generations/page' && req.method === 'GET') {
-        const cursor = parsedUrl.searchParams.get('cursor') ? Number(parsedUrl.searchParams.get('cursor')) : null
+        const cursor = parsedUrl.searchParams.get('cursor') ? Number(parsedUrl.searchParams.get('cursor')) : 0
         const limit = Number(parsedUrl.searchParams.get('limit')) || 20
 
-        let sql = 'SELECT * FROM image_generations WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2'
-        let params = [userId, limit + 1]
-        if (cursor !== null && !isNaN(cursor)) {
-          sql = 'SELECT * FROM image_generations WHERE user_id = $1 AND created_at < $2 ORDER BY created_at DESC LIMIT $3'
-          params = [userId, cursor, limit + 1]
-        }
-
-        const resImgs = await query(sql, params)
-        const hasMore = resImgs.rows.length > limit
-        const items = hasMore ? resImgs.rows.slice(0, limit) : resImgs.rows
-        const nextCursor = hasMore ? Number(items[items.length - 1].created_at) : null
-
         const countRes = await query('SELECT COUNT(*) as total FROM image_generations WHERE user_id = $1', [userId])
+        const total = Number(countRes.rows[0]?.total || 0)
+
+        const resImgs = await query(
+          'SELECT * FROM image_generations WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
+          [userId, limit, cursor]
+        )
+        const items = resImgs.rows
+        const nextCursor = cursor + items.length < total ? cursor + items.length : null
+
         sendJson(200, {
           items: items.map(formatImageGenRow),
           nextCursor,
-          total: Number(countRes.rows[0]?.total || 0),
+          total,
         })
         return true
       }
@@ -585,6 +555,7 @@ async function insertSessionMetaRow(userId, record) {
        assistant_avatar_key, pic_url, background_image, type, sort_order, created_at
      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      ON CONFLICT (id) DO UPDATE SET
+       user_id = EXCLUDED.user_id,
        name = EXCLUDED.name,
        starred = EXCLUDED.starred,
        hidden = EXCLUDED.hidden,
@@ -686,6 +657,7 @@ async function syncRelationalSession(userId, sessionId, sessionData) {
     `INSERT INTO chat_sessions (id, user_id, name, type, data, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
      ON CONFLICT (id) DO UPDATE SET
+       user_id = EXCLUDED.user_id,
        name = EXCLUDED.name,
        type = EXCLUDED.type,
        data = EXCLUDED.data,
@@ -700,28 +672,43 @@ async function syncRelationalSession(userId, sessionId, sessionData) {
     ]
   )
 
-  // Sync messages into chat_messages
-  if (Array.isArray(sessionData.messages)) {
-    for (const msg of sessionData.messages) {
-      if (!msg.id) continue
-      await query(
-        `INSERT INTO chat_messages (id, session_id, user_id, role, model, content_parts, timestamp, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
-         ON CONFLICT (id) DO UPDATE SET
-           role = EXCLUDED.role,
-           model = EXCLUDED.model,
-           content_parts = EXCLUDED.content_parts,
-           timestamp = EXCLUDED.timestamp`,
-        [
-          msg.id,
-          sessionId,
-          userId,
-          msg.role || 'user',
-          msg.model || msg.modelId || null,
-          JSON.stringify(msg.contentParts || []),
-          Number(msg.timestamp || Date.now()),
-        ]
-      )
+  // Collect all messages from active conversation and archived threads
+  const allMessages = [...(Array.isArray(sessionData.messages) ? sessionData.messages : [])]
+  if (Array.isArray(sessionData.threads)) {
+    for (const thread of sessionData.threads) {
+      if (Array.isArray(thread.messages)) {
+        allMessages.push(...thread.messages)
+      }
     }
+  }
+
+  // Sync messages into chat_messages
+  for (const msg of allMessages) {
+    if (!msg.id) continue
+    const contentParts =
+      msg.contentParts && msg.contentParts.length > 0
+        ? msg.contentParts
+        : msg.content
+          ? [{ type: 'text', text: String(msg.content) }]
+          : []
+    await query(
+      `INSERT INTO chat_messages (id, session_id, user_id, role, model, content_parts, timestamp, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+       ON CONFLICT (id) DO UPDATE SET
+         user_id = EXCLUDED.user_id,
+         role = EXCLUDED.role,
+         model = EXCLUDED.model,
+         content_parts = EXCLUDED.content_parts,
+         timestamp = EXCLUDED.timestamp`,
+      [
+        msg.id,
+        sessionId,
+        userId,
+        msg.role || 'user',
+        msg.model || msg.modelId || null,
+        JSON.stringify(contentParts),
+        Number(msg.timestamp || Date.now()),
+      ]
+    )
   }
 }

@@ -7,18 +7,14 @@ export function navigateToSettings(path?: string) {
   const user = useAppAuthStore.getState().user
   const isAdmin = user?.role === 'admin'
 
-  // Restrict model provider and MCP configuration to admin users only
+  // Restrict model provider configuration to admin users only
   if (!isAdmin) {
     if (
       !targetPath ||
       targetPath === '/provider' ||
       targetPath === 'provider' ||
       targetPath.startsWith('/provider/') ||
-      targetPath.startsWith('provider/') ||
-      targetPath === '/mcp' ||
-      targetPath === 'mcp' ||
-      targetPath.startsWith('/mcp/') ||
-      targetPath.startsWith('mcp/')
+      targetPath.startsWith('provider/')
     ) {
       targetPath = '/general'
     }

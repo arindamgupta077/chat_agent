@@ -44,13 +44,15 @@ BEFORE UPDATE ON users
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ==============================================================================
--- 4. Admin Global Credentials Table (LLM APIs & MCP Servers)
--- Controlled and configured by Admin users for all users in the system.
+-- 4. Admin Global Credentials Table (LLM APIs Only)
+-- Admin can only set global LLM AI API keys (OpenAI, Claude, DeepSeek, etc.).
+-- Admin does not set global MCP server settings.
+-- Every user configures their own unique MCP servers in the app_key_value table.
 -- ==============================================================================
 CREATE TABLE IF NOT EXISTS admin_global_config (
     id VARCHAR(64) PRIMARY KEY DEFAULT 'global',
-    llm_providers JSONB NOT NULL DEFAULT '{}'::jsonb, -- Model providers (OpenAI, Claude, DeepSeek, etc.)
-    mcp_servers JSONB NOT NULL DEFAULT '[]'::jsonb,   -- MCP server configurations
+    llm_providers JSONB NOT NULL DEFAULT '{}'::jsonb, -- Global Model providers
+    mcp_servers JSONB NOT NULL DEFAULT '[]'::jsonb,   -- Deprecated/Unused (MCP is now unique per user)
     updated_by VARCHAR(64) REFERENCES users(id) ON DELETE SET NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

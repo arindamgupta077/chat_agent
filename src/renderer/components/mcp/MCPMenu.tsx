@@ -1,4 +1,4 @@
-import { ActionIcon, Button, Flex, Group, Menu, Switch, Text } from '@mantine/core'
+import { ActionIcon, Button, Flex, Group, Menu, Switch } from '@mantine/core'
 import { IconSettings2 } from '@tabler/icons-react'
 import { Link } from '@tanstack/react-router'
 import { type FC, type ReactNode, useState } from 'react'
@@ -8,7 +8,6 @@ import { navigateToSettings } from '@/modals/settings-navigation'
 import { BUILTIN_MCP_SERVERS } from '@/packages/mcp/builtin'
 import { useAutoValidate } from '@/stores/premiumActions'
 import { useMcpSettings } from '@/stores/settingsStore'
-import { useAppAuthStore } from '@/stores/appAuthStore'
 import { ScalableIcon } from '../common/ScalableIcon'
 import MCPStatus from './MCPStatus'
 
@@ -46,8 +45,6 @@ const MCPMenu: FC<{ children: (enabledTools: number) => ReactNode }> = ({ childr
   const mcp = useMcpSettings()
   const isPremium = useAutoValidate()
   const onEnabledChange = useToggleMCPServer()
-  const user = useAppAuthStore((s) => s.user)
-  const isAdmin = user?.role === 'admin'
   const enabledToolsCount = mcp.servers.filter((s) => s.enabled).length + mcp.enabledBuiltinServers.length
   const [opened, setOpened] = useState(false)
   return (
@@ -71,20 +68,18 @@ const MCPMenu: FC<{ children: (enabledTools: number) => ReactNode }> = ({ childr
       <Menu.Dropdown>
         <Flex justify="space-between" align="center">
           <Menu.Label fw={600}>MCP</Menu.Label>
-          {isAdmin && (
-            <Menu.Label>
-              <ActionIcon
-                variant="subtle"
-                size={20}
-                onClick={() => {
-                  setOpened(false)
-                  navigateToSettings('/mcp')
-                }}
-              >
-                <ScalableIcon icon={IconSettings2} size={16} color="var(--chatbox-tint-tertiary)" />
-              </ActionIcon>
-            </Menu.Label>
-          )}
+          <Menu.Label>
+            <ActionIcon
+              variant="subtle"
+              size={20}
+              onClick={() => {
+                setOpened(false)
+                navigateToSettings('/mcp')
+              }}
+            >
+              <ScalableIcon icon={IconSettings2} size={16} color="var(--chatbox-tint-tertiary)" />
+            </ActionIcon>
+          </Menu.Label>
         </Flex>
         {isPremium && BUILTIN_MCP_SERVERS.length > 0 && (
           <>
@@ -107,17 +102,11 @@ const MCPMenu: FC<{ children: (enabledTools: number) => ReactNode }> = ({ childr
         ))}
         {!mcp.servers.length && !mcp.enabledBuiltinServers.length && (
           <Group justify="center" p="xs">
-            {isAdmin ? (
-              <Link to="/settings/mcp">
-                <Button size="xs" my={12} variant="outline">
-                  {t('Add your first MCP server')}
-                </Button>
-              </Link>
-            ) : (
-              <Text size="xs" c="dimmed" ta="center">
-                {t('No MCP servers configured by administrator.')}
-              </Text>
-            )}
+            <Link to="/settings/mcp">
+              <Button size="xs" my={12} variant="outline">
+                {t('Add your first MCP server')}
+              </Button>
+            </Link>
           </Group>
         )}
       </Menu.Dropdown>

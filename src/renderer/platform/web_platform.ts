@@ -1,7 +1,6 @@
 import { type AnalyticsEventParams, GOOGLE_ANALYTICS_MEASUREMENT_ID } from '@shared/analytics'
 import * as defaults from '@shared/defaults'
 import type { Config, Settings, ShortcutSetting } from '@shared/types'
-import localforage from 'localforage'
 import { v4 as uuidv4 } from 'uuid'
 import { parseLocale } from '@/i18n/parser'
 import {
@@ -120,20 +119,6 @@ export default class WebPlatform extends PostgresStorage implements Platform {
     }
     return value
   }
-
-  public async getStoreBlob(key: string): Promise<string | null> {
-    return localforage.getItem<string>(key)
-  }
-  public async setStoreBlob(key: string, value: string): Promise<void> {
-    await localforage.setItem(key, value)
-  }
-  public async delStoreBlob(key: string) {
-    return localforage.removeItem(key)
-  }
-  public async listStoreBlobKeys(): Promise<string[]> {
-    return localforage.keys()
-  }
-
   public async initTracking() {
     const conf = await this.getConfig()
     window.gtag('config', GOOGLE_ANALYTICS_MEASUREMENT_ID, {

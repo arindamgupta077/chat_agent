@@ -424,10 +424,10 @@ export async function handleAuthRoute(req, res, pathname) {
 
     try {
       const result = await query(
-        'SELECT llm_providers, mcp_servers, updated_at FROM admin_global_config WHERE id = $1',
+        'SELECT llm_providers, updated_at FROM admin_global_config WHERE id = $1',
         ['global']
       )
-      const config = result.rows[0] || { llm_providers: {}, mcp_servers: [] }
+      const config = result.rows[0] || { llm_providers: {} }
       sendJson(200, config)
       return true
     } catch (err) {
@@ -445,20 +445,18 @@ export async function handleAuthRoute(req, res, pathname) {
     }
 
     try {
-      const { llm_providers, mcp_servers } = await parseJsonBody(req)
+      const { llm_providers } = await parseJsonBody(req)
 
       const result = await query(
-        `INSERT INTO admin_global_config (id, llm_providers, mcp_servers, updated_by)
-         VALUES ('global', $1, $2, $3)
+        `INSERT INTO admin_global_config (id, llm_providers, updated_by)
+         VALUES ('global', $1, $2)
          ON CONFLICT (id) DO UPDATE
          SET llm_providers = EXCLUDED.llm_providers,
-             mcp_servers = EXCLUDED.mcp_servers,
              updated_by = EXCLUDED.updated_by,
              updated_at = CURRENT_TIMESTAMP
-         RETURNING llm_providers, mcp_servers, updated_at`,
+         RETURNING llm_providers, updated_at`,
         [
           JSON.stringify(llm_providers || {}),
-          JSON.stringify(mcp_servers || []),
           authUser.id,
         ]
       )

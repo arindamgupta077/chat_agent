@@ -1042,7 +1042,7 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
       const mcpDisabled = platform.isDesktopLike ? workModeCapabilitiesDisabled : false
       return (
         <>
-          <SubPanelHeader title="MCP" settingsPath={isAdmin ? '/mcp' : undefined} disabled={mcpDisabled} />
+          <SubPanelHeader title="MCP" settingsPath="/mcp" disabled={mcpDisabled} />
           <Divider my={4} />
           {isPremium && BUILTIN_MCP_SERVERS.length > 0 && (
             <>
@@ -1071,25 +1071,19 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
           ))}
           {!mcp.servers.length && !mcp.enabledBuiltinServers.length && (
             <Group justify="center" py="md">
-              {isAdmin ? (
-                <Button
-                  size="xs"
-                  variant="light"
-                  disabled={mcpDisabled}
-                  onClick={() => {
-                    if (mcpDisabled) return
-                    onClose()
-                    navigateToSettings('/mcp')
-                  }}
-                >
-                  <PlusIcon size={14} className="mr-1" />
-                  {t('Add your first MCP server')}
-                </Button>
-              ) : (
-                <Text size="xs" c="dimmed" p="sm" ta="center">
-                  {t('No MCP servers configured by administrator.')}
-                </Text>
-              )}
+              <Button
+                size="xs"
+                variant="light"
+                disabled={mcpDisabled}
+                onClick={() => {
+                  if (mcpDisabled) return
+                  onClose()
+                  navigateToSettings('/mcp')
+                }}
+              >
+                <PlusIcon size={14} className="mr-1" />
+                {t('Add your first MCP server')}
+              </Button>
             </Group>
           )}
         </>

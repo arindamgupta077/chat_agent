@@ -196,7 +196,6 @@ export const SettingsModal: FC<SettingsModalProps> = (props) => {
       if (
         !isAdmin &&
         (effectivePath.startsWith('/settings/provider') ||
-          effectivePath.startsWith('/settings/mcp') ||
           effectivePath === '/settings')
       ) {
         effectivePath = '/settings/general'
