@@ -447,15 +447,17 @@ export function RouteComponent() {
             }
           />
 
-          <Switch
-            label={t('show model name')}
-            checked={settings.showModelName}
-            onChange={() =>
-              setSettings({
-                showModelName: !settings.showModelName,
-              })
-            }
-          />
+          {isAdmin && (
+            <Switch
+              label={t('show model name')}
+              checked={settings.showModelName}
+              onChange={() =>
+                setSettings({
+                  showModelName: !settings.showModelName,
+                })
+              }
+            />
+          )}
 
           <Switch
             label={t('show message timestamp')}

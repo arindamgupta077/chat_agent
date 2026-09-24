@@ -1265,6 +1265,9 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
     const isAgentModeActive = agentModeUIState.isActive
 
     const insertFiles = async (files: File[], options: InsertFilesOptions = {}) => {
+      if (!isAdmin) {
+        return
+      }
       const MAX_IMAGES = 8
       const MAX_ATTACHMENTS = 20
       let imageCount = preConstructedMessageRef.current.pictureKeys?.length || 0
@@ -1380,9 +1383,11 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
     }
 
     const onImageUploadClick = () => {
+      if (!isAdmin) return
       pictureInputRef.current?.click()
     }
     const onFileUploadClick = () => {
+      if (!isAdmin) return
       fileInputRef.current?.click()
     }
 
@@ -1407,10 +1412,12 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
           for (let i = 0; i < event.clipboardData.items.length; i++) {
             const item = event.clipboardData.items[i]
             if (item.kind === 'file') {
-              // Insert files and images
-              const file = item.getAsFile()
-              if (file) {
-                insertFilesRef.current([file])
+              if (isAdmin) {
+                // Insert files and images
+                const file = item.getAsFile()
+                if (file) {
+                  insertFilesRef.current([file])
+                }
               }
               continue
             }
@@ -1418,7 +1425,7 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
             if (item.kind === 'string' && item.type === 'text/plain') {
               item.getAsString((text) => {
                 const raw = text.trim()
-                if (pasteLongTextAsAFile && raw.length > 3000) {
+                if (isAdmin && pasteLongTextAsAFile && raw.length > 3000) {
                   const file = new File([text], `pasted_text_${Date.now()}.txt`, {
                     type: 'text/plain',
                   })
@@ -1433,11 +1440,12 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
           }
         }
       },
-      [sessionType, pasteLongTextAsAFile]
+      [sessionType, pasteLongTextAsAFile, isAdmin]
     )
 
     const { getRootProps, getInputProps } = useDropzone({
       onDrop: (acceptedFiles: File[], fileRejections) => {
+        if (!isAdmin) return
         insertFiles(acceptedFiles)
         // Show toast for rejected files (only in non-agent mode, agent mode accepts all)
         if (fileRejections.length > 0) {
@@ -1449,6 +1457,7 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
       accept: isAgentModeActive ? undefined : getFileAcceptConfig(),
       noClick: true,
       noKeyboard: true,
+      disabled: !isAdmin,
     })
 
     const quote = useUIStore((state) => state.quote)
@@ -1499,9 +1508,11 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
             <Text size="sm" c="chatbox-tertiary" ta="center">
               {t('This image session is read-only. Please use the new Image Creator for image generation.')}
             </Text>
-            <Button variant="light" size="xs" onClick={() => navigate({ to: '/image-creator' })}>
-              {t('Go to Image Creator')}
-            </Button>
+            {isAdmin && (
+              <Button variant="light" size="xs" onClick={() => navigate({ to: '/image-creator' })}>
+                {t('Go to Image Creator')}
+              </Button>
+            )}
           </Stack>
         </Box>
       )
@@ -1514,9 +1525,9 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
         px="sm"
         id={dom.InputBoxID}
         className="overflow-visible"
-        {...getRootProps()}
+        {...(isAdmin ? getRootProps() : {})}
       >
-        <input className="hidden" {...getInputProps()} />
+        {isAdmin && <input className="hidden" {...getInputProps()} />}
         <Stack className={cn('overflow-visible', widthFull ? 'w-full' : 'max-w-4xl mx-auto')} gap="xs">
           {currentSessionId && (
             <CompactionStatus sessionId={currentSessionId} onViewSummary={onViewCompactionSummary} />
@@ -1881,24 +1892,30 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
             {/* Toolbar Row */}
             <Flex align="center" gap={0} className="shrink-0 w-full" justify="space-between">
               {/* Hidden file inputs */}
-              <ImageUploadInput
-                ref={pictureInputRef}
-                onChange={onFileInputChange}
-                testId={TestId.chat.attachmentImageInput}
-              />
-              <input
-                data-testid={TestId.chat.attachmentFileInput}
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={onFileInputChange}
-                multiple
-                accept={isAgentModeActive ? undefined : getFileAcceptString()}
-              />
+              {isAdmin && (
+                <>
+                  <ImageUploadInput
+                    ref={pictureInputRef}
+                    onChange={onFileInputChange}
+                    testId={TestId.chat.attachmentImageInput}
+                  />
+                  <input
+                    data-testid={TestId.chat.attachmentFileInput}
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    onChange={onFileInputChange}
+                    multiple
+                    accept={isAgentModeActive ? undefined : getFileAcceptString()}
+                  />
+                </>
+              )}
 
               {/* Left Group: Tool Buttons */}
               <Flex align="center" gap={0}>
-                <AttachmentMenu onImageUploadClick={onImageUploadClick} onFileUploadClick={onFileUploadClick} t={t} />
+                {isAdmin && (
+                  <AttachmentMenu onImageUploadClick={onImageUploadClick} onFileUploadClick={onFileUploadClick} t={t} />
+                )}
 
                 <ReasoningControlButton
                   provider={model?.provider}
@@ -2030,8 +2047,8 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                 </TokenCountMenu>
 
                 {/* Model Selector */}
-                <Box className="min-w-0 flex-1 justify-end max-w-[200px]">
-                  {isAdmin ? (
+                {isAdmin && (
+                  <Box className="min-w-0 flex-1 justify-end max-w-[200px]">
                     <ModelSelectorV2
                       onSelect={handleSelectModel}
                       selectedProviderId={!model || isChatboxAI(model.provider) ? undefined : model.provider}
@@ -2069,34 +2086,8 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                         />
                       </UnstyledButton>
                     </ModelSelectorV2>
-                  ) : (
-                    <Tooltip label={t('AI model is selected and managed by administrator')} withArrow>
-                      <Flex
-                        align="center"
-                        gap={4}
-                        px={8}
-                        py={4}
-                        className="rounded-lg bg-[var(--chatbox-background-tertiary)]/50 border border-solid border-chatbox-border-primary/40 cursor-default select-none max-w-full"
-                      >
-                        {!!model && !isChatboxAI(model.provider) && (
-                          <ProviderImageIcon size={16} provider={model.provider} />
-                        )}
-                        <Text
-                          size="xs"
-                          fw={500}
-                          data-testid={TestId.model.selectorTrigger}
-                          className={cn(
-                            'min-w-0 flex-1 truncate text-[var(--chatbox-tint-secondary)]',
-                            isSmallScreen ? 'max-w-[100px]' : 'max-w-[150px]'
-                          )}
-                        >
-                          {modelSelectorDisplayText}
-                        </Text>
-                        <IconLock size={12} className="text-[var(--chatbox-tint-tertiary)] flex-shrink-0" />
-                      </Flex>
-                    </Tooltip>
-                  )}
-                </Box>
+                  </Box>
+                )}
               </Flex>
             </Flex>
           </Box>
@@ -2148,7 +2139,7 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
 )
 
 // Reusable attachment menu component with lightweight style
-const AttachmentMenu: React.FC<{
+export const AttachmentMenu: React.FC<{
   onImageUploadClick: () => void
   onFileUploadClick: () => void
   t: (key: string) => string

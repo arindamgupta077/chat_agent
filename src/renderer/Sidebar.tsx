@@ -67,6 +67,7 @@ export default function Sidebar() {
 
   const user = useAppAuthStore((s) => s.user)
   const logout = useAppAuthStore((s) => s.logout)
+  const isAdmin = user?.role === 'admin'
 
   const sidebarWidth = useSidebarWidth()
 
@@ -87,12 +88,13 @@ export default function Sidebar() {
   }, [navigate, setShowSidebar, isSmallScreen])
 
   const handleCreateNewPictureSession = useCallback(() => {
+    if (!isAdmin) return
     navigate({ to: '/image-creator' })
     if (isSmallScreen) {
       setShowSidebar(false)
     }
     trackingEvent('open_image_creator', { event_category: 'user' })
-  }, [isSmallScreen, setShowSidebar, navigate])
+  }, [isSmallScreen, setShowSidebar, navigate, isAdmin])
 
   const handleResizeStart = useCallback(
     (e: React.MouseEvent) => {
@@ -237,16 +239,18 @@ export default function Sidebar() {
               <ScalableIcon icon={IconCirclePlus} className="mr-2" />
               {t('New Chat')}
             </Button>
-            <Button
-              variant="light"
-              fullWidth
-              radius="lg"
-              data-testid={TestId.sidebar.newImage}
-              onClick={handleCreateNewPictureSession}
-            >
-              <ScalableIcon icon={IconPhotoPlus} className="mr-2" />
-              {t('Create Image')}
-            </Button>
+            {isAdmin && (
+              <Button
+                variant="light"
+                fullWidth
+                radius="lg"
+                data-testid={TestId.sidebar.newImage}
+                onClick={handleCreateNewPictureSession}
+              >
+                <ScalableIcon icon={IconPhotoPlus} className="mr-2" />
+                {t('Create Image')}
+              </Button>
+            )}
           </Stack>
 
           {isSmallScreen ? (
@@ -315,16 +319,16 @@ export default function Sidebar() {
                   <Flex justify="space-between" align="center" gap="xs">
                     <Flex align="center" gap="xs" style={{ minWidth: 0 }}>
                       <ScalableIcon
-                        icon={user.role === 'admin' ? IconShieldCheck : IconUser}
+                        icon={isAdmin ? IconShieldCheck : IconUser}
                         size={16}
-                        className={user.role === 'admin' ? 'text-amber-400' : 'text-blue-400'}
+                        className={isAdmin ? 'text-amber-400' : 'text-blue-400'}
                       />
                       <Box style={{ minWidth: 0 }}>
                         <Flex align="center" gap="xs">
                           <Text size="xs" fw={600} truncate style={{ maxWidth: '85px' }}>
                             {user.username}
                           </Text>
-                          <Badge size="xs" color={user.role === 'admin' ? 'yellow' : 'blue'} variant="light">
+                          <Badge size="xs" color={isAdmin ? 'yellow' : 'blue'} variant="light">
                             {user.role.toUpperCase()}
                           </Badge>
                         </Flex>
@@ -341,7 +345,7 @@ export default function Sidebar() {
                     </ActionIcon>
                   </Flex>
 
-                  {user.role === 'admin' && (
+                  {isAdmin && (
                     <Button
                       size="compact-xs"
                       variant="light"
@@ -358,7 +362,7 @@ export default function Sidebar() {
                 </Box>
               )}
 
-              {user?.role === 'admin' && (
+              {isAdmin && (
                 <AdminUserModal
                   opened={adminModalOpened}
                   onClose={() => setAdminModalOpened(false)}

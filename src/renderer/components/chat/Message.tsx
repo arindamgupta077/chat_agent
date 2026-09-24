@@ -59,6 +59,7 @@ import { getAcceptedImageBackgroundTaskResult } from '@/packages/chatbox-cli/bac
 import { copyToClipboard } from '@/packages/navigator'
 import { countWord } from '@/packages/word-count'
 import { lockSessionAgentMode, setSessionAgentMode } from '@/stores/session/agent-mode'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useUIStore } from '@/stores/uiStore'
 import '../../static/Block.css'
@@ -189,6 +190,8 @@ const _Message: FC<Props> = (props) => {
   const isSmallScreen = useIsSmallScreen()
   const userAvatarKey = useSettingsStore((state) => state.userAvatarKey)
   const showMessageTimestamp = useSettingsStore((state) => state.showMessageTimestamp)
+  const user = useAppAuthStore((state) => state.user)
+  const isAdmin = user?.role === 'admin'
   const showModelName = useSettingsStore((state) => state.showModelName)
   const showWordCount = useSettingsStore((state) => state.showWordCount)
   const showTokenUsed = useSettingsStore((state) => state.showTokenUsed)
@@ -462,7 +465,7 @@ const _Message: FC<Props> = (props) => {
   // because they are technical/universal abbreviations that remain readable across all locales.
   const tips: { label: string; tooltip?: string }[] = []
   if (props.sessionType === 'chat' || !props.sessionType) {
-    if (showModelName && props.msg.role === 'assistant') {
+    if (isAdmin && showModelName && props.msg.role === 'assistant') {
       tips.push({ label: props.msg.model || 'unknown', tooltip: t('Model') as string })
     }
     if (showTokenUsed && msg.role === 'assistant' && !msg.generating) {
@@ -492,7 +495,7 @@ const _Message: FC<Props> = (props) => {
         })
     }
   } else if (props.sessionType === 'picture') {
-    if (showModelName && props.msg.role === 'assistant') {
+    if (isAdmin && showModelName && props.msg.role === 'assistant') {
       tips.push({ label: props.msg.model || 'unknown', tooltip: t('Model') as string })
       if (props.msg.style) tips.push({ label: props.msg.style })
     }

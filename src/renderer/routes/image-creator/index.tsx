@@ -23,7 +23,7 @@ import {
   IconPlus,
   IconSparkles,
 } from '@tabler/icons-react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { JK_PAGE_NAMES } from '@/analytics/jk-events'
@@ -38,6 +38,7 @@ import { getLogger } from '@/lib/utils'
 import { resumeImageGenerationWithFollowUp } from '@/packages/chatbox-cli/image-task-follow-up'
 import storage from '@/storage'
 import { StorageKeyGenerator } from '@/storage/StoreStorage'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import { useAuthInfoStore } from '@/stores/authInfoStore'
 import { cancelGeneration, createAndGenerate, retryGeneration } from '@/stores/imageGenerationActions'
 import {
@@ -214,6 +215,19 @@ function InputToolbar({
 function ImageCreatorPage() {
   const { t } = useTranslation()
   const isSmallScreen = useIsSmallScreen()
+  const navigate = useNavigate()
+  const user = useAppAuthStore((s) => s.user)
+  const isAdmin = user?.role === 'admin'
+
+  useEffect(() => {
+    if (!isAdmin) {
+      navigate({ to: '/' })
+    }
+  }, [isAdmin, navigate])
+
+  if (!isAdmin) {
+    return null
+  }
   const { providers } = useProviders()
   const imageModelGroups = useImageModelGroups()
   const hasLicense = useSettingsStore((s) => Boolean(s.licenseKey))

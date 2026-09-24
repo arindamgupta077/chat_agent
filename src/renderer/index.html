@@ -74,18 +74,10 @@
         background-color: #242424;
       }
 
-      .splash-screen-top {
-        flex: 2;
-      }
-      .splash-screen-bottom {
-        flex: 3;
-        width: 100%;
-        position: relative;
-      }
       .splash-screen-content {
-        flex: 0 0 auto;
         position: relative;
         text-align: center;
+        z-index: 1;
       }
 
       .splash-screen-title {
@@ -129,18 +121,7 @@
   <body>
     <div id="root"></div>
     <div class="splash-screen">
-      <div class="splash-screen-top"></div>
       <div class="splash-screen-content">
-        <img
-          src="/static/icon.png"
-          alt="AgentLab"
-          width="84"
-          height="84"
-          style="display: block; margin: 0 auto 12px; object-fit: contain;"
-        />
-        <div class="splash-screen-title">AgentLab</div>
-      </div>
-
         <svg
           class="splash-screen-logo-bg"
           width="660"
@@ -221,8 +202,16 @@
             stroke-width="0.5"
           />
         </svg>
+        <img
+          src="/static/icon.png"
+          alt="AgentLab"
+          width="96"
+          height="96"
+          style="display: block; margin: 0 auto 14px; object-fit: contain;"
+        />
+        <div class="splash-screen-title">AgentLab</div>
       </div>
-      <div class="splash-screen-bottom" id="log-root"></div>
+      <div id="log-root" style="position: fixed; bottom: 0; left: 0; right: 0;"></div>
     </div>
     <script type="module" src="./index.tsx"></script>
   </body>
