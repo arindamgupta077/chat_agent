@@ -104,10 +104,15 @@ export async function handleApiRequest(req, res) {
 
         // If reading settings, merge admin-configured global LLM API credentials & selected AI model & global system instruction!
         if (key === 'settings') {
+          if (!val) {
+            val = { __version: 7, mcp: { servers: [], enabledBuiltinServers: [] } }
+          }
+          if (typeof val.__version !== 'number') {
+            val.__version = 7
+          }
           try {
             const adminConfigRes = await query('SELECT llm_providers, selected_model, global_system_instruction FROM admin_global_config WHERE id = $1', ['global'])
             const globalConfig = adminConfigRes.rows[0]
-            if (!val) val = {}
             val.globalSystemInstruction = globalConfig?.global_system_instruction || ''
             if (user.role !== 'admin') {
               val.providers = sanitizeProviders(globalConfig?.llm_providers || {})
@@ -133,7 +138,6 @@ export async function handleApiRequest(req, res) {
           // Merge this user's isolated MCP servers from PostgreSQL
           try {
             const userServers = await getUserMcpServers(userId)
-            if (!val) val = {}
             if (!val.mcp) val.mcp = { servers: [], enabledBuiltinServers: [] }
             val.mcp.servers = userServers
           } catch (mcpErr) {
@@ -181,6 +185,26 @@ export async function handleApiRequest(req, res) {
             } else {
               finalValue = value
             }
+          }
+
+          // MCP server preservation & synchronization:
+          // users.mcp_servers in PostgreSQL is the single source of truth for user MCP configs.
+          const currentDbServers = await getUserMcpServers(userId)
+          if (!finalValue.mcp) {
+            finalValue.mcp = { servers: currentDbServers, enabledBuiltinServers: [] }
+          }
+          if (value.mcp && Array.isArray(value.mcp.servers) && value.mcp.servers.length > 0) {
+            try {
+              await syncUserMcpServers(userId, value.mcp.servers)
+              finalValue.mcp.servers = value.mcp.servers
+            } catch (mcpSyncErr) {
+              console.warn('[Storage] Failed to sync user MCP servers on settings update:', mcpSyncErr.message)
+              finalValue.mcp.servers = currentDbServers
+            }
+          } else {
+            // Incoming payload has empty or missing mcp.servers:
+            // NEVER wipe out users.mcp_servers from a generic settings update! Always preserve existing servers.
+            finalValue.mcp.servers = currentDbServers
           }
         }
 
@@ -257,15 +281,6 @@ export async function handleApiRequest(req, res) {
           }
         }
 
-        // Sync: if updating settings with mcp.servers, sync to users.mcp_servers
-        if (key === 'settings' && value && typeof value === 'object' && value.mcp && Array.isArray(value.mcp.servers)) {
-          try {
-            await syncUserMcpServers(userId, value.mcp.servers)
-          } catch (mcpSyncErr) {
-            console.warn('[Storage] Failed to sync user MCP servers on settings update:', mcpSyncErr.message)
-          }
-        }
-
         // Relational sync: if saving a session object, sync to chat_sessions & chat_messages
         if (key.startsWith('session:')) {
           const sessionId = key.slice('session:'.length)
@@ -303,40 +318,44 @@ export async function handleApiRequest(req, res) {
         for (const row of result.rows) {
           valuesMap[row.key] = row.value
         }
-        if (valuesMap.settings) {
-          try {
-            const adminConfigRes = await query('SELECT llm_providers, selected_model, global_system_instruction FROM admin_global_config WHERE id = $1', ['global'])
-            const globalConfig = adminConfigRes.rows[0]
-            valuesMap.settings.globalSystemInstruction = globalConfig?.global_system_instruction || ''
-            if (user.role !== 'admin') {
-              valuesMap.settings.providers = sanitizeProviders(globalConfig?.llm_providers || {})
-              if (globalConfig?.selected_model && (globalConfig.selected_model.provider || globalConfig.selected_model.modelId)) {
-                valuesMap.settings.defaultChatModel = {
-                  provider: globalConfig.selected_model.provider,
-                  model: globalConfig.selected_model.model || globalConfig.selected_model.modelId,
-                }
-              }
-            } else {
-              valuesMap.settings.providers = sanitizeProviders(globalConfig?.llm_providers ?? valuesMap.settings.providers ?? {})
-              if (!valuesMap.settings.defaultChatModel && globalConfig?.selected_model?.provider) {
-                valuesMap.settings.defaultChatModel = {
-                  provider: globalConfig.selected_model.provider,
-                  model: globalConfig.selected_model.model || globalConfig.selected_model.modelId,
-                }
+        if (!valuesMap.settings) {
+          valuesMap.settings = { __version: 7, mcp: { servers: [], enabledBuiltinServers: [] } }
+        }
+        if (typeof valuesMap.settings.__version !== 'number') {
+          valuesMap.settings.__version = 7
+        }
+        try {
+          const adminConfigRes = await query('SELECT llm_providers, selected_model, global_system_instruction FROM admin_global_config WHERE id = $1', ['global'])
+          const globalConfig = adminConfigRes.rows[0]
+          valuesMap.settings.globalSystemInstruction = globalConfig?.global_system_instruction || ''
+          if (user.role !== 'admin') {
+            valuesMap.settings.providers = sanitizeProviders(globalConfig?.llm_providers || {})
+            if (globalConfig?.selected_model && (globalConfig.selected_model.provider || globalConfig.selected_model.modelId)) {
+              valuesMap.settings.defaultChatModel = {
+                provider: globalConfig.selected_model.provider,
+                model: globalConfig.selected_model.model || globalConfig.selected_model.modelId,
               }
             }
-          } catch (e) {
-            console.warn('[Storage] Failed to merge global admin LLM credentials in getAll:', e.message)
+          } else {
+            valuesMap.settings.providers = sanitizeProviders(globalConfig?.llm_providers ?? valuesMap.settings.providers ?? {})
+            if (!valuesMap.settings.defaultChatModel && globalConfig?.selected_model?.provider) {
+              valuesMap.settings.defaultChatModel = {
+                provider: globalConfig.selected_model.provider,
+                model: globalConfig.selected_model.model || globalConfig.selected_model.modelId,
+              }
+            }
           }
+        } catch (e) {
+          console.warn('[Storage] Failed to merge global admin LLM credentials in getAll:', e.message)
+        }
 
-          // Merge this user's isolated MCP servers from PostgreSQL
-          try {
-            const userServers = await getUserMcpServers(userId)
-            if (!valuesMap.settings.mcp) valuesMap.settings.mcp = { servers: [], enabledBuiltinServers: [] }
-            valuesMap.settings.mcp.servers = userServers
-          } catch (mcpErr) {
-            console.warn('[Storage] Failed to merge user MCP servers in getAll:', mcpErr.message)
-          }
+        // Merge this user's isolated MCP servers from PostgreSQL
+        try {
+          const userServers = await getUserMcpServers(userId)
+          if (!valuesMap.settings.mcp) valuesMap.settings.mcp = { servers: [], enabledBuiltinServers: [] }
+          valuesMap.settings.mcp.servers = userServers
+        } catch (mcpErr) {
+          console.warn('[Storage] Failed to merge user MCP servers in getAll:', mcpErr.message)
         }
         sendJson(200, valuesMap)
         return true
@@ -370,6 +389,22 @@ export async function handleApiRequest(req, res) {
               } else {
                 batchValue = value
               }
+            }
+
+            // MCP server preservation & synchronization:
+            const currentDbServers = await getUserMcpServers(userId)
+            if (!batchValue.mcp) {
+              batchValue.mcp = { servers: currentDbServers, enabledBuiltinServers: [] }
+            }
+            if (value.mcp && Array.isArray(value.mcp.servers) && value.mcp.servers.length > 0) {
+              try {
+                await syncUserMcpServers(userId, value.mcp.servers)
+                batchValue.mcp.servers = value.mcp.servers
+              } catch (mcpSyncErr) {
+                batchValue.mcp.servers = currentDbServers
+              }
+            } else {
+              batchValue.mcp.servers = currentDbServers
             }
           }
           await query(
@@ -436,14 +471,6 @@ export async function handleApiRequest(req, res) {
                 )
               }
             } catch (adminSyncErr) {}
-          }
-
-          if (key === 'settings' && value && typeof value === 'object' && value.mcp && Array.isArray(value.mcp.servers)) {
-            try {
-              await syncUserMcpServers(userId, value.mcp.servers)
-            } catch (mcpSyncErr) {
-              console.warn('[Storage] Failed to sync user MCP servers in batch:', mcpSyncErr.message)
-            }
           }
         }
         sendJson(200, { success: true })

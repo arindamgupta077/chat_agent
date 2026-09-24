@@ -197,6 +197,7 @@ vi.mock('@/stores/uiStore', () => ({
 
 import { TestId } from '@shared/automation/testids'
 import { recentDirectoriesStore } from '@/stores/recentDirectoriesStore'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import AgentModePanel from './AgentModePanel'
 
 const defaultProps: ComponentProps<typeof AgentModePanel> = {
@@ -239,6 +240,10 @@ beforeEach(() => {
   mocks.uiState.newSessionCommandApprovalModeDefault = undefined
   mocks.uiState.newSessionWorkingDirectoriesDefault = undefined
   recentDirectoriesStore.setState({ directories: [] })
+  useAppAuthStore.setState({
+    user: { id: 'admin-1', role: 'admin', email: 'admin@test.com' } as any,
+    isAuthenticated: true,
+  })
 })
 
 describe('AgentModePanel mode buttons', () => {
@@ -279,22 +284,25 @@ describe('AgentModePanel mode buttons', () => {
     expect(mocks.setSessionAgentModeMock).toHaveBeenCalledWith('new', 'on')
   })
 
-  test('shows Chat Mode as the current state on web without a Work Mode switcher', () => {
+  test('does not show Chat Mode banner or hint text on web without Work Mode switcher', () => {
     mocks.platform.type = 'web'
     mocks.platform.isDesktopLike = false
     mocks.agentModeEntry.value = 'off'
     renderPanel({ modelSupportsAgentMode: false })
 
-    expect(screen.getByText('Chat Mode')).toBeTruthy()
+    expect(screen.queryByText('Chat Mode')).toBeNull()
+    expect(screen.queryByText('Mode')).toBeNull()
     expect(screen.queryByRole('button', { name: 'Work Mode' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Chat Mode' })).toBeNull()
     expect(screen.queryByText('Smart Switching')).toBeNull()
     expect(
-      screen.getByText('This app currently supports Chat Mode only. Use Work Mode on the desktop app.')
-    ).toBeTruthy()
+      screen.queryByText('This app currently supports Chat Mode only. Use Work Mode on the desktop app.')
+    ).toBeNull()
     expect(
-      screen.getByText('Skills, MCP, code execution, and Working Directory are available in the desktop app.')
-    ).toBeTruthy()
+      screen.queryByText('Skills, MCP, code execution, and Working Directory are available in the desktop app.')
+    ).toBeNull()
+    expect(screen.queryByText('Built-in')).toBeNull()
+    expect(screen.queryByText('Extensions')).toBeNull()
   })
 
   test('does not query or show Knowledge Base where the platform capability is unavailable', () => {
@@ -453,11 +461,11 @@ describe('AgentModePanel capability availability', () => {
 
     expect(screen.getByText('Sign in required')).toBeTruthy()
     expect(
-      screen.getByText('Chatbox AI Search needs sign-in. Web Search will be skipped while this setting is on.')
+      screen.getByText('AgentLab AI Search needs sign-in. Web Search will be skipped while this setting is on.')
     ).toBeTruthy()
     expect(screen.getByTestId(TestId.chat.webSearchToggle)).toHaveProperty('checked', true)
 
-    fireEvent.click(screen.getByRole('button', { name: /Sign in to Chatbox AI/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Sign in to AgentLab AI/ }))
     expect(mocks.navigateToSettingsMock).toHaveBeenCalledWith(undefined)
   })
 
@@ -486,6 +494,24 @@ describe('AgentModePanel capability availability', () => {
 })
 
 describe('AgentModePanel memory', () => {
+  test('hides Memory option for non-admin users', () => {
+    useAppAuthStore.setState({
+      user: { id: 'user-1', role: 'user', email: 'user@test.com' } as any,
+      isAuthenticated: true,
+    })
+    renderPanel()
+    expect(screen.queryByRole('button', { name: /^Memory/ })).toBeNull()
+  })
+
+  test('shows Memory option for admin users', () => {
+    useAppAuthStore.setState({
+      user: { id: 'admin-1', role: 'admin', email: 'admin@test.com' } as any,
+      isAuthenticated: true,
+    })
+    renderPanel()
+    expect(screen.getByRole('button', { name: /^Memory/ })).toBeTruthy()
+  })
+
   test('shows the effective global source and updates it from the Memory panel', () => {
     mocks.agentModeEntry.value = 'off'
     renderPanel()
@@ -847,12 +873,12 @@ describe('AgentModePanel platform-unavailable capabilities', () => {
     expect(screen.queryByText('Extensions')).toBeNull()
     expect(screen.getByRole('button', { name: 'Web Search' })).toBeTruthy()
     expect(screen.getByRole('button', { name: /^Memory/ })).toBeTruthy()
-    expect(screen.getByText('Chat Mode')).toBeTruthy()
+    expect(screen.queryByText('Chat Mode')).toBeNull()
     expect(
-      screen.getByText('This app currently supports Chat Mode only. Use Work Mode on the desktop app.')
-    ).toBeTruthy()
+      screen.queryByText('This app currently supports Chat Mode only. Use Work Mode on the desktop app.')
+    ).toBeNull()
     expect(
-      screen.getByText('Skills, MCP, code execution, and Working Directory are available in the desktop app.')
-    ).toBeTruthy()
+      screen.queryByText('Skills, MCP, code execution, and Working Directory are available in the desktop app.')
+    ).toBeNull()
   })
 })

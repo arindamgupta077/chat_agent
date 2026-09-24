@@ -221,7 +221,6 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
 ) {
   const isTouchLayout = layout === 'touch'
   const showModeSwitcher = platform.isDesktopLike
-  const showDesktopCapabilityHint = !platform.isDesktopLike
   const user = useAppAuthStore((s) => s.user)
   const isAdmin = user?.role === 'admin'
   const showCodeExecution = featureFlags.agentMode
@@ -229,7 +228,6 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
   const showMcp = featureFlags.mcp
   const showKnowledgeBase = featureFlags.knowledgeBase
   const showWorkingDirectory = supportsWorkingDirectories()
-  const showExtensions = showSkills || showMcp || showKnowledgeBase || showWorkingDirectory
   const { t } = useTranslation()
   const [page, setPage] = useState<PanelPage>('main')
   const closeTimerRef = useRef<ReturnType<typeof setTimeout>>()
@@ -303,6 +301,7 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
   const [memoryCount, setMemoryCount] = useState<number | null>(null)
 
   useEffect(() => {
+    if (!isAdmin) return
     let cancelled = false
     setMemoryCount(null)
     const load = managedMemoryCopilotId ? listCopilotMemories(managedMemoryCopilotId) : listMemories()
@@ -316,7 +315,7 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
     return () => {
       cancelled = true
     }
-  }, [managedMemoryCopilotId])
+  }, [isAdmin, managedMemoryCopilotId])
 
   const isProviderAvailable = useCallback(
     (provider: WebSearchProviderValue) => {
@@ -901,6 +900,7 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
     }
 
     if (page === 'memory') {
+      if (!isAdmin) return null
       return (
         <>
           <SubPanelHeader
@@ -1181,60 +1181,46 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
     >
       {showMainList && (
         <Stack gap={0} py="xs" className={panelWidthClass}>
-          <Stack gap="xs" px="sm" py="xs" onMouseEnter={isTouchLayout ? undefined : handleNonExtensionHover}>
-            <Text fw={600} size="sm" c="chatbox-primary">
-              {t('Mode')}
-            </Text>
-            {showModeSwitcher ? (
-              <>
-                <Flex gap={6}>
-                  <ModeButton value="off" label={t('Chat Mode')} />
-                  <ModeButton value="on" label={t('Work Mode')} />
+          {showModeSwitcher && (
+            <Stack gap="xs" px="sm" py="xs" onMouseEnter={isTouchLayout ? undefined : handleNonExtensionHover}>
+              <Text fw={600} size="sm" c="chatbox-primary">
+                {t('Mode')}
+              </Text>
+              <Flex gap={6}>
+                <ModeButton value="off" label={t('Chat Mode')} />
+                <ModeButton value="on" label={t('Work Mode')} />
+              </Flex>
+              <Text size="xs" c="chatbox-secondary" className="leading-snug max-w-[244px]">
+                {modeDescription}
+              </Text>
+              {isChatModeSelected && (
+                <Flex
+                  justify="space-between"
+                  align="center"
+                  gap="sm"
+                  className="rounded-lg bg-chatbox-background-secondary px-2 py-1.5"
+                >
+                  <Stack gap={0} className="min-w-0">
+                    <Text size="xs" fw={500} c="chatbox-primary">
+                      {t('Smart Switching')}
+                    </Text>
+                    <Text size="xs" c="chatbox-secondary" className="leading-snug max-w-[196px]">
+                      {smartSwitchingDescription}
+                    </Text>
+                  </Stack>
+                  <Switch
+                    size="xs"
+                    checked={smartSwitchingEnabled}
+                    disabled={isSmartSwitchingDisabled}
+                    onChange={(e) => handleSmartSwitchingChange(e.currentTarget.checked)}
+                  />
                 </Flex>
-                <Text size="xs" c="chatbox-secondary" className="leading-snug max-w-[244px]">
-                  {modeDescription}
-                </Text>
-              </>
-            ) : (
-              <Flex align="flex-start" gap="sm" className="rounded-lg bg-chatbox-background-secondary px-2 py-1.5">
-                <AgentModeStatusIcon mode="off" size={14} className="mt-0.5 shrink-0" />
-                <Stack gap={2} className="min-w-0">
-                  <Text size="sm" fw={500} c="chatbox-primary">
-                    {t('Chat Mode')}
-                  </Text>
-                  <Text size="xs" c="chatbox-secondary" className="leading-snug">
-                    {t('This app currently supports Chat Mode only. Use Work Mode on the desktop app.')}
-                  </Text>
-                </Stack>
-              </Flex>
-            )}
-            {showModeSwitcher && isChatModeSelected && (
-              <Flex
-                justify="space-between"
-                align="center"
-                gap="sm"
-                className="rounded-lg bg-chatbox-background-secondary px-2 py-1.5"
-              >
-                <Stack gap={0} className="min-w-0">
-                  <Text size="xs" fw={500} c="chatbox-primary">
-                    {t('Smart Switching')}
-                  </Text>
-                  <Text size="xs" c="chatbox-secondary" className="leading-snug max-w-[196px]">
-                    {smartSwitchingDescription}
-                  </Text>
-                </Stack>
-                <Switch
-                  size="xs"
-                  checked={smartSwitchingEnabled}
-                  disabled={isSmartSwitchingDisabled}
-                  onChange={(e) => handleSmartSwitchingChange(e.currentTarget.checked)}
-                />
-              </Flex>
-            )}
-          </Stack>
+              )}
+            </Stack>
+          )}
 
           <div>
-            <Divider my={4} mx="sm" label={t('Built-in')} labelPosition="left" />
+            {showModeSwitcher && <Divider my={4} mx="sm" />}
 
             <ExtensionRow
               icon={
@@ -1330,26 +1316,28 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
               </Flex>
             )}
 
-            <ExtensionRow
-              icon={<IconNotes size={16} className="text-[var(--chatbox-tint-secondary)]" />}
-              label={t('Memory')}
-              badge={effectiveMemorySource !== 'none' && memoryCount && memoryCount > 0 ? memoryCount : undefined}
-              active={page === 'memory'}
-              page="memory"
-              subPanelAlign="top"
-              rightContent={
-                <Flex gap="xs" align="center" className="shrink-0">
-                  <Badge size="xs" variant="light" color={effectiveMemorySource === 'none' ? 'gray' : 'chatbox-brand'}>
-                    {effectiveMemorySource === 'copilot'
-                      ? t('Copilot Memory')
-                      : effectiveMemorySource === 'global'
-                        ? t('Global Memory')
-                        : t('Off')}
-                  </Badge>
-                  <IconChevronRight size={14} className="text-[var(--chatbox-tint-tertiary)]" />
-                </Flex>
-              }
-            />
+            {isAdmin && (
+              <ExtensionRow
+                icon={<IconNotes size={16} className="text-[var(--chatbox-tint-secondary)]" />}
+                label={t('Memory')}
+                badge={effectiveMemorySource !== 'none' && memoryCount && memoryCount > 0 ? memoryCount : undefined}
+                active={page === 'memory'}
+                page="memory"
+                subPanelAlign="top"
+                rightContent={
+                  <Flex gap="xs" align="center" className="shrink-0">
+                    <Badge size="xs" variant="light" color={effectiveMemorySource === 'none' ? 'gray' : 'chatbox-brand'}>
+                      {effectiveMemorySource === 'copilot'
+                        ? t('Copilot Memory')
+                        : effectiveMemorySource === 'global'
+                          ? t('Global Memory')
+                          : t('Off')}
+                    </Badge>
+                    <IconChevronRight size={14} className="text-[var(--chatbox-tint-tertiary)]" />
+                  </Flex>
+                }
+              />
+            )}
 
             {showCodeExecution && (
               <ExtensionRow
@@ -1375,8 +1363,6 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
                 }
               />
             )}
-
-            {showExtensions && <Divider my={4} mx="sm" label={t('Extensions')} labelPosition="left" />}
 
             {showSkills && (
               <ExtensionRow
@@ -1421,12 +1407,6 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
               />
             )}
           </div>
-
-          {showDesktopCapabilityHint && (
-            <Text size="xs" c="chatbox-secondary" px="sm" pt="sm" pb="xs" className="leading-snug">
-              {t('Skills, MCP, code execution, and Working Directory are available in the desktop app.')}
-            </Text>
-          )}
         </Stack>
       )}
 
