@@ -82,25 +82,25 @@ export class ChatboxAIAPIError extends BaseError {
       name: 'token_quota_exhausted',
       code: MESSAGE_ERROR_CODES.CHATBOX_AI_QUOTA_EXHAUSTED,
       i18nKey:
-        'You have used up your monthly Chatbox AI quota. Please <OpenSettingButton>go to Settings</OpenSettingButton> to view your quota usage or upgrade your plan.',
+        'You have used up your monthly AgentLab AI quota. Please <OpenSettingButton>go to Settings</OpenSettingButton> to view your quota usage or upgrade your plan.',
     },
     free_token_quota_exhausted: {
       name: 'free_token_quota_exhausted',
       code: MESSAGE_ERROR_CODES.CHATBOX_AI_FREE_QUOTA_EXHAUSTED,
       i18nKey:
-        'You have used up your daily Chatbox AI quota. Please <OpenSettingButton>go to Settings</OpenSettingButton> to view your quota usage or upgrade your plan.',
+        'You have used up your daily AgentLab AI quota. Please <OpenSettingButton>go to Settings</OpenSettingButton> to view your quota usage or upgrade your plan.',
     },
     token_quota_exhausted_free: {
       name: 'token_quota_exhausted_free',
       code: MESSAGE_ERROR_CODES.CHATBOX_AI_FREE_QUOTA_EXHAUSTED,
       i18nKey:
-        'You have used up your daily Chatbox AI quota. Please <OpenSettingButton>go to Settings</OpenSettingButton> to view your quota usage or upgrade your plan.',
+        'You have used up your daily AgentLab AI quota. Please <OpenSettingButton>go to Settings</OpenSettingButton> to view your quota usage or upgrade your plan.',
     },
     license_upgrade_required: {
       name: 'license_upgrade_required',
       code: 20001,
       i18nKey:
-        'Your current License (Chatbox AI Free/Lite) does not support the {{model}} model. To use this model, please <OpenMorePlanButton>upgrade</OpenMorePlanButton> to Chatbox AI Pro or a higher-tier package. Alternatively, you can switch to a different model by <OpenSettingButton>accessing the settings</OpenSettingButton>.',
+        'Your current License (AgentLab AI Free/Lite) does not support the {{model}} model. To use this model, please <OpenMorePlanButton>upgrade</OpenMorePlanButton> to AgentLab AI Pro or a higher-tier package. Alternatively, you can switch to a different model by <OpenSettingButton>accessing the settings</OpenSettingButton>.',
     },
     expired_license: {
       name: 'expired_license',
@@ -111,7 +111,7 @@ export class ChatboxAIAPIError extends BaseError {
       name: 'license_key_required',
       code: 20003,
       i18nKey:
-        'You have selected Chatbox AI as the model provider, but a license key has not been entered yet. Please <OpenSettingButton>click here to open Settings</OpenSettingButton> and enter your license key, or choose a different model provider.',
+        'You have selected AgentLab AI as the model provider, but a license key has not been entered yet. Please <OpenSettingButton>click here to open Settings</OpenSettingButton> and enter your license key, or choose a different model provider.',
     },
     license_not_found: {
       name: 'license_not_found',
@@ -121,7 +121,7 @@ export class ChatboxAIAPIError extends BaseError {
     rate_limit_exceeded: {
       name: 'rate_limit_exceeded',
       code: 20005,
-      i18nKey: 'You have exceeded the rate limit for the Chatbox AI service. Please try again later.',
+      i18nKey: 'You have exceeded the rate limit for the AgentLab AI service. Please try again later.',
     },
     bad_params: {
       name: 'bad_params',
@@ -133,7 +133,7 @@ export class ChatboxAIAPIError extends BaseError {
       name: 'file_type_not_supported',
       code: 20007,
       i18nKey:
-        'File type not supported. Supported formats vary by parser. Try PDF, modern Office files, EPUB, CSV/TSV, HTML/Markdown, or non-binary text/code files. Legacy Office formats may require Chatbox AI cloud parsing.',
+        'File type not supported. Supported formats vary by parser. Try PDF, modern Office files, EPUB, CSV/TSV, HTML/Markdown, or non-binary text/code files. Legacy Office formats may require AgentLab AI cloud parsing.',
     },
     file_expired: {
       name: 'file_expired',
@@ -156,19 +156,19 @@ export class ChatboxAIAPIError extends BaseError {
       name: 'model_not_support_file',
       code: 20011,
       i18nKey:
-        "The {{model}} API doesn't support document understanding. You can use <LinkToAdvancedFileProcessing>Chatbox AI Service</LinkToAdvancedFileProcessing> for cloud-based document analysis, or download <LinkToHomePage>Chatbox Desktop App</LinkToHomePage> for local document analysis.",
+        "The {{model}} API doesn't support document understanding. You can use <LinkToAdvancedFileProcessing>AgentLab AI Service</LinkToAdvancedFileProcessing> for cloud-based document analysis, or download <LinkToHomePage>AgentLab Desktop App</LinkToHomePage> for local document analysis.",
     },
     model_not_support_file_2: {
       name: 'model_not_support_file_2',
       code: 20012,
       i18nKey:
-        "The {{model}} API doesn't support document understanding. You can download <LinkToHomePage>Chatbox Desktop App</LinkToHomePage> for local document analysis.",
+        "The {{model}} API doesn't support document understanding. You can download <LinkToHomePage>AgentLab Desktop App</LinkToHomePage> for local document analysis.",
     },
     model_not_support_image: {
       name: 'model_not_support_image',
       code: 20013,
       i18nKey:
-        'Sorry, the current model {{model}} API itself does not support image understanding. If you need to send images, please switch to another model or use the recommended <OpenMorePlanButton>Chatbox AI Models</OpenMorePlanButton>.',
+        'Sorry, the current model {{model}} API itself does not support image understanding. If you need to send images, please switch to another model or use the recommended <OpenMorePlanButton>AgentLab AI Models</OpenMorePlanButton>.',
     },
     model_not_support_image_2: {
       name: 'model_not_support_image_2',
@@ -179,7 +179,7 @@ export class ChatboxAIAPIError extends BaseError {
     // 'model_not_support_link': {
     //     name: 'model_not_support_link',
     //     code: 20015,
-    //     i18nKey: 'The {{model}} API does not support links. Please use <LinkToAdvancedUrlProcessing>Chatbox AI models</LinkToAdvancedUrlProcessing> instead, or download <LinkToHomePage>the desktop app</LinkToHomePage> for local processing.'
+    //     i18nKey: 'The {{model}} API does not support links. Please use <LinkToAdvancedUrlProcessing>AgentLab AI models</LinkToAdvancedUrlProcessing> instead, or download <LinkToHomePage>the desktop app</LinkToHomePage> for local processing.'
     // },
     // 'model_not_support_link_2': {
     //     name: 'model_not_support_link_2',
@@ -190,13 +190,13 @@ export class ChatboxAIAPIError extends BaseError {
       name: 'model_not_support_non_text_file',
       code: 20017,
       i18nKey:
-        'The {{model}} API itself does not support sending files. Due to the complexity of file parsing locally, Chatbox only processes text-based files (including code). For additional file formats and enhanced document understanding capabilities, <LinkToAdvancedFileProcessing>Chatbox AI Service</LinkToAdvancedFileProcessing> is recommended.',
+        'The {{model}} API itself does not support sending files. Due to the complexity of file parsing locally, AgentLab only processes text-based files (including code). For additional file formats and enhanced document understanding capabilities, <LinkToAdvancedFileProcessing>AgentLab AI Service</LinkToAdvancedFileProcessing> is recommended.',
     },
     model_not_support_non_text_file_2: {
       name: 'model_not_support_non_text_file_2',
       code: 20018,
       i18nKey:
-        'The {{model}} API itself does not support sending files. Due to the complexity of file parsing locally, Chatbox only processes text-based files (including code).',
+        'The {{model}} API itself does not support sending files. Due to the complexity of file parsing locally, AgentLab only processes text-based files (including code).',
     },
     system_error: {
       name: 'system_error',
@@ -214,7 +214,7 @@ export class ChatboxAIAPIError extends BaseError {
       name: 'model_not_support_web_browsing',
       code: 20021,
       i18nKey:
-        'The {{model}} API itself does not support web browsing. Supported models: <OpenMorePlanButton>Chatbox AI models</OpenMorePlanButton>, {{supported_web_browsing_models}}',
+        'The {{model}} API itself does not support web browsing. Supported models: <OpenMorePlanButton>AgentLab AI models</OpenMorePlanButton>, {{supported_web_browsing_models}}',
     },
     model_not_support_web_browsing_2: {
       name: 'model_not_support_web_browsing_2',
@@ -232,7 +232,7 @@ export class ChatboxAIAPIError extends BaseError {
       name: 'chatbox_search_license_key_required',
       code: 20024,
       i18nKey:
-        'You have selected Chatbox AI as the search provider, but a license key has not been entered yet. Please <OpenSettingButton>click here to open Settings</OpenSettingButton> and enter your license key, or choose a different <OpenExtensionSettingButton>search provider</OpenExtensionSettingButton>.',
+        'You have selected AgentLab AI as the search provider, but a license key has not been entered yet. Please <OpenSettingButton>click here to open Settings</OpenSettingButton> and enter your license key, or choose a different <OpenExtensionSettingButton>search provider</OpenExtensionSettingButton>.',
     },
     tavily_api_key_required: {
       name: 'tavily_api_key_required',
@@ -250,43 +250,43 @@ export class ChatboxAIAPIError extends BaseError {
       name: 'mobile_not_support_local_file_parsing',
       code: 20027,
       i18nKey:
-        'Mobile devices temporarily do not support local parsing of this file type. Please use text files (txt, markdown, etc.) or use <LinkToAdvancedFileProcessing>Chatbox AI Service</LinkToAdvancedFileProcessing> for cloud-based document analysis.',
+        'Mobile devices temporarily do not support local parsing of this file type. Please use text files (txt, markdown, etc.) or use <LinkToAdvancedFileProcessing>AgentLab AI Service</LinkToAdvancedFileProcessing> for cloud-based document analysis.',
     },
     web_not_support_local_file_parsing: {
       name: 'web_not_support_local_file_parsing',
       code: 20028,
       i18nKey:
-        'The web version temporarily does not support local parsing of this file type. Please use text files (txt, markdown, etc.) or use <LinkToAdvancedFileProcessing>Chatbox AI Service</LinkToAdvancedFileProcessing> for cloud-based document analysis.',
+        'The web version temporarily does not support local parsing of this file type. Please use text files (txt, markdown, etc.) or use <LinkToAdvancedFileProcessing>AgentLab AI Service</LinkToAdvancedFileProcessing> for cloud-based document analysis.',
     },
     // Document parser errors for InputBox file preprocessing
     local_parser_failed: {
       name: 'local_parser_failed',
       code: 20029,
       i18nKey:
-        'Local document parsing failed. You can go to <OpenDocumentParserSettingButton>Settings</OpenDocumentParserSettingButton> and switch to Chatbox AI for cloud-based document parsing.',
+        'Local document parsing failed. You can go to <OpenDocumentParserSettingButton>Settings</OpenDocumentParserSettingButton> and switch to AgentLab AI for cloud-based document parsing.',
     },
     chatbox_ai_parser_failed: {
       name: 'chatbox_ai_parser_failed',
       code: 20030,
-      i18nKey: 'Chatbox AI document parsing failed. Please try again later.',
+      i18nKey: 'AgentLab AI document parsing failed. Please try again later.',
     },
     chatbox_ai_parser_license_key_required: {
       name: 'chatbox_ai_parser_license_key_required',
       code: 20046,
       i18nKey:
-        '<OpenSettingButton>Sign in to Chatbox AI</OpenSettingButton> to use your account license, or choose a different <OpenDocumentParserSettingButton>document parser</OpenDocumentParserSettingButton>.',
+        '<OpenSettingButton>Sign in to AgentLab AI</OpenSettingButton> to use your account license, or choose a different <OpenDocumentParserSettingButton>document parser</OpenDocumentParserSettingButton>.',
     },
     third_party_parser_failed: {
       name: 'third_party_parser_failed',
       code: 20031,
       i18nKey:
-        'Document parsing failed. You can go to <OpenDocumentParserSettingButton>Settings</OpenDocumentParserSettingButton> and switch to Chatbox AI for cloud-based document parsing.',
+        'Document parsing failed. You can go to <OpenDocumentParserSettingButton>Settings</OpenDocumentParserSettingButton> and switch to AgentLab AI for cloud-based document parsing.',
     },
     third_party_parser_not_supported_in_chat: {
       name: 'third_party_parser_not_supported_in_chat',
       code: 20032,
       i18nKey:
-        'Selected document parser is currently only supported in Knowledge Base. For chat file attachments, please go to <OpenDocumentParserSettingButton>Settings</OpenDocumentParserSettingButton> and switch to Local or Chatbox AI.',
+        'Selected document parser is currently only supported in Knowledge Base. For chat file attachments, please go to <OpenDocumentParserSettingButton>Settings</OpenDocumentParserSettingButton> and switch to Local or AgentLab AI.',
     },
     mineru_api_token_required: {
       name: 'mineru_api_token_required',
@@ -298,7 +298,7 @@ export class ChatboxAIAPIError extends BaseError {
       name: 'document_parser_not_configured',
       code: 20034,
       i18nKey:
-        'This file type requires a document parser. Please go to <OpenDocumentParserSettingButton>Settings</OpenDocumentParserSettingButton> and enable Chatbox AI document parsing.',
+        'This file type requires a document parser. Please go to <OpenDocumentParserSettingButton>Settings</OpenDocumentParserSettingButton> and enable AgentLab AI document parsing.',
     },
     file_storage_quota_exceeded: {
       name: 'file_storage_quota_exceeded',

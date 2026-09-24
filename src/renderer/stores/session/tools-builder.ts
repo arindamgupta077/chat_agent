@@ -396,11 +396,11 @@ In long conversations, earlier tool call results may be automatically compressed
     instructions += options.workspaceInstructionsOverride ?? (await buildWorkspaceInstructions(userWorkingDirectories))
     instructions += `
 ## Git
-When you create a Git branch, prefix its name with \`chatbox/\` (for example \`chatbox/fix-login-retry\`).
+When you create a Git branch, prefix its name with \`agentlab/\` (for example \`agentlab/fix-login-retry\`).
 
 When you create a Git commit that includes code changes, append this exact trailer to the commit message:
 
-\`Co-authored-by: Chatbox <chatbox@chatboxai.com>\`
+\`Co-authored-by: AgentLab <support@agentlab.local>\`
 `
   }
   if (kbToolSet && kbSupported) {

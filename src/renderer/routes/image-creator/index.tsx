@@ -371,7 +371,7 @@ function ImageCreatorPage() {
     }
 
     if (selectedProvider === ModelProviderEnum.ChatboxAI && !settingsStore.getState().licenseKey) {
-      toastActions.add(t('Please log in to Chatbox AI first'))
+      toastActions.add(t('Please log in to AgentLab AI first'))
       return
     }
 
@@ -411,7 +411,7 @@ function ImageCreatorPage() {
       }
 
       if (selectedProvider === ModelProviderEnum.ChatboxAI && !settingsStore.getState().licenseKey) {
-        toastActions.add(t('Please log in to Chatbox AI first'))
+        toastActions.add(t('Please log in to AgentLab AI first'))
         return
       }
 

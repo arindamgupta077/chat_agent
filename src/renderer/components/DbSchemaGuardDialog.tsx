@@ -20,12 +20,12 @@ export default function DbSchemaGuardDialog() {
         closeOnClickOutside={false}
         closeOnEscape={false}
         centered
-        title={t('Your data was created by a newer version of Chatbox')}
+        title={t('Your data was created by a newer version of AgentLab')}
       >
         <Stack gap="sm">
           <Text size="sm">
             {t(
-              'This version of Chatbox cannot read data created by a newer version. Your data is safe — update Chatbox to the latest version to continue.'
+              'This version of AgentLab cannot read data created by a newer version. Your data is safe — update AgentLab to the latest version to continue.'
             )}
           </Text>
           <UpdateAction language={i18n.language} />
@@ -44,9 +44,9 @@ export default function DbSchemaGuardDialog() {
         closeOnClickOutside={false}
         closeOnEscape={false}
         centered
-        title={t('Waiting for other Chatbox windows')}
+        title={t('Waiting for other AgentLab windows')}
       >
-        <Text size="sm">{t('Close other Chatbox windows or tabs to finish updating the local database.')}</Text>
+        <Text size="sm">{t('Close other AgentLab windows or tabs to finish updating the local database.')}</Text>
       </Modal>
     )
   }
@@ -60,7 +60,7 @@ export default function DbSchemaGuardDialog() {
         closeOnClickOutside={false}
         closeOnEscape={false}
         centered
-        title={t('Chatbox was updated in another window')}
+        title={t('AgentLab was updated in another window')}
       >
         <Stack gap="sm">
           <Text size="sm">{t('Reload this page to continue.')}</Text>

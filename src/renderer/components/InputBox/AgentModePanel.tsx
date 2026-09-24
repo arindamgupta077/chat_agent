@@ -1309,7 +1309,7 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
                 <Stack gap={3} className="min-w-0">
                   <Text size="xs" c="chatbox-secondary" className="leading-snug">
                     {webSearchConfigurationIssue === 'chatbox-ai-sign-in'
-                      ? t('Chatbox AI Search needs sign-in. Web Search will be skipped while this setting is on.')
+                      ? t('AgentLab AI Search needs sign-in. Web Search will be skipped while this setting is on.')
                       : t('The selected Web Search provider needs to be configured before it can run.')}
                   </Text>
                   <UnstyledButton
@@ -1322,7 +1322,7 @@ const AgentModePanel = forwardRef<AgentModePanelHandle, AgentModePanelProps>(fun
                     }}
                   >
                     {webSearchConfigurationIssue === 'chatbox-ai-sign-in'
-                      ? t('Sign in to Chatbox AI')
+                      ? t('Sign in to AgentLab AI')
                       : t('Open Web Search settings')}{' '}
                     →
                   </UnstyledButton>

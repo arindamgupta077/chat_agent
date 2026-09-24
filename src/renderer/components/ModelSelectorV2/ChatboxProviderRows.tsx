@@ -89,7 +89,7 @@ export function ChatboxProviderRows({
   const { t } = useTranslation()
   const selectedProviderMatches =
     selectedProviderId === provider.id ||
-    (provider.name === 'Chatbox AI' && selectedProviderId === ModelProviderEnum.ChatboxAI)
+    ((provider.name === 'AgentLab AI' || provider.name === 'Chatbox AI') && selectedProviderId === ModelProviderEnum.ChatboxAI)
   const favoriteSet = new Set(
     (favorites || []).filter((favorite) => favorite.provider === provider.id).map((favorite) => favorite.model)
   )

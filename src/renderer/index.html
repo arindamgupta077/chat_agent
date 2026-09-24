@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="AgentLab" />
     <meta name="theme-color" content="#000000" />
     <meta name="description" content="AgentLab" />
-    <link rel="apple-touch-icon" href="/logo192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <title>AgentLab</title>
     <!-- Google tag (gtag.js) -->
@@ -20,7 +20,7 @@
     ></script>
     <script
       defer
-      data-domain="app.chatboxai.app"
+      data-domain="app.agentlab.local"
       src="https://plausible.midway.run/js/script.local.hash.manual.js"
     ></script>
     <script>
@@ -85,13 +85,17 @@
       .splash-screen-content {
         flex: 0 0 auto;
         position: relative;
+        text-align: center;
       }
 
-      .splash-screen-logo {
-        display: block;
+      .splash-screen-title {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 20px;
+        font-weight: 700;
         color: #495057;
+        letter-spacing: 0.5px;
       }
-      html[data-theme="dark"] .splash-screen-logo {
+      html[data-theme="dark"] .splash-screen-title {
         color: #ced4da;
       }
 
@@ -127,60 +131,15 @@
     <div class="splash-screen">
       <div class="splash-screen-top"></div>
       <div class="splash-screen-content">
-        <svg
-          class="splash-screen-logo"
-          width="132"
-          height="96"
-          viewBox="0 0 132 96"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <mask
-            id="path-1-outside-1_11100_16759"
-            maskUnits="userSpaceOnUse"
-            x="35.0715"
-            y="0"
-            width="62"
-            height="60"
-            fill="black"
-          >
-            <rect fill="white" x="35.0715" width="62" height="60" />
-            <path
-              d="M83.0247 4C88.4948 4.00025 92.929 8.43512 92.929 13.9053V38.1172C92.9287 43.5872 88.4946 48.0212 83.0247 48.0215H53.1057L43.468 56.001V46.3486C40.8172 44.5713 39.0717 41.5485 39.0715 38.1172V13.9053C39.0715 8.43496 43.5065 4 48.9768 4H83.0247Z"
-            />
-          </mask>
-          <path
-            d="M83.0247 4L83.0248 0.148105H83.0247V4ZM92.929 38.1172L96.7808 38.1173V38.1172H92.929ZM83.0247 48.0215V51.8734H83.0248L83.0247 48.0215ZM53.1057 48.0215V44.1696C52.2088 44.1696 51.3401 44.4826 50.6492 45.0545L53.1057 48.0215ZM43.468 56.001H39.6161C39.6161 57.4934 40.4782 58.8514 41.8287 59.4866C43.1791 60.1218 44.775 59.9197 45.9245 58.9679L43.468 56.001ZM43.468 46.3486H47.3199C47.3199 45.0643 46.6798 43.8645 45.6131 43.1493L43.468 46.3486ZM39.0715 38.1172H35.2196V38.1173L39.0715 38.1172ZM83.0247 4L83.0245 7.8519C86.3671 7.85205 89.0771 10.5621 89.0771 13.9053H92.929H96.7808C96.7808 6.30809 90.6225 0.148449 83.0248 0.148105L83.0247 4ZM92.929 13.9053H89.0771V38.1172H92.929H96.7808V13.9053H92.929ZM92.929 38.1172L89.0771 38.117C89.0769 41.4598 86.3673 44.1694 83.0245 44.1696L83.0247 48.0215L83.0248 51.8734C90.622 51.873 96.7805 45.7146 96.7808 38.1173L92.929 38.1172ZM83.0247 48.0215V44.1696H53.1057V48.0215V51.8734H83.0247V48.0215ZM53.1057 48.0215L50.6492 45.0545L41.0115 53.034L43.468 56.001L45.9245 58.9679L55.5622 50.9884L53.1057 48.0215ZM43.468 56.001H47.3199V46.3486H43.468H39.6161V56.001H43.468ZM43.468 46.3486L45.6131 43.1493C43.9827 42.0562 42.9235 40.2094 42.9234 38.117L39.0715 38.1172L35.2196 38.1173C35.2198 42.8875 37.6516 47.0864 41.3229 49.548L43.468 46.3486ZM39.0715 38.1172H42.9234V13.9053H39.0715H35.2196V38.1172H39.0715ZM39.0715 13.9053H42.9234C42.9234 10.5623 45.6338 7.8519 48.9768 7.8519V4V0.148105C41.3792 0.148105 35.2196 6.30762 35.2196 13.9053H39.0715ZM48.9768 4V7.8519H83.0247V4V0.148105H48.9768V4Z"
-            fill="currentColor"
-            mask="url(#path-1-outside-1_11100_16759)"
-          />
-          <circle
-            cx="57.5052"
-            cy="25.7339"
-            r="3.02649"
-            fill="currentColor"
-            stroke="currentColor"
-            stroke-width="0.550271"
-          />
-          <circle
-            cx="74.5641"
-            cy="25.7339"
-            r="3.02649"
-            fill="currentColor"
-            stroke="currentColor"
-            stroke-width="0.550271"
-          />
-          <text
-            x="66"
-            y="89"
-            text-anchor="middle"
-            font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-            font-size="16"
-            font-weight="700"
-            fill="currentColor"
-            letter-spacing="0.5"
-          >AgentLab</text>
-        </svg>
+        <img
+          src="/static/icon.png"
+          alt="AgentLab"
+          width="84"
+          height="84"
+          style="display: block; margin: 0 auto 12px; object-fit: contain;"
+        />
+        <div class="splash-screen-title">AgentLab</div>
+      </div>
 
         <svg
           class="splash-screen-logo-bg"

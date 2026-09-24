@@ -41,20 +41,20 @@ export function useSidebarWidth() {
 
   // If custom width is set, use it
   if (customWidth !== null) {
-    return customWidth
+    return Math.max(260 * scale, customWidth)
   }
 
   // Otherwise use default responsive width
   if (xl) {
-    return 280 * scale
+    return 320 * scale
   } else if (lg) {
-    return 240 * scale
+    return 300 * scale
   } else if (md) {
-    return 220 * scale
+    return 280 * scale
   } else if (sm) {
-    return 200 * scale
+    return 260 * scale
   } else {
-    return 240 * scale
+    return 260 * scale
   }
 }
 

@@ -4,7 +4,7 @@ import ChatboxAI from './models/chatboxai'
 
 export const chatboxAIProvider = defineProvider({
   id: ModelProviderEnum.ChatboxAI,
-  name: 'Chatbox AI',
+  name: 'AgentLab AI',
   type: ModelProviderType.ChatboxAI,
   urls: {
     website: 'https://chatboxai.app',
@@ -30,8 +30,8 @@ export const chatboxAIProvider = defineProvider({
   },
   getDisplayName: (modelId, providerSettings, sessionType) => {
     if (sessionType === 'picture') {
-      return 'Chatbox AI'
+      return 'AgentLab AI'
     }
-    return `Chatbox AI (${providerSettings?.models?.find((m) => m.modelId === modelId)?.nickname || modelId})`
+    return `AgentLab AI (${providerSettings?.models?.find((m) => m.modelId === modelId)?.nickname || modelId})`
   },
 })

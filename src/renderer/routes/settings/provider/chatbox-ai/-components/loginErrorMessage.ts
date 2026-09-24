@@ -2,7 +2,7 @@ import { ApiError } from '@shared/models/errors'
 
 type TranslateFn = (key: string) => string
 
-export const LOGIN_SUPPORT_EMAIL = 'hi@chatboxai.com'
+export const LOGIN_SUPPORT_EMAIL = 'support@agentlab.local'
 
 export interface LoginErrorPresentation {
   code?: string
@@ -61,7 +61,7 @@ function getAccountUnavailablePresentation(
     code: payload.error.code,
     title: t('Unable to Sign In') || 'Unable to Sign In',
     message:
-      t("We can't sign you in to this account. If you believe this is a mistake, please contact hi@chatboxai.com.") ||
+      t("We can't sign you in to this account. If you believe this is a mistake, please contact support@agentlab.local.") ||
       `We can't sign you in to this account. If you believe this is a mistake, please contact ${LOGIN_SUPPORT_EMAIL}.`,
   }
 }

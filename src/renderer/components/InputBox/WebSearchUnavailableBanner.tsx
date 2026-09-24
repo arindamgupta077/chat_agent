@@ -75,15 +75,15 @@ export function WebSearchUnavailableBanner({ session }: { session: Session }) {
         <IconAlertCircle size={14} color="var(--chatbox-tint-warning)" className="shrink-0" />
         <Text size="xs" c="chatbox-secondary" truncate>
           {isSmallScreen
-            ? t('Web Search was skipped: sign in to Chatbox AI')
+            ? t('Web Search was skipped: sign in to AgentLab AI')
             : t(
-                'Web Search was skipped because Chatbox AI requires sign-in. Future searches in this chat will fail until you sign in or change providers.'
+                'Web Search was skipped because AgentLab AI requires sign-in. Future searches in this chat will fail until you sign in or change providers.'
               )}
         </Text>
       </Flex>
       <Flex align="center" gap={4} className="shrink-0">
         <Button h={24} px={10} radius={12} size="compact-xs" variant="light" onClick={() => navigateToSettings()}>
-          {isSmallScreen ? t('Sign in') : t('Sign in to Chatbox AI')}
+          {isSmallScreen ? t('Sign in') : t('Sign in to AgentLab AI')}
         </Button>
         {!isSmallScreen && (
           <Button

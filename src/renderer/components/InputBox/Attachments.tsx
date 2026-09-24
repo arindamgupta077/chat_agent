@@ -29,7 +29,7 @@ function getTranslatedErrorMessage(
 ): string | undefined {
   if (!errorCode) return undefined
   if (isSessionAttachmentRagAuthError(errorCode)) {
-    return t('This large file needs Chatbox AI to finish indexing. Sign in to Chatbox AI, then retry this file.')
+    return t('This large file needs AgentLab AI to finish indexing. Sign in to AgentLab AI, then retry this file.')
   }
   if (isSessionAttachmentRagIndexingError(errorCode)) {
     return recoveryAction
@@ -303,7 +303,7 @@ export function getParserDisplayName(
     case 'local':
       return t('Parser: Local')
     case 'chatbox-ai':
-      return t('Parser: {{parser}}', { parser: 'Chatbox AI' })
+      return t('Parser: {{parser}}', { parser: 'AgentLab AI' })
     case 'mineru':
       return t('Parser: {{parser}}', { parser: 'MinerU' })
     default:

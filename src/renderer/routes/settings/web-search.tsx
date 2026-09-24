@@ -30,7 +30,7 @@ export function RouteComponent() {
           query: {
             key: extension.webSearch.googleApiKey,
             cx: extension.webSearch.googleCx,
-            q: 'Chatbox',
+            q: 'AgentLab',
             num: '1',
           },
         })

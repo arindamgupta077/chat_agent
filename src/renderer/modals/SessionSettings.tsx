@@ -26,6 +26,7 @@ import storage from '@/storage'
 import { StorageKeyGenerator } from '@/storage/StoreStorage'
 import { getSessionAgentModeEntry } from '@/stores/session/agent-mode'
 import { getSessionMeta } from '@/stores/sessionHelpers'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { add as addToast } from '@/stores/toastActions'
 import { getMessageText } from '../../shared/utils/message'
@@ -35,6 +36,8 @@ const SessionSettingsModal = NiceModal.create(
     const modal = useModal()
     const { t } = useTranslation()
     const isSmallScreen = useIsSmallScreen()
+    const user = useAppAuthStore((s) => s.user)
+    const isAdmin = user?.role === 'admin'
     const globalSystemInstruction = useSettingsStore((s) => s.globalSystemInstruction)
 
     const [editingData, setEditingData] = useState<Session | null>(session || null)
@@ -219,7 +222,7 @@ const SessionSettingsModal = NiceModal.create(
 
             {isChatSession(session) && (
               <>
-                {globalSystemInstruction && (
+                {isAdmin && globalSystemInstruction && (
                   <Box p="xs" className="border border-solid border-amber-500/30 rounded-md bg-amber-500/10">
                     <Flex align="center" gap="xs">
                       <ScalableIcon icon={IconShieldCheck} size={16} className="text-amber-400" />

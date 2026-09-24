@@ -208,7 +208,7 @@ export function RouteComponent() {
         </ModelSelector>
 
         <Text c="chatbox-tertiary" size="xs">
-          {t('When selected, AgentLab will use this model instead of the automatic Chatbox AI embedding model.')}
+          {t('When selected, AgentLab will use this model instead of the automatic AgentLab AI embedding model.')}
         </Text>
       </Stack>
 
@@ -245,7 +245,7 @@ export function RouteComponent() {
         </ModelSelector>
 
         <Text c="chatbox-tertiary" size="xs">
-          {t('When selected, AgentLab will use this model instead of the automatic Chatbox AI reranking model.')}
+          {t('When selected, AgentLab will use this model instead of the automatic AgentLab AI reranking model.')}
         </Text>
       </Stack>
     </Stack>

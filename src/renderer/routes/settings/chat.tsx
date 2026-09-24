@@ -139,24 +139,24 @@ export function RouteComponent() {
         <Text fw="600">{t('Default Settings for New Conversation')}</Text>
 
         {/* Global System Instruction (Admin Only) */}
-        <Stack gap="xs" p="sm" className="border border-solid border-chatbox-border-primary rounded-lg bg-black/5 dark:bg-white/5">
-          <Flex align="center" justify="space-between">
-            <Flex align="center" gap="xs">
-              <ScalableIcon icon={IconShieldCheck} size={18} className={isAdmin ? 'text-amber-400' : 'text-blue-400'} />
-              <Text fw="600">{t('Global System Instruction')}</Text>
+        {isAdmin && (
+          <Stack gap="xs" p="sm" className="border border-solid border-chatbox-border-primary rounded-lg bg-black/5 dark:bg-white/5">
+            <Flex align="center" justify="space-between">
+              <Flex align="center" gap="xs">
+                <ScalableIcon icon={IconShieldCheck} size={18} className="text-amber-400" />
+                <Text fw="600">{t('Global System Instruction')}</Text>
+              </Flex>
+              <Badge size="xs" color="yellow" variant="light">
+                {t('Admin Only')}
+              </Badge>
             </Flex>
-            <Badge size="xs" color={isAdmin ? 'yellow' : 'blue'} variant="light">
-              {isAdmin ? t('Admin Only') : t('Enforced by Administrator')}
-            </Badge>
-          </Flex>
 
-          <Text size="xs" c="dimmed">
-            {isAdmin
-              ? t('Set a global system instruction enforced across all AI conversations and all users in this application. Only administrators can configure this.')
-              : t('This system instruction is centrally configured by administrators and automatically applied to all AI conversations. Normal users cannot modify it.')}
-          </Text>
+            <Text size="xs" c="dimmed">
+              {t(
+                'Set a global system instruction enforced across all AI conversations and all users in this application. Only administrators can configure this.'
+              )}
+            </Text>
 
-          {isAdmin ? (
             <Stack gap="xs">
               <Textarea
                 placeholder={
@@ -209,20 +209,8 @@ export function RouteComponent() {
                 </Button>
               </Flex>
             </Stack>
-          ) : (
-            <Textarea
-              value={settings.globalSystemInstruction || t('No global system instruction currently set by administrator.') || ''}
-              readOnly
-              disabled
-              autosize
-              minRows={2}
-              maxRows={6}
-              styles={{
-                input: { opacity: 0.75, cursor: 'not-allowed' },
-              }}
-            />
-          )}
-        </Stack>
+          </Stack>
+        )}
 
         <Stack gap="xxs">
           <Text fw="500">{t('Prompt')}</Text>
@@ -605,10 +593,14 @@ export function RouteComponent() {
         </Stack>
       </Stack>
 
-      <Divider />
+      {isAdmin && (
+        <>
+          <Divider />
 
-      {/* Context Management */}
-      <ContextManagementSection />
+          {/* Context Management */}
+          <ContextManagementSection />
+        </>
+      )}
     </Stack>
   )
 }

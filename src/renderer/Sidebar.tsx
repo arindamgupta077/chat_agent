@@ -9,14 +9,15 @@ import {
   IconDownload,
   IconLayoutSidebarLeftCollapse,
   IconLogout,
-  IconMessageChatbot,
   IconPhotoPlus,
+  IconRoute,
   IconSearch,
   IconSettingsFilled,
   IconShieldCheck,
   IconUser,
   IconUsers,
 } from '@tabler/icons-react'
+import platform from '@/platform'
 import { useAppAuthStore } from './stores/appAuthStore'
 import { AdminUserModal } from './components/admin/AdminUserModal'
 import { useNavigate } from '@tanstack/react-router'
@@ -110,7 +111,7 @@ export default function Sidebar() {
 
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - resizeStartX.current
-      const newWidth = Math.max(200, Math.min(500, resizeStartWidth.current + deltaX))
+      const newWidth = Math.max(260, Math.min(500, resizeStartWidth.current + deltaX))
       setSidebarWidth(newWidth)
     }
 
@@ -175,7 +176,7 @@ export default function Sidebar() {
               gap="sm"
               style={{ minWidth: 0 }}
             >
-              <Image src={icon} w={20} h={20} />
+              <Image src={icon} w={20} h={20} style={{ flexShrink: 0 }} />
               <Text span c="chatbox-secondary" size="xl" lh={1.2} fw="700" truncate>
                 AgentLab
               </Text>
@@ -253,12 +254,10 @@ export default function Sidebar() {
               <NavLink
                 c="chatbox-secondary"
                 className="rounded-lg"
-                label={t('My Copilots')}
-                leftSection={<ScalableIcon icon={IconMessageChatbot} size={20} />}
+                label={t('My workflows')}
+                leftSection={<ScalableIcon icon={IconRoute} size={20} />}
                 onClick={() => {
-                  navigate({
-                    to: '/copilots',
-                  })
+                  platform.openLink('http://localhost:5678/home/workflows')
                   setShowSidebar(false)
                 }}
                 variant="light"
@@ -283,12 +282,10 @@ export default function Sidebar() {
               <NavLink
                 c="chatbox-secondary"
                 className="rounded-lg"
-                label={t('My Copilots')}
-                leftSection={<ScalableIcon icon={IconMessageChatbot} size={20} />}
+                label={t('My workflows')}
+                leftSection={<ScalableIcon icon={IconRoute} size={20} />}
                 onClick={() => {
-                  navigate({
-                    to: '/copilots',
-                  })
+                  platform.openLink('http://localhost:5678/home/workflows')
                   if (isSmallScreen) {
                     setShowSidebar(false)
                   }
