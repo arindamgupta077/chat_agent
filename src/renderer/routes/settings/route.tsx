@@ -143,7 +143,7 @@ export function SettingsRoot() {
   const isAdmin = user?.role === 'admin'
 
   const visibleItems = ITEMS.filter((item) => {
-    if (!isAdmin && item.key === 'provider') {
+    if (!isAdmin && (item.key === 'provider' || item.key === 'default-models')) {
       return false
     }
     return true
@@ -217,12 +217,14 @@ export function SettingsRoot() {
       )}
       {!(isSmallScreen && routerState.location.pathname === '/settings') && (
         <Box flex="1 1 80%" className="overflow-auto">
-          {!isAdmin && routerState.location.pathname.startsWith('/settings/provider') ? (
+          {!isAdmin &&
+          (routerState.location.pathname.startsWith('/settings/provider') ||
+            routerState.location.pathname.startsWith('/settings/default-models')) ? (
             <Stack p="xl" align="center" justify="center" h="100%" gap="md" ta="center">
               <ScalableIcon icon={IconShieldCheck} size={48} className="text-amber-400" />
               <Title order={4}>Admin Configuration Only</Title>
               <Text size="sm" c="dimmed" maw={450}>
-                AI model providers and API keys are configured centrally by administrators. Normal users cannot view or modify these settings.
+                AI models, providers, and default model selections are configured centrally by administrators. Normal users cannot view or modify these settings.
               </Text>
             </Stack>
           ) : (

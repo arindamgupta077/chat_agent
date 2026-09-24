@@ -1,6 +1,7 @@
 import { SystemProviders } from '@shared/defaults'
 import { isUsingOAuth, mergeSharedOAuthProviderSettings } from '@shared/oauth'
 import { ModelProviderEnum, type ProviderInfo } from '@shared/types'
+import { isValidApiKey } from '@shared/utils/apiKey'
 import { useCallback, useMemo } from 'react'
 import { enrichModelsFromRegistry, useModelRegistryVersion } from '@/packages/model-registry'
 import platform from '@/platform'
@@ -31,9 +32,11 @@ export const useProviders = () => {
             }
           } else if (
             (!p.isCustom &&
-              (providerSettings?.apiKey ||
+              (isValidApiKey(providerSettings?.apiKey) ||
                 isUsingOAuth(providerSettings || {}, platform.type) ||
-                (p.id === ModelProviderEnum.Bedrock && providerSettings?.accessKey && providerSettings?.secretKey))) ||
+                (p.id === ModelProviderEnum.Bedrock &&
+                  isValidApiKey(providerSettings?.accessKey) &&
+                  isValidApiKey(providerSettings?.secretKey)))) ||
             ((p.isCustom || p.id === ModelProviderEnum.Ollama || p.id === ModelProviderEnum.LMStudio) &&
               providerSettings?.models?.length)
           ) {

@@ -25,6 +25,7 @@ import {
   IconCirclePlus,
   IconFilePencil,
   IconFolder,
+  IconLock,
   IconPhoto,
   IconPlayerStopFilled,
   IconWand,
@@ -79,6 +80,8 @@ import { skillsController, subscribeSkillsChanged } from '@/packages/skills/cont
 import { seedExactDraftTokens } from '@/packages/token-estimation'
 import platform from '@/platform'
 import { StorageKeyGenerator } from '@/storage/StoreStorage'
+import { syncAdminSelectedModel } from '@/stores/adminModelSync'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import * as atoms from '@/stores/atoms'
 import { resolveWebBrowsingMode } from '@/stores/session'
 import { useSessionAgentMode } from '@/stores/session/agent-mode'
@@ -219,6 +222,8 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
     const modelRegistryVersion = useModelRegistryVersion()
 
     const { t } = useTranslation()
+    const user = useAppAuthStore((s) => s.user)
+    const isAdmin = user?.role === 'admin'
     const navigate = useNavigate()
     const isSmallScreen = useIsSmallScreen()
     const toolbarIconSize = isSmallScreen ? 22 : 18
@@ -1143,7 +1148,7 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
 
     const handleSelectModel = useCallback(
       async (provider: string, modelId: string) => {
-        if (!onSelectModel) {
+        if (!isAdmin || !onSelectModel) {
           return
         }
         if (model?.provider === provider && model?.modelId === modelId) {
@@ -1158,10 +1163,18 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
           return
         }
         onSelectModel(provider, modelId)
+        settingsStore.getState().setSettings({
+          defaultChatModel: {
+            provider,
+            model: modelId,
+          },
+        })
+        void syncAdminSelectedModel(provider, modelId)
       },
       [
         currentSession,
         currentSessionMergedSettings.maxContextMessageCount,
+        isAdmin,
         isNewSession,
         model?.modelId,
         model?.provider,
@@ -2018,43 +2031,71 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
 
                 {/* Model Selector */}
                 <Box className="min-w-0 flex-1 justify-end max-w-[200px]">
-                  <ModelSelectorV2
-                    onSelect={handleSelectModel}
-                    selectedProviderId={!model || isChatboxAI(model.provider) ? undefined : model.provider}
-                    selectedModelId={!model || isChatboxAI(model.provider) ? undefined : model.modelId}
-                    modelDisabledCheck={modelDisabledCheck}
-                    pageName={JK_PAGE_NAMES.CHAT_PAGE}
-                    position="top-end"
-                    transitionProps={{
-                      transition: 'fade-up',
-                      duration: 200,
-                    }}
-                  >
-                    <UnstyledButton
-                      className={cn(
-                        'flex min-w-0 max-w-full items-center gap-1 px-2 py-1 rounded-lg hover:bg-[var(--chatbox-background-tertiary)] transition-colors',
-                        (!model || isChatboxAI(model.provider)) && 'animate-pulse bg-blue-500/20'
-                      )}
+                  {isAdmin ? (
+                    <ModelSelectorV2
+                      onSelect={handleSelectModel}
+                      selectedProviderId={!model || isChatboxAI(model.provider) ? undefined : model.provider}
+                      selectedModelId={!model || isChatboxAI(model.provider) ? undefined : model.modelId}
+                      modelDisabledCheck={modelDisabledCheck}
+                      pageName={JK_PAGE_NAMES.CHAT_PAGE}
+                      position="top-end"
+                      transitionProps={{
+                        transition: 'fade-up',
+                        duration: 200,
+                      }}
                     >
-                      {!!model && !isChatboxAI(model.provider) && (
-                        <ProviderImageIcon size={18} provider={model.provider} />
-                      )}
-                      <Text
-                        size="sm"
-                        data-testid={TestId.model.selectorTrigger}
+                      <UnstyledButton
                         className={cn(
-                          'min-w-0 flex-1 truncate text-[var(--chatbox-tint-secondary)]',
-                          isSmallScreen ? 'max-w-[100px]' : 'max-w-[160px]'
+                          'flex min-w-0 max-w-full items-center gap-1 px-2 py-1 rounded-lg hover:bg-[var(--chatbox-background-tertiary)] transition-colors',
+                          (!model || isChatboxAI(model.provider)) && 'animate-pulse bg-blue-500/20'
                         )}
                       >
-                        {modelSelectorDisplayText}
-                      </Text>
-                      <IconChevronRight
-                        size={14}
-                        className="text-[var(--chatbox-tint-tertiary)] rotate-90 flex-shrink-0"
-                      />
-                    </UnstyledButton>
-                  </ModelSelectorV2>
+                        {!!model && !isChatboxAI(model.provider) && (
+                          <ProviderImageIcon size={18} provider={model.provider} />
+                        )}
+                        <Text
+                          size="sm"
+                          data-testid={TestId.model.selectorTrigger}
+                          className={cn(
+                            'min-w-0 flex-1 truncate text-[var(--chatbox-tint-secondary)]',
+                            isSmallScreen ? 'max-w-[100px]' : 'max-w-[160px]'
+                          )}
+                        >
+                          {modelSelectorDisplayText}
+                        </Text>
+                        <IconChevronRight
+                          size={14}
+                          className="text-[var(--chatbox-tint-tertiary)] rotate-90 flex-shrink-0"
+                        />
+                      </UnstyledButton>
+                    </ModelSelectorV2>
+                  ) : (
+                    <Tooltip label={t('AI model is selected and managed by administrator')} withArrow>
+                      <Flex
+                        align="center"
+                        gap={4}
+                        px={8}
+                        py={4}
+                        className="rounded-lg bg-[var(--chatbox-background-tertiary)]/50 border border-solid border-chatbox-border-primary/40 cursor-default select-none max-w-full"
+                      >
+                        {!!model && !isChatboxAI(model.provider) && (
+                          <ProviderImageIcon size={16} provider={model.provider} />
+                        )}
+                        <Text
+                          size="xs"
+                          fw={500}
+                          data-testid={TestId.model.selectorTrigger}
+                          className={cn(
+                            'min-w-0 flex-1 truncate text-[var(--chatbox-tint-secondary)]',
+                            isSmallScreen ? 'max-w-[100px]' : 'max-w-[150px]'
+                          )}
+                        >
+                          {modelSelectorDisplayText}
+                        </Text>
+                        <IconLock size={12} className="text-[var(--chatbox-tint-tertiary)] flex-shrink-0" />
+                      </Flex>
+                    </Tooltip>
+                  )}
                 </Box>
               </Flex>
             </Flex>

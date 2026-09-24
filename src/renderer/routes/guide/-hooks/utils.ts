@@ -2,6 +2,7 @@
  * Utility functions for Guide Session
  */
 
+import { isValidApiKey } from '@shared/utils/apiKey'
 import { settingsStore } from '@/stores/settingsStore'
 import type { GuideToolPart } from './types'
 
@@ -28,7 +29,7 @@ export function checkHasValidConfig(): boolean {
     const keys = Object.keys(providers)
 
     // Any provider with API key
-    if (keys.some((key) => !!providers[key].apiKey)) {
+    if (keys.some((key) => isValidApiKey(providers[key]?.apiKey))) {
       return true
     }
 

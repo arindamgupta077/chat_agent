@@ -1,5 +1,6 @@
 import { isUsingOAuth, mergeSharedOAuthProviderSettings } from '@shared/oauth'
 import { ModelProviderEnum } from '@shared/types'
+import { isValidApiKey } from '@shared/utils/apiKey'
 import { getDefaultStore } from 'jotai'
 import platform from '@/platform'
 import * as atoms from './atoms'
@@ -19,13 +20,13 @@ export function needEditSetting() {
     if (
       keys.filter((key) => {
         const providerSettings = mergeSharedOAuthProviderSettings(key, providers)
-        return !!providerSettings.apiKey || isUsingOAuth(providerSettings, platform.type)
+        return isValidApiKey(providerSettings.apiKey) || isUsingOAuth(providerSettings, platform.type)
       }).length > 0
     ) {
       return false
     }
     // Bedrock configured with AWS credentials
-    if (providers[ModelProviderEnum.Bedrock]?.accessKey && providers[ModelProviderEnum.Bedrock]?.secretKey) {
+    if (isValidApiKey(providers[ModelProviderEnum.Bedrock]?.accessKey) && isValidApiKey(providers[ModelProviderEnum.Bedrock]?.secretKey)) {
       return false
     }
     if (

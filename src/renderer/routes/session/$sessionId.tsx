@@ -27,6 +27,7 @@ import {
   useSessionStartupQueryFailure,
 } from '@/packages/session-startup-recovery'
 import { showSessionArchiveUndo } from '@/presentation/session/session-archive-notification'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import { useAuthInfoStore } from '@/stores/authInfoStore'
 import { applyChatboxLicenseDefaultModelToSession } from '@/stores/defaultChatModel'
 import { lastUsedModelStore } from '@/stores/lastUsedModelStore'
@@ -72,6 +73,9 @@ function RouteComponent() {
   const sessionLoadSettled = currentSession?.id === currentSessionId || (!isFetching && !isError)
   useSessionStartupGuard(currentSessionId, sessionLoadSettled, recovering)
   const { providers } = useProviders()
+  const user = useAppAuthStore((s) => s.user)
+  const isAdmin = user?.role === 'admin'
+  const defaultChatModel = useSettingsStore((s) => s.defaultChatModel)
   const licenseKey = useSettingsStore((s) => s.licenseKey)
   const hasLicense = Boolean(licenseKey)
   const licenseDetail = useSettingsStore((s) => s.licenseDetail)
@@ -105,7 +109,20 @@ function RouteComponent() {
     [currentSession, welcomeCardMode]
   )
   const currentSessionWithDefaultModel = useMemo(() => {
-    if (!currentSession || !builtInTemplateSessionIds.has(currentSession.id)) {
+    if (!currentSession) {
+      return currentSession
+    }
+    if (!isAdmin && defaultChatModel?.provider && defaultChatModel?.model) {
+      return {
+        ...currentSession,
+        settings: {
+          ...(currentSession.settings || {}),
+          provider: defaultChatModel.provider,
+          modelId: defaultChatModel.model,
+        },
+      }
+    }
+    if (!builtInTemplateSessionIds.has(currentSession.id)) {
       return currentSession
     }
     return applyChatboxLicenseDefaultModelToSession(currentSession, {
@@ -114,7 +131,7 @@ function RouteComponent() {
       licenseDetail,
       licensePlanName,
     })
-  }, [currentSession, hasExpiredLicense, licenseDetail, licenseKey, licensePlanName])
+  }, [currentSession, isAdmin, defaultChatModel, hasExpiredLicense, licenseDetail, licenseKey, licensePlanName])
   const messageListRef = useRef<MessageListRef>(null)
 
   const goHome = useCallback(() => {
@@ -150,7 +167,7 @@ function RouteComponent() {
 
   const onSelectModel = useCallback(
     (provider: ModelProvider, modelId: string) => {
-      if (!currentSession) {
+      if (!isAdmin || !currentSession) {
         return
       }
       void rendererApplication.sessions.updateSession(currentSession.id, {
@@ -161,7 +178,7 @@ function RouteComponent() {
         },
       })
     },
-    [currentSession]
+    [isAdmin, currentSession]
   )
 
   const onStartNewThread = useCallback(() => {
@@ -231,6 +248,12 @@ function RouteComponent() {
   }, [])
 
   const model = useMemo(() => {
+    if (!isAdmin && defaultChatModel?.provider && defaultChatModel?.model) {
+      return {
+        provider: defaultChatModel.provider,
+        modelId: defaultChatModel.model,
+      }
+    }
     const provider = currentSessionWithDefaultModel?.settings?.provider
     const modelId = currentSessionWithDefaultModel?.settings?.modelId
     if (!provider || !modelId || provider === ModelProviderEnum.ChatboxAI || provider === 'chatbox-ai') {
@@ -240,7 +263,7 @@ function RouteComponent() {
       provider,
       modelId,
     }
-  }, [currentSessionWithDefaultModel?.settings?.provider, currentSessionWithDefaultModel?.settings?.modelId])
+  }, [isAdmin, defaultChatModel, currentSessionWithDefaultModel?.settings?.provider, currentSessionWithDefaultModel?.settings?.modelId])
 
   const onArchiveBrokenSession = useCallback(async () => {
     try {

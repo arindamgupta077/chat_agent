@@ -336,6 +336,12 @@ export const DocumentParserSelector: React.FC<DocumentParserSelectorProps> = ({
           <PasswordInput
             placeholder={t('Enter your MinerU API token') as string}
             value={mineruToken}
+            autoComplete="new-password"
+            name="kb-mineru-token"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-form-type="other"
+            data-bwignore="true"
             onChange={(e) => handleMineruTokenChange(e.target.value)}
           />
           <Group gap="xs" align="center">

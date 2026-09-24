@@ -42,6 +42,7 @@ import * as defaults from '../../shared/defaults'
 import { SESSION_ATTACHMENT_RAG_LOG_PREFIX } from '../../shared/session-attachment-rag/logging'
 import { createMessage, type Message, SessionSettingsSchema, TOKEN_CACHE_KEYS } from '../../shared/types'
 import type { AttachmentPreparationResult, PreprocessedFile } from '../types/input-box'
+import { useAppAuthStore } from './appAuthStore'
 import { resolveChatboxLicenseDefaultModel } from './defaultChatModel'
 import { lastUsedModelStore } from './lastUsedModelStore'
 import { SESSION_ATTACHMENT_RAG_LARGE_ATTACHMENT_WARNING } from './sessionAttachmentRagErrors'
@@ -945,13 +946,17 @@ export function initEmptyChatSession(): Omit<Session, 'id'> {
   const settings = settingsStore.getState().getSettings()
   const { chat: lastUsedChatModel } = lastUsedModelStore.getState()
   const isChatboxAI = (provider?: string) => provider === ModelProviderEnum.ChatboxAI || provider === 'chatbox-ai'
+  const user = useAppAuthStore.getState().user
+  const isAdmin = user?.role === 'admin'
 
   const rawDefaultChatModel = settings.defaultChatModel
     ? {
         provider: settings.defaultChatModel.provider,
         modelId: settings.defaultChatModel.model,
       }
-    : lastUsedChatModel || resolveChatboxLicenseDefaultModel(settings)
+    : !isAdmin
+      ? undefined
+      : lastUsedChatModel || resolveChatboxLicenseDefaultModel(settings)
 
   const defaultChatModel =
     rawDefaultChatModel && !isChatboxAI(rawDefaultChatModel.provider) ? rawDefaultChatModel : undefined

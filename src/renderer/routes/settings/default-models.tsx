@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { ScalableIcon } from '@/components/common/ScalableIcon'
 import ModelSelector from '@/components/ModelSelector'
 import { enrichModelsFromRegistry, useModelRegistryVersion } from '@/packages/model-registry'
+import { syncAdminSelectedModel } from '@/stores/adminModelSync'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { isEmbeddingModel, isRerankModel } from './-defaultModelFilters'
 
@@ -51,6 +52,9 @@ export function RouteComponent() {
                     }
                   : undefined,
             })
+            if (provider && model) {
+              void syncAdminSelectedModel(provider, model)
+            }
           }}
         >
           <ModelSelectContent

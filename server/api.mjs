@@ -12,6 +12,29 @@
 import { query, testConnection } from './db.mjs'
 import { extractAuthUser, handleAuthRoute, parseJsonBody } from './auth.mjs'
 
+export function sanitizeProviders(providers) {
+  if (!providers || typeof providers !== 'object') return {}
+  const cleaned = {}
+  for (const [providerId, config] of Object.entries(providers)) {
+    if (!config || typeof config !== 'object') continue
+    const copy = { ...config }
+    const apiKey = copy.apiKey?.toString().trim().toLowerCase()
+    if (apiKey === 'admin@123' || apiKey === 'welcome@123' || apiKey === 'dummy' || apiKey === 'admin' || (apiKey && apiKey.length < 8)) {
+      delete copy.apiKey
+    }
+    const accessKey = copy.accessKey?.toString().trim().toLowerCase()
+    if (accessKey === 'admin@123' || accessKey === 'welcome@123' || accessKey === 'dummy' || accessKey === 'admin' || (accessKey && accessKey.length < 8)) {
+      delete copy.accessKey
+    }
+    const secretKey = copy.secretKey?.toString().trim().toLowerCase()
+    if (secretKey === 'admin@123' || secretKey === 'welcome@123' || secretKey === 'dummy' || secretKey === 'admin' || (secretKey && secretKey.length < 8)) {
+      delete copy.secretKey
+    }
+    cleaned[providerId] = copy
+  }
+  return cleaned
+}
+
 export async function handleApiRequest(req, res) {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`)
   const pathname = decodeURIComponent(parsedUrl.pathname)
@@ -74,16 +97,27 @@ export async function handleApiRequest(req, res) {
 
         let val = result.rows[0]?.value ?? null
 
-        // If reading settings, merge admin-configured global LLM API credentials!
+        // If reading settings, merge admin-configured global LLM API credentials & selected AI model!
         if (key === 'settings') {
           try {
-            const adminConfigRes = await query('SELECT llm_providers FROM admin_global_config WHERE id = $1', ['global'])
+            const adminConfigRes = await query('SELECT llm_providers, selected_model FROM admin_global_config WHERE id = $1', ['global'])
             const globalConfig = adminConfigRes.rows[0]
-            if (globalConfig) {
-              if (!val) val = {}
-              // Merge global providers
-              if (globalConfig.llm_providers && Object.keys(globalConfig.llm_providers).length > 0) {
-                val.providers = { ...(val.providers || {}), ...globalConfig.llm_providers }
+            if (!val) val = {}
+            if (user.role !== 'admin') {
+              val.providers = sanitizeProviders(globalConfig?.llm_providers || {})
+              if (globalConfig?.selected_model && (globalConfig.selected_model.provider || globalConfig.selected_model.modelId)) {
+                val.defaultChatModel = {
+                  provider: globalConfig.selected_model.provider,
+                  model: globalConfig.selected_model.model || globalConfig.selected_model.modelId,
+                }
+              }
+            } else {
+              val.providers = sanitizeProviders(globalConfig?.llm_providers ?? val.providers ?? {})
+              if (!val.defaultChatModel && globalConfig?.selected_model?.provider) {
+                val.defaultChatModel = {
+                  provider: globalConfig.selected_model.provider,
+                  model: globalConfig.selected_model.model || globalConfig.selected_model.modelId,
+                }
               }
             }
           } catch (e) {
@@ -101,20 +135,35 @@ export async function handleApiRequest(req, res) {
         const { value } = await parseJsonBody(req)
 
         let finalValue = value
-        if (key === 'settings' && user.role !== 'admin' && value && typeof value === 'object') {
-          // Normal users cannot configure LLM API models; enforce the administrator's global model providers.
-          // Note: Each user has their own unique MCP server configuration and can freely configure it!
-          try {
-            const adminConfigRes = await query('SELECT llm_providers FROM admin_global_config WHERE id = $1', ['global'])
-            const globalConfig = adminConfigRes.rows[0]
-            if (globalConfig?.llm_providers) {
+        if (key === 'settings' && value && typeof value === 'object') {
+          if (user.role !== 'admin') {
+            // Normal users cannot configure LLM API models; enforce administrator's global model providers & selected model.
+            try {
+              const adminConfigRes = await query('SELECT llm_providers, selected_model FROM admin_global_config WHERE id = $1', ['global'])
+              const globalConfig = adminConfigRes.rows[0]
               finalValue = {
                 ...value,
-                providers: globalConfig.llm_providers,
+                providers: sanitizeProviders(globalConfig?.llm_providers || {}),
+                defaultChatModel: globalConfig?.selected_model?.provider
+                  ? {
+                      provider: globalConfig.selected_model.provider,
+                      model: globalConfig.selected_model.model || globalConfig.selected_model.modelId,
+                    }
+                  : undefined,
               }
+            } catch (err) {
+              console.warn('[Storage] Failed to preserve global admin LLM config on normal user update:', err.message)
             }
-          } catch (err) {
-            console.warn('[Storage] Failed to preserve global admin LLM config on normal user update:', err.message)
+          } else {
+            // Admin user: sanitize credentials if providers are provided; preserve existing providers if not provided in payload!
+            if (value.providers && typeof value.providers === 'object') {
+              finalValue = {
+                ...value,
+                providers: sanitizeProviders(value.providers),
+              }
+            } else {
+              finalValue = value
+            }
           }
         }
 
@@ -126,20 +175,53 @@ export async function handleApiRequest(req, res) {
           [userId, key, JSON.stringify(finalValue)]
         )
 
-        // If admin updates settings, propagate ONLY LLM providers to global config for all users (MCP is user-unique)
+        // If admin updates settings, propagate LLM providers and selected model to global config for all users (MCP is user-unique)
         if (key === 'settings' && user.role === 'admin' && value && typeof value === 'object') {
           try {
-            const providers = value.providers || {}
-            await query(
-              `INSERT INTO admin_global_config (id, llm_providers, updated_by)
-               VALUES ('global', $1, $2)
-               ON CONFLICT (id) DO UPDATE SET
-                 llm_providers = EXCLUDED.llm_providers,
-                 updated_by = EXCLUDED.updated_by,
-                 updated_at = CURRENT_TIMESTAMP`,
-              [JSON.stringify(providers), userId]
-            )
-            console.log('[Admin] Automatically synchronized global LLM providers for all users.')
+            const hasProvidersUpdate = Boolean(value.providers && typeof value.providers === 'object' && Object.keys(value.providers).length > 0)
+            const providers = hasProvidersUpdate ? sanitizeProviders(value.providers) : null
+            const selectedModel = value.defaultChatModel && value.defaultChatModel.provider
+              ? {
+                  provider: value.defaultChatModel.provider,
+                  modelId: value.defaultChatModel.model || value.defaultChatModel.modelId,
+                }
+              : null
+
+            if (hasProvidersUpdate && selectedModel) {
+              await query(
+                `INSERT INTO admin_global_config (id, llm_providers, selected_model, updated_by)
+                 VALUES ('global', $1, $2, $3)
+                 ON CONFLICT (id) DO UPDATE SET
+                   llm_providers = EXCLUDED.llm_providers,
+                   selected_model = EXCLUDED.selected_model,
+                   updated_by = EXCLUDED.updated_by,
+                   updated_at = CURRENT_TIMESTAMP`,
+                [JSON.stringify(providers), JSON.stringify(selectedModel), userId]
+              )
+              console.log('[Admin] Automatically synchronized global LLM providers and selected model for all users.')
+            } else if (hasProvidersUpdate) {
+              await query(
+                `INSERT INTO admin_global_config (id, llm_providers, updated_by)
+                 VALUES ('global', $1, $2)
+                 ON CONFLICT (id) DO UPDATE SET
+                   llm_providers = EXCLUDED.llm_providers,
+                   updated_by = EXCLUDED.updated_by,
+                   updated_at = CURRENT_TIMESTAMP`,
+                [JSON.stringify(providers), userId]
+              )
+              console.log('[Admin] Automatically synchronized global LLM providers for all users.')
+            } else if (selectedModel) {
+              await query(
+                `INSERT INTO admin_global_config (id, selected_model, updated_by)
+                 VALUES ('global', $1, $2)
+                 ON CONFLICT (id) DO UPDATE SET
+                   selected_model = EXCLUDED.selected_model,
+                   updated_by = EXCLUDED.updated_by,
+                   updated_at = CURRENT_TIMESTAMP`,
+                [JSON.stringify(selectedModel), userId]
+              )
+              console.log('[Admin] Automatically synchronized selected model for all users.')
+            }
           } catch (adminSyncErr) {
             console.warn('[Admin] Failed to update global config:', adminSyncErr.message)
           }
@@ -184,10 +266,24 @@ export async function handleApiRequest(req, res) {
         }
         if (valuesMap.settings) {
           try {
-            const adminConfigRes = await query('SELECT llm_providers FROM admin_global_config WHERE id = $1', ['global'])
+            const adminConfigRes = await query('SELECT llm_providers, selected_model FROM admin_global_config WHERE id = $1', ['global'])
             const globalConfig = adminConfigRes.rows[0]
-            if (globalConfig?.llm_providers && Object.keys(globalConfig.llm_providers).length > 0) {
-              valuesMap.settings.providers = { ...(valuesMap.settings.providers || {}), ...globalConfig.llm_providers }
+            if (user.role !== 'admin') {
+              valuesMap.settings.providers = sanitizeProviders(globalConfig?.llm_providers || {})
+              if (globalConfig?.selected_model && (globalConfig.selected_model.provider || globalConfig.selected_model.modelId)) {
+                valuesMap.settings.defaultChatModel = {
+                  provider: globalConfig.selected_model.provider,
+                  model: globalConfig.selected_model.model || globalConfig.selected_model.modelId,
+                }
+              }
+            } else {
+              valuesMap.settings.providers = sanitizeProviders(globalConfig?.llm_providers ?? valuesMap.settings.providers ?? {})
+              if (!valuesMap.settings.defaultChatModel && globalConfig?.selected_model?.provider) {
+                valuesMap.settings.defaultChatModel = {
+                  provider: globalConfig.selected_model.provider,
+                  model: globalConfig.selected_model.model || globalConfig.selected_model.modelId,
+                }
+              }
             }
           } catch (e) {
             console.warn('[Storage] Failed to merge global admin LLM credentials in getAll:', e.message)
@@ -201,34 +297,81 @@ export async function handleApiRequest(req, res) {
       if (pathname === '/api/storage/values/batch' && req.method === 'POST') {
         const data = await parseJsonBody(req)
         for (let [key, value] of Object.entries(data || {})) {
-          if (key === 'settings' && user.role !== 'admin' && value && typeof value === 'object') {
-            try {
-              const adminConfigRes = await query('SELECT llm_providers FROM admin_global_config WHERE id = $1', ['global'])
-              const globalConfig = adminConfigRes.rows[0]
-              if (globalConfig?.llm_providers) {
-                value = { ...value, providers: globalConfig.llm_providers }
+          let batchValue = value
+          if (key === 'settings' && value && typeof value === 'object') {
+            if (user.role !== 'admin') {
+              try {
+                const adminConfigRes = await query('SELECT llm_providers, selected_model FROM admin_global_config WHERE id = $1', ['global'])
+                const globalConfig = adminConfigRes.rows[0]
+                batchValue = {
+                  ...value,
+                  providers: sanitizeProviders(globalConfig?.llm_providers || {}),
+                  defaultChatModel: globalConfig?.selected_model?.provider
+                    ? {
+                        provider: globalConfig.selected_model.provider,
+                        model: globalConfig.selected_model.model || globalConfig.selected_model.modelId,
+                      }
+                    : undefined,
+                }
+              } catch (err) {}
+            } else {
+              if (value.providers && typeof value.providers === 'object') {
+                batchValue = { ...value, providers: sanitizeProviders(value.providers) }
+              } else {
+                batchValue = value
               }
-            } catch (err) {}
+            }
           }
           await query(
             `INSERT INTO app_key_value (user_id, key, value, updated_at)
              VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
              ON CONFLICT (user_id, key) DO UPDATE
              SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
-            [userId, key, JSON.stringify(value)]
+            [userId, key, JSON.stringify(batchValue)]
           )
           if (key === 'settings' && user.role === 'admin' && value && typeof value === 'object') {
             try {
-              const providers = value.providers || {}
-              await query(
-                `INSERT INTO admin_global_config (id, llm_providers, updated_by)
-                 VALUES ('global', $1, $2)
-                 ON CONFLICT (id) DO UPDATE SET
-                   llm_providers = EXCLUDED.llm_providers,
-                   updated_by = EXCLUDED.updated_by,
-                   updated_at = CURRENT_TIMESTAMP`,
-                [JSON.stringify(providers), userId]
-              )
+              const hasProvidersUpdate = Boolean(value.providers && typeof value.providers === 'object' && Object.keys(value.providers).length > 0)
+              const providers = hasProvidersUpdate ? sanitizeProviders(value.providers) : null
+              const selectedModel = value.defaultChatModel && value.defaultChatModel.provider
+                ? {
+                    provider: value.defaultChatModel.provider,
+                    modelId: value.defaultChatModel.model || value.defaultChatModel.modelId,
+                  }
+                : null
+
+              if (hasProvidersUpdate && selectedModel) {
+                await query(
+                  `INSERT INTO admin_global_config (id, llm_providers, selected_model, updated_by)
+                   VALUES ('global', $1, $2, $3)
+                   ON CONFLICT (id) DO UPDATE SET
+                     llm_providers = EXCLUDED.llm_providers,
+                     selected_model = EXCLUDED.selected_model,
+                     updated_by = EXCLUDED.updated_by,
+                     updated_at = CURRENT_TIMESTAMP`,
+                  [JSON.stringify(providers), JSON.stringify(selectedModel), userId]
+                )
+              } else if (hasProvidersUpdate) {
+                await query(
+                  `INSERT INTO admin_global_config (id, llm_providers, updated_by)
+                   VALUES ('global', $1, $2)
+                   ON CONFLICT (id) DO UPDATE SET
+                     llm_providers = EXCLUDED.llm_providers,
+                     updated_by = EXCLUDED.updated_by,
+                     updated_at = CURRENT_TIMESTAMP`,
+                  [JSON.stringify(providers), userId]
+                )
+              } else if (selectedModel) {
+                await query(
+                  `INSERT INTO admin_global_config (id, selected_model, updated_by)
+                   VALUES ('global', $1, $2)
+                   ON CONFLICT (id) DO UPDATE SET
+                     selected_model = EXCLUDED.selected_model,
+                     updated_by = EXCLUDED.updated_by,
+                     updated_at = CURRENT_TIMESTAMP`,
+                  [JSON.stringify(selectedModel), userId]
+                )
+              }
             } catch (adminSyncErr) {}
           }
         }

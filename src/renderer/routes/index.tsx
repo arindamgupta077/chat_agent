@@ -33,6 +33,7 @@ import { useIsSmallScreen } from '@/hooks/useScreenChange'
 import useVersion from '@/hooks/useVersion'
 import * as remote from '@/packages/remote'
 import { router } from '@/router'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import { useAuthInfoStore } from '@/stores/authInfoStore'
 import { getHasCompletedFirstSuccessfulChat } from '@/stores/firstSuccessfulChat'
 import { getSessionAgentModeEntry } from '@/stores/session/agent-mode'
@@ -90,6 +91,8 @@ function Index() {
   )
   const hasUserSelectedModelRef = useRef(false)
 
+  const user = useAppAuthStore((s) => s.user)
+  const isAdmin = user?.role === 'admin'
   const { providers } = useProviders()
   const defaultChatModel = useSettingsStore((s) => s.defaultChatModel)
   const hasLicense = useSettingsStore((s) => Boolean(s.licenseKey))
@@ -112,6 +115,12 @@ function Index() {
   )
 
   const selectedModel = useMemo(() => {
+    if (!isAdmin && defaultChatModel?.provider && defaultChatModel?.model) {
+      return {
+        provider: defaultChatModel.provider,
+        modelId: defaultChatModel.model,
+      }
+    }
     if (
       session.settings?.provider &&
       session.settings?.modelId &&
@@ -123,7 +132,7 @@ function Index() {
         modelId: session.settings.modelId,
       }
     }
-  }, [session.settings?.provider, session.settings?.modelId])
+  }, [isAdmin, defaultChatModel, session.settings?.provider, session.settings?.modelId])
 
   useEffect(() => {
     let cancelled = false
@@ -150,6 +159,16 @@ function Index() {
 
   useEffect(() => {
     setSession((old) => {
+      if (!isAdmin && defaultChatModel?.provider && defaultChatModel?.model) {
+        return {
+          ...old,
+          settings: {
+            ...(old.settings || {}),
+            provider: defaultChatModel.provider,
+            modelId: defaultChatModel.model,
+          },
+        }
+      }
       if (
         old.settings?.provider &&
         old.settings?.modelId &&
@@ -178,7 +197,7 @@ function Index() {
         },
       }
     })
-  }, [defaultChatModel])
+  }, [isAdmin, defaultChatModel])
 
   const { copilots: myCopilots } = useMyCopilots()
   const { copilots: remoteCopilots } = useRemoteCopilotsByCursor({ limit: 10 })
@@ -392,6 +411,9 @@ function Index() {
   )
 
   const onSelectModel = useCallback((p: string, m: string) => {
+    if (!isAdmin) {
+      return
+    }
     hasUserSelectedModelRef.current = true
     setSession((old) => ({
       ...old,
@@ -401,7 +423,7 @@ function Index() {
         modelId: m,
       },
     }))
-  }, [])
+  }, [isAdmin])
 
   const onClickSessionSettings = useCallback(async () => {
     const res: Session = await NiceModal.show('session-settings', {

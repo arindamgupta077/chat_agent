@@ -472,5 +472,53 @@ export async function handleAuthRoute(req, res, pathname) {
     }
   }
 
+  // 7. GET /api/admin/selected-model (Read administrator's globally selected AI model)
+  if (pathname === '/api/admin/selected-model' && req.method === 'GET') {
+    try {
+      const result = await query(
+        'SELECT selected_model, updated_at FROM admin_global_config WHERE id = $1',
+        ['global']
+      )
+      const config = result.rows[0] || { selected_model: {} }
+      sendJson(200, { selected_model: config.selected_model || {} })
+      return true
+    } catch (err) {
+      sendJson(500, { error: 'Failed to fetch admin selected model: ' + err.message })
+      return true
+    }
+  }
+
+  // 8. POST /api/admin/selected-model (Admin Only: Set administrator's globally selected AI model)
+  if (pathname === '/api/admin/selected-model' && req.method === 'POST') {
+    const authUser = extractAuthUser(req)
+    if (!authUser || authUser.role !== 'admin') {
+      sendJson(403, { error: 'Forbidden: Admin access required' })
+      return true
+    }
+
+    try {
+      const { selected_model } = await parseJsonBody(req)
+      const result = await query(
+        `INSERT INTO admin_global_config (id, selected_model, updated_by)
+         VALUES ('global', $1, $2)
+         ON CONFLICT (id) DO UPDATE
+         SET selected_model = EXCLUDED.selected_model,
+             updated_by = EXCLUDED.updated_by,
+             updated_at = CURRENT_TIMESTAMP
+         RETURNING selected_model, updated_at`,
+        [JSON.stringify(selected_model || {}), authUser.id]
+      )
+
+      sendJson(200, {
+        success: true,
+        selected_model: result.rows[0]?.selected_model || {},
+      })
+      return true
+    } catch (err) {
+      sendJson(500, { error: 'Failed to update admin selected model: ' + err.message })
+      return true
+    }
+  }
+
   return false // Route not handled by auth
 }

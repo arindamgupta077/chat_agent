@@ -118,6 +118,12 @@ export function DocumentParserSettings({ showTitle = true }: DocumentParserSetti
               flex={1}
               maw={320}
               value={mineruToken}
+              autoComplete="new-password"
+              name="mineru-api-token"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-form-type="other"
+              data-bwignore="true"
               onChange={(e) => handleMineruTokenChange(e.currentTarget.value)}
               error={connectionResult === false}
             />

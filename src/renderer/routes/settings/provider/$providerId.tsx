@@ -29,6 +29,7 @@ import {
   normalizeOpenAIApiHostAndPath,
   normalizeOpenAIResponsesHostAndPath,
 } from '@shared/utils'
+import { isDummyApiKey, isValidApiKey } from '@shared/utils/apiKey'
 import {
   IconCircleCheck,
   IconDiscount2,
@@ -300,8 +301,13 @@ function ProviderSettings({ providerId }: { providerId: string }) {
   const providerWebsite = baseInfo?.urls?.website || ''
 
   const handleApiKeyChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const val = e.currentTarget.value
+    if (isDummyApiKey(val)) {
+      setProviderSettings({ apiKey: '' })
+      return
+    }
     setProviderSettings({
-      apiKey: e.currentTarget.value,
+      apiKey: val,
     })
   }
 
@@ -617,15 +623,21 @@ function ProviderSettings({ providerId }: { providerId: string }) {
                 <PasswordInput
                   data-testid={TestId.settings.providerApiKey}
                   flex={1}
-                  value={providerSettings?.apiKey || ''}
+                  value={isDummyApiKey(providerSettings?.apiKey) ? '' : providerSettings?.apiKey || ''}
                   onChange={handleApiKeyChange}
                   disabled={isOAuthActive}
+                  autoComplete="new-password"
+                  name={`llm-api-key-${baseInfo.id}`}
+                  data-1p-ignore="true"
+                  data-lpignore="true"
+                  data-form-type="other"
+                  data-bwignore="true"
                 />
                 <Tooltip
                   openOnTouch
-                  disabled={!!providerSettings?.apiKey && displayModels.length > 0}
+                  disabled={isValidApiKey(providerSettings?.apiKey) && displayModels.length > 0}
                   label={
-                    !providerSettings?.apiKey
+                    !isValidApiKey(providerSettings?.apiKey)
                       ? t('API Key is required to check connection')
                       : displayModels.length === 0
                         ? t('Add at least one model to check connection')
@@ -635,7 +647,7 @@ function ProviderSettings({ providerId }: { providerId: string }) {
                   <Button
                     data-testid={TestId.settings.providerCheck}
                     size="sm"
-                    disabled={isOAuthActive || !providerSettings?.apiKey || displayModels.length === 0}
+                    disabled={isOAuthActive || !isValidApiKey(providerSettings?.apiKey) || displayModels.length === 0}
                     loading={modelTestResult?.testing || false}
                     onClick={() => setShowTestModelSelector(true)}
                   >
@@ -822,13 +834,20 @@ function ProviderSettings({ providerId }: { providerId: string }) {
               </Text>
               <PasswordInput
                 flex={1}
-                value={providerSettings?.accessKey || ''}
+                value={isDummyApiKey(providerSettings?.accessKey) ? '' : providerSettings?.accessKey || ''}
                 placeholder="AKIAIOSFODNN7EXAMPLE"
-                onChange={(e) =>
+                autoComplete="new-password"
+                name="llm-bedrock-access-key"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-form-type="other"
+                data-bwignore="true"
+                onChange={(e) => {
+                  const val = e.currentTarget.value
                   setProviderSettings({
-                    accessKey: e.currentTarget.value,
+                    accessKey: isDummyApiKey(val) ? '' : val,
                   })
-                }
+                }}
               />
             </Stack>
 
@@ -838,13 +857,20 @@ function ProviderSettings({ providerId }: { providerId: string }) {
               </Text>
               <PasswordInput
                 flex={1}
-                value={providerSettings?.secretKey || ''}
+                value={isDummyApiKey(providerSettings?.secretKey) ? '' : providerSettings?.secretKey || ''}
                 placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-                onChange={(e) =>
+                autoComplete="new-password"
+                name="llm-bedrock-secret-key"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-form-type="other"
+                data-bwignore="true"
+                onChange={(e) => {
+                  const val = e.currentTarget.value
                   setProviderSettings({
-                    secretKey: e.currentTarget.value,
+                    secretKey: isDummyApiKey(val) ? '' : val,
                   })
-                }
+                }}
               />
             </Stack>
 

@@ -3,21 +3,32 @@ import { useMemo } from 'react'
 import { rendererApplication } from '@/app/renderer-application'
 import type { TokenModel } from '@/packages/token'
 import * as defaults from '../../../shared/defaults'
+import { useAppAuthStore } from '../appAuthStore'
 import { settingsStore, useSettingsStore } from '../settingsStore'
 
 const useSession = (sessionId: string | null) => rendererApplication.sessionHooks.useSession(sessionId)
 
 function mergeDefaultSessionSettings(session: Session): SessionSettings {
+  const user = useAppAuthStore.getState().user
+  const isAdmin = user?.role === 'admin'
+  const defaultChatModel = settingsStore.getState().getSettings().defaultChatModel
+
   if (session.type === 'picture') {
     return SessionSettingsSchema.parse({
       ...defaults.pictureSessionSettings(),
       ...session.settings,
     })
   } else {
-    return SessionSettingsSchema.parse({
+    const chatSettings = {
       ...defaults.chatSessionSettings(),
       ...session.settings,
-    })
+    }
+    // If not admin, strictly enforce administrator's chosen model
+    if (!isAdmin && defaultChatModel?.provider && defaultChatModel?.model) {
+      chatSettings.provider = defaultChatModel.provider
+      chatSettings.modelId = defaultChatModel.model
+    }
+    return SessionSettingsSchema.parse(chatSettings)
   }
 }
 
@@ -28,7 +39,13 @@ export function useSessionSettings(sessionId: string | null) {
 
   const sessionSettings = useMemo(() => {
     if (!session) {
-      return SessionSettingsSchema.parse(globalSettings)
+      const parsed = SessionSettingsSchema.parse(globalSettings)
+      const user = useAppAuthStore.getState().user
+      if (user?.role !== 'admin' && globalSettings.defaultChatModel?.provider && globalSettings.defaultChatModel?.model) {
+        parsed.provider = globalSettings.defaultChatModel.provider
+        parsed.modelId = globalSettings.defaultChatModel.model
+      }
+      return parsed
     }
     return mergeDefaultSessionSettings(session)
   }, [session, globalSettings])
@@ -40,7 +57,13 @@ export async function getSessionSettings(sessionId: string) {
   const session = await rendererApplication.sessionQueryBridge.getSession(sessionId)
   if (!session) {
     const globalSettings = settingsStore.getState().getSettings()
-    return SessionSettingsSchema.parse(globalSettings)
+    const parsed = SessionSettingsSchema.parse(globalSettings)
+    const user = useAppAuthStore.getState().user
+    if (user?.role !== 'admin' && globalSettings.defaultChatModel?.provider && globalSettings.defaultChatModel?.model) {
+      parsed.provider = globalSettings.defaultChatModel.provider
+      parsed.modelId = globalSettings.defaultChatModel.model
+    }
+    return parsed
   }
   return mergeDefaultSessionSettings(session)
 }

@@ -114,6 +114,12 @@ export function RouteComponent() {
               maw={320}
               value={extension.webSearch.googleApiKey || ''}
               placeholder="AIzaSy..."
+              autoComplete="new-password"
+              name="google-search-api-key"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-form-type="other"
+              data-bwignore="true"
               onChange={(e) => {
                 setGoogleAvailable(undefined)
                 setSettings({

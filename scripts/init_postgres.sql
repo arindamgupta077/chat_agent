@@ -53,14 +53,43 @@ CREATE TABLE IF NOT EXISTS admin_global_config (
     id VARCHAR(64) PRIMARY KEY DEFAULT 'global',
     llm_providers JSONB NOT NULL DEFAULT '{}'::jsonb, -- Global Model providers
     mcp_servers JSONB NOT NULL DEFAULT '[]'::jsonb,   -- Deprecated/Unused (MCP is now unique per user)
+    selected_model JSONB NOT NULL DEFAULT '{}'::jsonb, -- Administrator chosen global AI model for all users
     updated_by VARCHAR(64) REFERENCES users(id) ON DELETE SET NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Ensure column exists if table was previously created without it
+ALTER TABLE admin_global_config ADD COLUMN IF NOT EXISTS selected_model JSONB DEFAULT '{}'::jsonb;
+
 -- Seed global config row if missing
-INSERT INTO admin_global_config (id, llm_providers, mcp_servers)
-VALUES ('global', '{}'::jsonb, '[]'::jsonb)
+INSERT INTO admin_global_config (id, llm_providers, mcp_servers, selected_model)
+VALUES ('global', '{}'::jsonb, '[]'::jsonb, '{}'::jsonb)
 ON CONFLICT (id) DO NOTHING;
+
+-- Ensure dummy model provider API credentials (openai, gemini, claude) are NOT configured by default.
+-- Providers must be explicitly configured with valid API keys by the system administrator.
+UPDATE admin_global_config
+SET llm_providers = (llm_providers - 'openai' - 'gemini' - 'claude')
+WHERE id = 'global'
+  AND (
+    llm_providers->'openai'->>'apiKey' = 'Admin@123'
+    OR llm_providers->'claude'->>'apiKey' = 'Admin@123'
+    OR llm_providers->'gemini'->>'apiKey' = 'Admin@123'
+    OR llm_providers->'gemini'->>'apiKey' LIKE 'AIzaSy%'
+  );
+
+UPDATE app_key_value
+SET value = jsonb_set(
+  value,
+  '{providers}',
+  COALESCE((value->'providers') - 'openai' - 'gemini' - 'claude', '{}'::jsonb)
+)
+WHERE key = 'settings'
+  AND (
+    value->'providers'->'openai'->>'apiKey' = 'Admin@123'
+    OR value->'providers'->'claude'->>'apiKey' = 'Admin@123'
+    OR value->'providers'->'gemini'->>'apiKey' = 'Admin@123'
+  );
 
 -- ==============================================================================
 -- 5. User-Scoped Key-Value Store
