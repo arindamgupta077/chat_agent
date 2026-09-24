@@ -133,6 +133,50 @@ export async function testConnection() {
       }
     }
 
+    if (tables.includes('users')) {
+      try {
+        await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS mcp_servers JSONB NOT NULL DEFAULT \'[]\'::jsonb')
+      } catch (colErr) {
+        console.warn('[DB] Auto-migration for users.mcp_servers column failed:', colErr.message)
+      }
+    }
+
+    // Drop separate user_mcp_servers table if present (user MCP servers are stored exclusively in users table)
+    try {
+      await pool.query('DROP TABLE IF EXISTS user_mcp_servers CASCADE')
+    } catch (dropErr) {
+      console.warn('[DB] Notice on dropping user_mcp_servers:', dropErr.message)
+    }
+
+    // Auto-backfill existing MCP servers into users.mcp_servers
+    try {
+      // 1. Backfill from admin_global_config for admin user
+      const adminGlobal = await pool.query('SELECT mcp_servers, updated_by FROM admin_global_config WHERE id = \'global\'')
+      const adminServers = adminGlobal.rows[0]?.mcp_servers
+      const adminUserId = adminGlobal.rows[0]?.updated_by || 'admin-root-0000-000000000001'
+      if (Array.isArray(adminServers) && adminServers.length > 0) {
+        await pool.query(
+          `UPDATE users SET mcp_servers = $1 WHERE id = $2 AND (mcp_servers IS NULL OR mcp_servers = '[]'::jsonb)`,
+          [JSON.stringify(adminServers), adminUserId]
+        )
+      }
+
+      // 2. Backfill from app_key_value settings for any user
+      const kvRows = await pool.query("SELECT user_id, value->'mcp'->'servers' as mcp_servers FROM app_key_value WHERE key = 'settings' AND value->'mcp'->'servers' IS NOT NULL")
+      for (const row of kvRows.rows) {
+        const uId = row.user_id
+        const servers = row.mcp_servers
+        if (Array.isArray(servers) && servers.length > 0) {
+          await pool.query(
+            `UPDATE users SET mcp_servers = $1 WHERE id = $2 AND (mcp_servers IS NULL OR mcp_servers = '[]'::jsonb)`,
+            [JSON.stringify(servers), uId]
+          )
+        }
+      }
+    } catch (bfErr) {
+      console.warn('[DB] Auto-backfill for users.mcp_servers failed:', bfErr.message)
+    }
+
     return {
       connected: true,
       time: result.rows[0].current_time,

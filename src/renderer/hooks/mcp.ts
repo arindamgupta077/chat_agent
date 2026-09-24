@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { BUILTIN_MCP_SERVERS, getBuiltinServerConfig } from '@/packages/mcp/builtin'
 import { mcpController } from '@/packages/mcp/controller'
 import type { MCPServerConfig, MCPServerStatus } from '@/packages/mcp/types'
+import { getAuthHeaders } from '@/stores/appAuthStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { trackEvent } from '@/utils/track'
 
@@ -52,6 +53,16 @@ export function useToggleMCPServer() {
             }
           })
         })
+
+        // Persist toggled status to PostgreSQL database
+        fetch(`/api/mcp/servers/${encodeURIComponent(id)}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({ enabled }),
+        }).catch((err) => console.error('[MCP DB Toggle Error]:', err))
       }
       if (effect?.action === 'start') {
         mcpController.startServer(effect.config)

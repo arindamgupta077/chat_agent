@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(32) NOT NULL DEFAULT 'user', -- 'admin' or 'user'
+    mcp_servers JSONB NOT NULL DEFAULT '[]'::jsonb, -- User-specific MCP servers
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -37,6 +38,8 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS mcp_servers JSONB NOT NULL DEFAULT '[]'::jsonb;
 
 DROP TRIGGER IF EXISTS trg_users_updated_at ON users;
 CREATE TRIGGER trg_users_updated_at
@@ -221,6 +224,9 @@ CREATE TABLE IF NOT EXISTS image_generations (
 );
 
 CREATE INDEX IF NOT EXISTS idx_image_generations_user ON image_generations(user_id, created_at DESC);
+
+-- Drop separate user_mcp_servers table if it existed (user MCP servers are stored directly in users table)
+DROP TABLE IF EXISTS user_mcp_servers CASCADE;
 
 -- ==============================================================================
 -- 11. Initial Admin User Seed

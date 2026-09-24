@@ -12,6 +12,7 @@ import { mcpController } from '@/packages/mcp/controller'
 import type { MCPServerConfig } from '@/packages/mcp/types'
 import { toastError } from '@/packages/toast'
 import platform from '@/platform'
+import { getAuthHeaders } from '@/stores/appAuthStore'
 import { useMcpSettings, useSettingsStore } from '@/stores/settingsStore'
 import { trackEvent } from '@/utils/track'
 import { ConfigModal } from './ConfigModal'
@@ -61,6 +62,24 @@ const CustomServersSection: FC<Props> = (props) => {
   const onEnabledChange = useToggleMCPServer()
   const [modal, setModal] = useState<{ config: MCPServerConfig; mode: 'add' | 'edit' } | null>(null)
 
+  // Hydrate user's custom MCP servers from PostgreSQL database on mount
+  useEffect(() => {
+    fetch('/api/mcp/servers', {
+      headers: { ...getAuthHeaders() },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.servers && Array.isArray(data.servers)) {
+          setSettings((draft) => {
+            draft.mcp.servers = data.servers
+          })
+        }
+      })
+      .catch((err) => {
+        console.warn('[CustomServersSection] Failed to load MCP servers from database:', err)
+      })
+  }, [setSettings])
+
   useEffect(() => {
     if (props.installConfig) {
       setModal({ mode: 'add', config: props.installConfig })
@@ -77,6 +96,17 @@ const CustomServersSection: FC<Props> = (props) => {
       }
     })
     mcpController.updateServer(config)
+
+    // Instantly persist custom MCP server to PostgreSQL database
+    fetch('/api/mcp/servers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify(config),
+    }).catch((err) => console.error('[MCP DB Save Error]:', err))
+
     if (modal?.mode === 'add') {
       toast.success(t('MCP server added'))
     }
@@ -92,6 +122,15 @@ const CustomServersSection: FC<Props> = (props) => {
       delete draft.mcp.oauth?.[id]
     })
     mcpController.stopServer(id)
+
+    // Delete custom MCP server from PostgreSQL database
+    fetch(`/api/mcp/servers/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: {
+        ...getAuthHeaders(),
+      },
+    }).catch((err) => console.error('[MCP DB Delete Error]:', err))
+
     setModal(null)
   }
 
@@ -145,9 +184,21 @@ const CustomServersSection: FC<Props> = (props) => {
       toastError(t('No MCP servers parsed from clipboard'))
       return
     }
+    const combinedServers = [...mcpSettings.servers, ...servers]
     setSettings((draft) => {
       draft.mcp.servers.push(...servers)
     })
+
+    // Batch save imported servers to PostgreSQL database
+    fetch('/api/mcp/servers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ servers: combinedServers }),
+    }).catch((err) => console.error('[MCP DB Batch Import Error]:', err))
+
     toast.success(
       t('{{count}} MCP servers imported', { count: servers.length }) + ': ' + servers.map((s) => s.name).join(', ')
     )

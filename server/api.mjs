@@ -72,7 +72,12 @@ export async function handleApiRequest(req, res) {
   }
 
   // All storage & data routes below require authentication
-  if (pathname.startsWith('/api/storage') || pathname.startsWith('/api/session-meta') || pathname.startsWith('/api/image-generations')) {
+  if (
+    pathname.startsWith('/api/storage') ||
+    pathname.startsWith('/api/session-meta') ||
+    pathname.startsWith('/api/image-generations') ||
+    pathname.startsWith('/api/mcp')
+  ) {
     const user = extractAuthUser(req)
     if (!user) {
       sendJson(401, { error: 'Unauthorized: Valid Bearer token required' })
@@ -123,6 +128,16 @@ export async function handleApiRequest(req, res) {
             }
           } catch (e) {
             console.warn('[Storage] Failed to merge global admin LLM credentials:', e.message)
+          }
+
+          // Merge this user's isolated MCP servers from PostgreSQL
+          try {
+            const userServers = await getUserMcpServers(userId)
+            if (!val) val = {}
+            if (!val.mcp) val.mcp = { servers: [], enabledBuiltinServers: [] }
+            val.mcp.servers = userServers
+          } catch (mcpErr) {
+            console.warn('[Storage] Failed to merge user MCP servers:', mcpErr.message)
           }
         }
 
@@ -242,6 +257,15 @@ export async function handleApiRequest(req, res) {
           }
         }
 
+        // Sync: if updating settings with mcp.servers, sync to users.mcp_servers
+        if (key === 'settings' && value && typeof value === 'object' && value.mcp && Array.isArray(value.mcp.servers)) {
+          try {
+            await syncUserMcpServers(userId, value.mcp.servers)
+          } catch (mcpSyncErr) {
+            console.warn('[Storage] Failed to sync user MCP servers on settings update:', mcpSyncErr.message)
+          }
+        }
+
         // Relational sync: if saving a session object, sync to chat_sessions & chat_messages
         if (key.startsWith('session:')) {
           const sessionId = key.slice('session:'.length)
@@ -303,6 +327,15 @@ export async function handleApiRequest(req, res) {
             }
           } catch (e) {
             console.warn('[Storage] Failed to merge global admin LLM credentials in getAll:', e.message)
+          }
+
+          // Merge this user's isolated MCP servers from PostgreSQL
+          try {
+            const userServers = await getUserMcpServers(userId)
+            if (!valuesMap.settings.mcp) valuesMap.settings.mcp = { servers: [], enabledBuiltinServers: [] }
+            valuesMap.settings.mcp.servers = userServers
+          } catch (mcpErr) {
+            console.warn('[Storage] Failed to merge user MCP servers in getAll:', mcpErr.message)
           }
         }
         sendJson(200, valuesMap)
@@ -403,6 +436,14 @@ export async function handleApiRequest(req, res) {
                 )
               }
             } catch (adminSyncErr) {}
+          }
+
+          if (key === 'settings' && value && typeof value === 'object' && value.mcp && Array.isArray(value.mcp.servers)) {
+            try {
+              await syncUserMcpServers(userId, value.mcp.servers)
+            } catch (mcpSyncErr) {
+              console.warn('[Storage] Failed to sync user MCP servers in batch:', mcpSyncErr.message)
+            }
           }
         }
         sendJson(200, { success: true })
@@ -690,6 +731,54 @@ export async function handleApiRequest(req, res) {
         sendJson(200, { success: true })
         return true
       }
+
+      // -------------------------------------------------------------
+      // MCP Server APIs (/api/mcp/servers/*)
+      // -------------------------------------------------------------
+
+      // GET /api/mcp/servers
+      if (pathname === '/api/mcp/servers' && req.method === 'GET') {
+        const servers = await getUserMcpServers(userId)
+        sendJson(200, { servers })
+        return true
+      }
+
+      // POST /api/mcp/servers (add, update, or batch sync servers)
+      if (pathname === '/api/mcp/servers' && req.method === 'POST') {
+        const body = await parseJsonBody(req)
+        if (Array.isArray(body?.servers)) {
+          await syncUserMcpServers(userId, body.servers)
+          const servers = await getUserMcpServers(userId)
+          sendJson(200, { success: true, servers })
+          return true
+        }
+
+        const server = body?.server || body
+        if (!server || !server.id) {
+          sendJson(400, { error: 'Invalid MCP server: id is required' })
+          return true
+        }
+        const updatedServer = await upsertSingleMcpServer(userId, server)
+        sendJson(200, { success: true, server: updatedServer })
+        return true
+      }
+
+      // PUT /api/mcp/servers/:id
+      if (pathname.startsWith('/api/mcp/servers/') && req.method === 'PUT') {
+        const serverId = decodeURIComponent(pathname.slice('/api/mcp/servers/'.length))
+        const updates = await parseJsonBody(req)
+        const updatedServer = await updateSingleMcpServer(userId, serverId, updates)
+        sendJson(200, { success: true, server: updatedServer })
+        return true
+      }
+
+      // DELETE /api/mcp/servers/:id
+      if (pathname.startsWith('/api/mcp/servers/') && req.method === 'DELETE') {
+        const serverId = decodeURIComponent(pathname.slice('/api/mcp/servers/'.length))
+        await deleteMcpServer(userId, serverId)
+        sendJson(200, { success: true })
+        return true
+      }
     } catch (err) {
       console.error('[API Error]:', err)
       sendJson(500, { error: err.message })
@@ -885,3 +974,101 @@ async function syncRelationalSession(userId, sessionId, sessionData) {
     )
   }
 }
+
+// -------------------------------------------------------------
+// MCP Server Database Helper Functions
+// -------------------------------------------------------------
+
+// -------------------------------------------------------------
+// MCP Server Database Helper Functions (Stored exclusively in users.mcp_servers)
+// -------------------------------------------------------------
+
+export async function getUserMcpServers(userId) {
+  const result = await query('SELECT mcp_servers FROM users WHERE id = $1', [userId])
+  const servers = result.rows[0]?.mcp_servers
+  return Array.isArray(servers) ? servers : []
+}
+
+export async function syncUserMcpServers(userId, servers) {
+  const validServers = Array.isArray(servers) ? servers : []
+  await query(
+    `UPDATE users SET mcp_servers = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+    [JSON.stringify(validServers), userId]
+  )
+  await syncMcpToKeyValueSettings(userId, validServers)
+  return validServers
+}
+
+export const syncRelationalMcpServers = syncUserMcpServers
+
+export async function upsertSingleMcpServer(userId, server) {
+  if (!server || !server.id) {
+    throw new Error('Server ID is required')
+  }
+  const currentServers = await getUserMcpServers(userId)
+  const index = currentServers.findIndex((s) => s.id === server.id)
+  let updatedList
+  if (index !== -1) {
+    updatedList = [...currentServers]
+    updatedList[index] = { ...currentServers[index], ...server }
+  } else {
+    updatedList = [...currentServers, server]
+  }
+
+  await query(
+    `UPDATE users SET mcp_servers = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+    [JSON.stringify(updatedList), userId]
+  )
+  await syncMcpToKeyValueSettings(userId, updatedList)
+
+  return index !== -1 ? updatedList[index] : server
+}
+
+export async function updateSingleMcpServer(userId, serverId, updates) {
+  const currentServers = await getUserMcpServers(userId)
+  const index = currentServers.findIndex((s) => s.id === serverId)
+  if (index === -1) {
+    return upsertSingleMcpServer(userId, { ...updates, id: serverId })
+  }
+  const merged = { ...currentServers[index], ...updates, id: serverId }
+  const updatedList = [...currentServers]
+  updatedList[index] = merged
+
+  await query(
+    `UPDATE users SET mcp_servers = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+    [JSON.stringify(updatedList), userId]
+  )
+  await syncMcpToKeyValueSettings(userId, updatedList)
+  return merged
+}
+
+export async function deleteMcpServer(userId, serverId) {
+  const currentServers = await getUserMcpServers(userId)
+  const remaining = currentServers.filter((s) => s.id !== serverId)
+
+  await query(
+    `UPDATE users SET mcp_servers = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+    [JSON.stringify(remaining), userId]
+  )
+  await syncMcpToKeyValueSettings(userId, remaining)
+}
+
+async function syncMcpToKeyValueSettings(userId, allServers) {
+  try {
+    const kvRes = await query('SELECT value FROM app_key_value WHERE user_id = $1 AND key = $2', [userId, 'settings'])
+    let currentSettings = kvRes.rows[0]?.value || {}
+    if (!currentSettings.mcp) currentSettings.mcp = {}
+    currentSettings.mcp.servers = allServers
+    await query(
+      `INSERT INTO app_key_value (user_id, key, value, updated_at)
+       VALUES ($1, 'settings', $2, CURRENT_TIMESTAMP)
+       ON CONFLICT (user_id, key) DO UPDATE
+       SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
+      [userId, JSON.stringify(currentSettings)]
+    )
+  } catch (kvErr) {
+    console.warn('[MCP] Failed to update settings in app_key_value:', kvErr.message)
+  }
+}
+
+
