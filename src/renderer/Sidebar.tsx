@@ -317,20 +317,24 @@ export default function Sidebar() {
                   }}
                 >
                   <Flex justify="space-between" align="center" gap="xs">
-                    <Flex align="center" gap="xs" style={{ minWidth: 0 }}>
+                    <Flex align="center" gap="xs" style={{ minWidth: 0, flex: 1 }}>
                       <ScalableIcon
                         icon={isAdmin ? IconShieldCheck : IconUser}
                         size={16}
                         className={isAdmin ? 'text-amber-400' : 'text-blue-400'}
                       />
-                      <Box style={{ minWidth: 0 }}>
+                      <Box style={{ minWidth: 0, flex: 1 }}>
                         <Flex align="center" gap="xs">
-                          <Text size="xs" fw={600} truncate style={{ maxWidth: '85px' }}>
-                            {user.username}
-                          </Text>
-                          <Badge size="xs" color={isAdmin ? 'yellow' : 'blue'} variant="light">
-                            {user.role.toUpperCase()}
-                          </Badge>
+                          <Tooltip label={user.username}>
+                            <Text size="xs" fw={600} truncate style={{ minWidth: 0, flex: 1 }}>
+                              {user.username}
+                            </Text>
+                          </Tooltip>
+                          {isAdmin && (
+                            <Badge size="xs" color="yellow" variant="light" style={{ flexShrink: 0 }}>
+                              ADMIN
+                            </Badge>
+                          )}
                         </Flex>
                       </Box>
                     </Flex>
@@ -340,6 +344,7 @@ export default function Sidebar() {
                       size="sm"
                       onClick={logout}
                       title="Sign Out"
+                      style={{ flexShrink: 0 }}
                     >
                       <ScalableIcon icon={IconLogout} size={15} />
                     </ActionIcon>
@@ -356,7 +361,7 @@ export default function Sidebar() {
                       mt="xs"
                       style={{ fontSize: '11px', fontWeight: 600 }}
                     >
-                      Manage Users & SQL
+                      Manage users
                     </Button>
                   )}
                 </Box>

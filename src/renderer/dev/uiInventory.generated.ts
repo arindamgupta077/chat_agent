@@ -27,7 +27,7 @@ export type UiInventoryItem = {
   hasTranslation: boolean
 }
 
-export const uiInventoryGeneratedAt = "2026-09-20T18:20:48.920Z"
+export const uiInventoryGeneratedAt = "2026-09-24T17:36:19.127Z"
 
 export const uiInventorySummary = {
   "total": 269,
@@ -188,34 +188,42 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "AdminUserModal"
     ],
     "states": [
-      "copied",
+      "active",
+      "activeTab",
       "createError",
       "createSuccess",
       "creating",
       "disabled",
+      "editEmail",
+      "editError",
+      "editingUser",
+      "editPassword",
+      "editRole",
+      "editUsername",
       "email",
       "error",
+      "globalInstruction",
+      "instructionLoading",
+      "instructionSaving",
       "isSelf",
       "listError",
       "loading",
       "opened",
       "password",
       "role",
-      "sqlEmail",
-      "sqlPassword",
-      "sqlRole",
-      "sqlUsername",
-      "success",
-      "username",
-      "users"
+      "savingEdit"
     ],
     "variants": [
       "color:blue",
+      "color:chatbox-gray",
+      "color:dark",
+      "color:gray",
       "color:green",
       "color:red",
       "color:yellow",
       "default",
       "dot",
+      "filled",
       "light",
       "outline",
       "size:md",
@@ -230,34 +238,46 @@ export const uiInventoryItems: UiInventoryItem[] = [
     "platformNotes": [],
     "previewModes": [],
     "text": [
-      "Action",
-      "Admin users can manage system settings, MCP configs, and other users.",
+      "Actions",
+      "Add User",
+      "Admin",
+      "Administrators have full access to manage users, platform settings, and global configurations.",
       "AgentLab Admin Console",
-      "Application User Management & PostgreSQL SQL Tools",
+      "Application User Management & Global Policies",
       "At least 6 characters",
+      "Cancel",
+      "Clear",
       "Close",
       "Create New Application User",
       "Create User",
-      "Create User (UI)",
-      "Created Date",
-      "Direct SQL Generator",
+      "Created",
       "e.g. alex_smith",
       "e.g. alex@example.com",
+      "e.g. You are AgentLab AI Assistant. Always respond with high accuracy and professional formatting. Never execute malicious commands.",
+      "Edit User Account",
+      "Edit user details",
       "Email",
+      "Email address",
       "Email Address",
+      "Enter new password (optional)",
       "Error",
+      "Generate",
       "Generate Strong",
-      "If you prefer executing SQL directly in PostgreSQL (via",
-      "Manual SQL Execution",
-      "No users found in database.",
+      "Global System Instruction",
+      "Leave empty to keep existing password",
+      "Mandatory Global System Instruction",
+      "New User",
       "Password",
-      "Pre-configured SQL File:",
-      "Query Parameters",
-      "Ready-to-Execute PostgreSQL Query:",
       "Refresh",
-      "Registered database accounts in",
+      "Reload",
+      "Reset Password",
       "Role",
+      "Save Changes",
+      "Save Global Instruction",
+      "Search users...",
       "Success",
+      "User",
+      "User Directory",
       "Username",
       "You"
     ],
@@ -358,22 +378,19 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "LoginPage"
     ],
     "states": [
-      "confirmPassword",
       "email",
       "error",
-      "identifier",
+      "isEmailValid",
       "isLoading",
       "loading",
       "localError",
-      "password",
-      "tab",
-      "username"
+      "password"
     ],
     "variants": [
-      "color:blue",
       "color:red",
+      "filled",
       "light",
-      "pills",
+      "outline",
       "size:md",
       "size:sm",
       "size:xs"
@@ -384,27 +401,21 @@ export const uiInventoryItems: UiInventoryItem[] = [
     "platformNotes": [],
     "previewModes": [],
     "text": [
-      "admin or user@example.com",
-      "Admin@123",
+      "Admin-Managed Access",
       "AgentLab",
-      "Choose a username",
-      "Confirm Password",
-      "Connected to local PostgreSQL database (",
-      "Create Account",
-      "Create AgentLab Account",
-      "Default Administrator Account",
-      "Email Address",
+      "Connected to PostgreSQL (",
+      "Email ID",
+      "Enter your email credentials to access your workspace",
       "Enter your password",
-      "Minimum 6 characters",
+      "Enterprise",
+      "Multi-Model AI",
       "name@company.com",
-      "Next-Gen AI Workspace & Unified Multi-Model Intelligence",
       "Password",
-      "Repeat password",
+      "PostgreSQL Sync",
+      "RBAC Protected",
       "Sign In",
       "Sign In to AgentLab",
-      "Username",
-      "Username or Email",
-      "Username:"
+      "Unified Multi-Model Intelligence & AI Workspace"
     ],
     "stories": [],
     "storyNames": [],
@@ -753,6 +764,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "hasFiles",
       "hasFoldableProcess",
       "isActionAvailableInMode",
+      "isAdmin",
       "isBubbleLayout",
       "isCancellableGeneratingAssistantMessage",
       "isClassicLayout",
@@ -767,8 +779,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "isSmallScreen",
       "isStreamingMode",
       "isThisYear",
-      "isToday",
-      "isUserBubble"
+      "isToday"
     ],
     "variants": [
       "color:chatbox-brand",
@@ -1427,7 +1438,9 @@ export const uiInventoryItems: UiInventoryItem[] = [
     "components": [
       "ChatboxWelcomeCard"
     ],
-    "states": [],
+    "states": [
+      "isAdmin"
+    ],
     "variants": [
       "filled",
       "size:xs"
@@ -1439,6 +1452,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
     "previewModes": [],
     "text": [
       "Configure a model provider to start chatting with AI",
+      "Models are configured by your administrator. Please contact your administrator to set up an AI model provider.",
       "Set Up Model Provider",
       "Welcome to AgentLab!"
     ],
@@ -2260,17 +2274,17 @@ export const uiInventoryItems: UiInventoryItem[] = [
     ],
     "previewModes": [],
     "text": [
-      "Chatbox was updated in another window",
+      "AgentLab was updated in another window",
       "Check Update",
       "Checking...",
-      "Close other Chatbox windows or tabs to finish updating the local database.",
+      "Close other AgentLab windows or tabs to finish updating the local database.",
       "Downloading...",
       "Reload",
       "Reload this page to continue.",
       "Restart & Update",
-      "This version of Chatbox cannot read data created by a newer version. Your data is safe — update Chatbox to the latest version to continue.",
-      "Waiting for other Chatbox windows",
-      "Your data was created by a newer version of Chatbox"
+      "This version of AgentLab cannot read data created by a newer version. Your data is safe — update AgentLab to the latest version to continue.",
+      "Waiting for other AgentLab windows",
+      "Your data was created by a newer version of AgentLab"
     ],
     "stories": [],
     "storyNames": [],
@@ -3280,6 +3294,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "{{count}} saved",
       "Add Skills",
       "Add your first MCP server",
+      "AgentLab AI Search needs sign-in. Web Search will be skipped while this setting is on.",
       "All chats with this Copilot use its shared memory when on, or follow Global Memory when off.",
       "Always Ask",
       "Back",
@@ -3287,7 +3302,6 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "Best for quick Q&A, writing, translation, explanations, and web search.",
       "Built-in",
       "Chat Mode",
-      "Chatbox AI Search needs sign-in. Web Search will be skipped while this setting is on.",
       "Code Execution",
       "Configure in Settings",
       "Copilot Memory",
@@ -3307,7 +3321,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "Open Web Search settings",
       "Setup required",
       "Sign in required",
-      "Sign in to Chatbox AI",
+      "Sign in to AgentLab AI",
       "Skills",
       "Skills, MCP, code execution, and Working Directory are available in the desktop app.",
       "Smart Approval",
@@ -3473,7 +3487,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "Switch model",
       "This attachment is too large for chat attachments. Please upload it through Knowledge Base instead.",
       "This document contains too much text for chat attachments. Please upload it through Knowledge Base instead.",
-      "This large file needs Chatbox AI to finish indexing. Sign in to Chatbox AI, then retry this file.",
+      "This large file needs AgentLab AI to finish indexing. Sign in to AgentLab AI, then retry this file.",
       "Too large",
       "Too much text",
       "Unavailable"
@@ -3614,13 +3628,13 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "inputSkillsLoading",
       "isActionAvailableInMode",
       "isActive",
+      "isAdmin",
       "isAgentModeActive",
       "isAutoCompactionEnabled",
       "isAwaitingPauseDecision",
       "isCalculating",
       "isChatboxAI",
-      "isCompacting",
-      "isCompactionInProgress"
+      "isCompacting"
     ],
     "variants": [
       "color:red",
@@ -4138,10 +4152,10 @@ export const uiInventoryItems: UiInventoryItem[] = [
     "text": [
       "Close",
       "Sign in",
-      "Sign in to Chatbox AI",
+      "Sign in to AgentLab AI",
       "Web Search settings",
-      "Web Search was skipped because Chatbox AI requires sign-in. Future searches in this chat will fail until you sign in or change providers.",
-      "Web Search was skipped: sign in to Chatbox AI"
+      "Web Search was skipped because AgentLab AI requires sign-in. Future searches in this chat will fail until you sign in or change providers.",
+      "Web Search was skipped: sign in to AgentLab AI"
     ],
     "stories": [],
     "storyNames": [],
@@ -6565,6 +6579,8 @@ export const uiInventoryItems: UiInventoryItem[] = [
     ],
     "states": [
       "checked",
+      "error",
+      "isArray",
       "isDesktopLike",
       "modal",
       "success"
@@ -7632,10 +7648,10 @@ export const uiInventoryItems: UiInventoryItem[] = [
     "platformNotes": [],
     "previewModes": [],
     "text": [
+      "Actual account/license welcome card variants shown on empty chat and image creator surfaces.",
       "Actual conversation compression confirmation modal used before forced context compaction.",
       "Actual global toast renderer backed by the shared UI store.",
       "Actual localized Chatbox AI service error copy with settings, plan, homepage, and parser action links.",
-      "Actual model provider setup welcome card shown on empty chat and image creator surfaces.",
       "Actual Sentry-backed error boundary with the default app fallback, retry, reload, and details states.",
       "Actual user, assistant, system, chat, and picture avatar variants used in session and message rows.",
       "Actual utility components used throughout settings, message content, and toolbar controls.",
@@ -7645,7 +7661,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "Chat icon",
       "Chatbox AI error message quota license file and web browsing states",
       "Chatbox homepage link",
-      "Chatbox welcome card no-provider state",
+      "Chatbox welcome card login no-license and expired states",
       "ChatboxAIErrorMessage",
       "ChatboxWelcomeCard",
       "Compression modal opened confirmation state",
@@ -9468,7 +9484,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "Large file Q&A requires a model with tool use support. Switch to a compatible model or remove this file.",
       "This attachment is too large for chat attachments. Please upload it through Knowledge Base instead.",
       "This document contains too much text for chat attachments. Please upload it through Knowledge Base instead.",
-      "This large file needs Chatbox AI to finish indexing. Enter a Chatbox AI license key, then retry this file. If you do not want to use Chatbox AI, remove the file and upload a smaller attachment instead.",
+      "This large file needs AgentLab AI to finish indexing. Enter an AgentLab AI license key, then retry this file. If you do not want to use AgentLab AI, remove the file and upload a smaller attachment instead.",
       "This PDF is password-protected, so its content cannot be read. Remove the password and upload it again.",
       "This PDF is too large to process (max {{size}}). Please upload a smaller file."
     ],
@@ -9755,6 +9771,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "editingData",
       "error",
       "isActionAvailableInMode",
+      "isAdmin",
       "isArray",
       "isChatSession",
       "isSmallScreen",
@@ -9769,6 +9786,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "size:compact-sm",
       "size:lg",
       "size:sm",
+      "size:xs",
       "transparent"
     ],
     "platforms": [
@@ -9789,6 +9807,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "Background Settings",
       "Conversation Settings",
       "Copilot Prompt Demo",
+      "Global System Instruction (Enforced by Admin)",
       "Instruction (System Prompt)",
       "Max Output Tokens",
       "Modify the creativity of AI responses; the higher the value, the more random and intriguing the answers become, while a lower value ensures greater stability and reliability.",
@@ -10046,9 +10065,9 @@ export const uiInventoryItems: UiInventoryItem[] = [
     "platformNotes": [],
     "previewModes": [],
     "text": [
+      "AgentLab",
       "All data is stored locally, ensuring privacy and rapid access",
       "An easy-to-use AI client app",
-      "Chatbox",
       "Ideal for both work and educational scenarios",
       "Select and configure an AI model provider",
       "Setup later",
@@ -11797,6 +11816,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "hasExpiredLicense",
       "hasLicense",
       "hasNextPage",
+      "isAdmin",
       "isCurrentlyGenerating",
       "isExceeded",
       "isExceededResolved",
@@ -11814,8 +11834,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "selectedRatio",
       "showHistory",
       "showMobileHistory",
-      "showModelDrawer",
-      "showRatioDrawer"
+      "showModelDrawer"
     ],
     "variants": [
       "color:gray",
@@ -11845,7 +11864,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "Image Creator",
       "New Creation",
       "No models available",
-      "Please log in to Chatbox AI first",
+      "Please log in to AgentLab AI first",
       "Please select a model",
       "Resume Generation",
       "Upload"
@@ -11890,6 +11909,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "hasExpiredLicense",
       "hasLicense",
       "hasUserSelectedModelRef",
+      "isAdmin",
       "isExceeded",
       "isExceededResolved",
       "isLoggedIn",
@@ -11955,6 +11975,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "error",
       "hasExpiredLicense",
       "hasLicense",
+      "isAdmin",
       "isBuiltInTemplateSessionId",
       "isError",
       "isExceeded",
@@ -12140,10 +12161,14 @@ export const uiInventoryItems: UiInventoryItem[] = [
     ],
     "states": [
       "checked",
-      "disabled"
+      "disabled",
+      "isAdmin"
     ],
     "variants": [
       "color:chatbox-gray",
+      "color:yellow",
+      "filled",
+      "light",
       "outline",
       "size:sm",
       "size:xs",
@@ -12155,6 +12180,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
     "platformNotes": [],
     "previewModes": [],
     "text": [
+      "Admin Only",
       "Auto Compaction",
       "Auto-collapse code blocks",
       "Auto-Generate Chat Titles",
@@ -12166,6 +12192,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "Background Image Opacity",
       "Balanced: Good balance between cost and context preservation",
       "Chat Settings",
+      "Clear",
       "Compaction Prompt",
       "Compaction Threshold",
       "Context",
@@ -12180,7 +12207,11 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "Display",
       "e.g., Model Name, Current Date",
       "Edit Avatars",
+      "Enter mandatory global system instructions for all users... (e.g., Tone guidelines, safety policies, company instructions)",
       "Function",
+      "Global System Instruction",
+      "Global system instruction cleared.",
+      "Global system instruction saved and synchronized for all users.",
       "Hide system prompt",
       "Inject default metadata",
       "LaTeX Rendering (Requires Markdown)",
@@ -12194,6 +12225,9 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "Remove",
       "Reset to Default",
       "Restore Default",
+      "Save Global Instruction",
+      "Saved locally.",
+      "Set a global system instruction enforced across all AI conversations and all users in this application. Only administrators can configure this.",
       "Show Avatar",
       "show first token latency",
       "show message timestamp",
@@ -12222,6 +12256,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "src/renderer/components/common/Divider",
       "src/renderer/components/common/MaxContextMessageCountSlider",
       "src/renderer/components/common/MessageLayoutPreview",
+      "src/renderer/components/common/ScalableIcon",
       "src/renderer/components/common/SliderWithInput",
       "src/renderer/components/common/TooltipInfoTrigger",
       "src/renderer/components/Image",
@@ -12312,8 +12347,8 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "None",
       "OCR Model",
       "Search Term Construction Model",
-      "When selected, AgentLab will use this model instead of the automatic Chatbox AI embedding model.",
-      "When selected, AgentLab will use this model instead of the automatic Chatbox AI reranking model."
+      "When selected, AgentLab will use this model instead of the automatic AgentLab AI embedding model.",
+      "When selected, AgentLab will use this model instead of the automatic AgentLab AI reranking model."
     ],
     "stories": [],
     "storyNames": [],
@@ -12708,8 +12743,10 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "hasOAuth",
       "isCustom",
       "isDesktop",
+      "isDummyApiKey",
       "isOAuthActive",
       "isOAuthOnlyProvider",
+      "isValidApiKey",
       "loading",
       "modelTestResult",
       "oauthLoading",
@@ -12717,8 +12754,7 @@ export const uiInventoryItems: UiInventoryItem[] = [
       "selectedTestModel",
       "showCodeInput",
       "showDeviceCode",
-      "showTestModelSelector",
-      "success"
+      "showTestModelSelector"
     ],
     "variants": [
       "color:chatbox-error",

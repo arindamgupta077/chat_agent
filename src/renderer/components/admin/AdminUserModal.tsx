@@ -1,10 +1,10 @@
 import {
   ActionIcon,
   Alert,
+  Avatar,
   Badge,
   Box,
   Button,
-  Code,
   Divider,
   Flex,
   Group,
@@ -25,16 +25,21 @@ import {
 import {
   IconAlertCircle,
   IconCheck,
-  IconCopy,
-  IconDatabase,
   IconKey,
+  IconLock,
+  IconMail,
+  IconPencil,
   IconRefresh,
+  IconSearch,
+  IconShield,
   IconShieldCheck,
   IconTrash,
+  IconUser,
   IconUserPlus,
   IconUsers,
+  IconX,
 } from '@tabler/icons-react'
-import { type FC, useEffect, useState } from 'react'
+import { type FC, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { ScalableIcon } from '@/components/common/ScalableIcon'
 import { getAuthHeaders, useAppAuthStore } from '@/stores/appAuthStore'
@@ -56,10 +61,14 @@ interface AdminUserModalProps {
 export const AdminUserModal: FC<AdminUserModalProps> = ({ opened, onClose }) => {
   const currentUser = useAppAuthStore((s) => s.user)
 
+  // Active Tab State
+  const [activeTab, setActiveTab] = useState<string | null>('users')
+
   // Users List State
   const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(false)
   const [listError, setListError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Form State for UI user creation
   const [username, setUsername] = useState('')
@@ -70,12 +79,14 @@ export const AdminUserModal: FC<AdminUserModalProps> = ({ opened, onClose }) => 
   const [createError, setCreateError] = useState<string | null>(null)
   const [createSuccess, setCreateSuccess] = useState<string | null>(null)
 
-  // SQL Generator Form State
-  const [sqlUsername, setSqlUsername] = useState('new_user')
-  const [sqlEmail, setSqlEmail] = useState('user@example.com')
-  const [sqlPassword, setSqlPassword] = useState('Welcome@123')
-  const [sqlRole, setSqlRole] = useState<'user' | 'admin'>('user')
-  const [copied, setCopied] = useState(false)
+  // Edit User State
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null)
+  const [editUsername, setEditUsername] = useState('')
+  const [editEmail, setEditEmail] = useState('')
+  const [editRole, setEditRole] = useState<'user' | 'admin'>('user')
+  const [editPassword, setEditPassword] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
 
   // Global System Instruction State
   const [globalInstruction, setGlobalInstruction] = useState('')
@@ -158,8 +169,20 @@ export const AdminUserModal: FC<AdminUserModalProps> = ({ opened, onClose }) => 
       fetchGlobalInstruction()
       setCreateError(null)
       setCreateSuccess(null)
+      setEditingUser(null)
+      setEditError(null)
     }
   }, [opened])
+
+  // Helper to generate a random strong password
+  const generateStrongPassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^&*'
+    let pass = ''
+    for (let i = 0; i < 12; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return pass
+  }
 
   // Handle User Creation via API
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -172,7 +195,7 @@ export const AdminUserModal: FC<AdminUserModalProps> = ({ opened, onClose }) => 
       return
     }
 
-    if (username.length < 3) {
+    if (username.trim().length < 3) {
       setCreateError('Username must be at least 3 characters.')
       return
     }
@@ -217,6 +240,79 @@ export const AdminUserModal: FC<AdminUserModalProps> = ({ opened, onClose }) => 
     }
   }
 
+  // Open Edit User Modal
+  const handleOpenEdit = (user: AdminUser) => {
+    setEditingUser(user)
+    setEditUsername(user.username)
+    setEditEmail(user.email)
+    setEditRole(user.role)
+    setEditPassword('')
+    setEditError(null)
+  }
+
+  const handleCloseEdit = () => {
+    setEditingUser(null)
+    setEditPassword('')
+    setEditError(null)
+  }
+
+  // Save Edit User Changes
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingUser) return
+
+    setEditError(null)
+
+    if (!editUsername.trim() || !editEmail.trim()) {
+      setEditError('Username and Email are required.')
+      return
+    }
+
+    if (editUsername.trim().length < 3) {
+      setEditError('Username must be at least 3 characters.')
+      return
+    }
+
+    if (editPassword && editPassword.length < 6) {
+      setEditError('New password must be at least 6 characters.')
+      return
+    }
+
+    setSavingEdit(true)
+    try {
+      const bodyPayload: any = {
+        username: editUsername.trim(),
+        email: editEmail.trim().toLowerCase(),
+        role: editRole,
+      }
+      if (editPassword && editPassword.trim().length > 0) {
+        bodyPayload.password = editPassword
+      }
+
+      const res = await fetch(`/api/admin/users/${editingUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(bodyPayload),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update user')
+      }
+
+      toast.success(`User "${editUsername}" updated successfully!`)
+      setEditingUser(null)
+      fetchUsers()
+    } catch (err: any) {
+      setEditError(err.message)
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
   // Handle User Deletion
   const handleDeleteUser = async (userToDelete: AdminUser) => {
     if (userToDelete.id === currentUser?.id) {
@@ -250,450 +346,553 @@ export const AdminUserModal: FC<AdminUserModalProps> = ({ opened, onClose }) => 
     }
   }
 
-  // Helper to generate a random strong password
-  const generateRandomPassword = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^&*'
-    let pass = ''
-    for (let i = 0; i < 12; i++) {
-      pass += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    setPassword(pass)
-  }
+  // Filtered Users List
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery.trim()) return users
+    const query = searchQuery.toLowerCase().trim()
+    return users.filter(
+      (u) =>
+        u.username.toLowerCase().includes(query) ||
+        u.email.toLowerCase().includes(query) ||
+        u.role.toLowerCase().includes(query)
+    )
+  }, [users, searchQuery])
 
-  // Generate copyable SQL snippet
-  const generatedSql = `-- ==============================================================================
--- AgentLab Manual User Creation Query
--- Run this in psql, pgAdmin, or your PostgreSQL client:
--- ==============================================================================
-INSERT INTO users (id, username, email, password_hash, role)
-VALUES (
-    'user-' || gen_random_uuid(),
-    '${sqlUsername.replace(/'/g, "''").trim()}',
-    '${sqlEmail.replace(/'/g, "''").trim().toLowerCase()}',
-    encode(sha256('${sqlPassword.replace(/'/g, "''")}'::bytea), 'hex'),
-    '${sqlRole}'
-)
-ON CONFLICT (username) DO UPDATE
-SET email = EXCLUDED.email,
-    password_hash = EXCLUDED.password_hash,
-    role = EXCLUDED.role,
-    updated_at = CURRENT_TIMESTAMP;
-
--- Verification:
-SELECT id, username, email, role, created_at FROM users WHERE username = '${sqlUsername.replace(/'/g, "''").trim()}';`
-
-  const handleCopySql = () => {
-    navigator.clipboard.writeText(generatedSql)
-    setCopied(true)
-    toast.success('SQL query copied to clipboard!')
-    setTimeout(() => setCopied(false), 2500)
-  }
+  // Count metrics
+  const adminCount = useMemo(() => users.filter((u) => u.role === 'admin').length, [users])
+  const standardCount = useMemo(() => users.filter((u) => u.role === 'user').length, [users])
 
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      title={
-        <Flex align="center" gap="xs">
-          <ScalableIcon icon={IconShieldCheck} size={22} className="text-amber-400" />
-          <Box>
-            <Text fw={700} size="md">
-              AgentLab Admin Console
-            </Text>
-            <Text size="xs" c="dimmed">
-              Application User Management & PostgreSQL SQL Tools
-            </Text>
-          </Box>
-        </Flex>
-      }
-      size="xl"
-      radius="md"
-      centered
-      overlayProps={{
-        backgroundOpacity: 0.65,
-        blur: 4,
-      }}
-      styles={{
-        header: {
-          borderBottom: '1px solid var(--chatbox-border-primary, rgba(255, 255, 255, 0.08))',
-          paddingBottom: '12px',
-        },
-        body: {
-          paddingTop: '16px',
-        },
-      }}
-    >
-      <Tabs defaultValue="users" variant="outline">
-        <Tabs.List mb="md">
-          <Tabs.Tab value="users" leftSection={<ScalableIcon icon={IconUsers} size={16} />}>
-            Application Users ({users.length})
-          </Tabs.Tab>
-          <Tabs.Tab value="create" leftSection={<ScalableIcon icon={IconUserPlus} size={16} />}>
-            Create User (UI)
-          </Tabs.Tab>
-          <Tabs.Tab value="sql" leftSection={<ScalableIcon icon={IconDatabase} size={16} />}>
-            Direct SQL Generator
-          </Tabs.Tab>
-          <Tabs.Tab value="instruction" leftSection={<ScalableIcon icon={IconShieldCheck} size={16} />}>
-            Global System Instruction
-          </Tabs.Tab>
-        </Tabs.List>
-
-        {/* TAB 1: USER LIST */}
-        <Tabs.Panel value="users">
-          <Stack gap="md">
-            <Flex justify="space-between" align="center">
-              <Text size="sm" c="dimmed">
-                Registered database accounts in <Code>app_db</Code>
+    <>
+      <Modal
+        opened={opened}
+        onClose={onClose}
+        title={
+          <Flex align="center" gap="sm">
+            <Box
+              p={8}
+              style={{
+                borderRadius: '8px',
+                background: 'rgba(245, 158, 11, 0.12)',
+                color: 'var(--mantine-color-yellow-5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ScalableIcon icon={IconShieldCheck} size={22} />
+            </Box>
+            <Box>
+              <Flex align="center" gap="xs">
+                <Text fw={700} size="md">
+                  AgentLab Admin Console
+                </Text>
+                <Badge size="xs" variant="light" color="yellow">
+                  Admin
+                </Badge>
+              </Flex>
+              <Text size="xs" c="dimmed">
+                Application User Management & Global Policies
               </Text>
-              <Button
-                variant="subtle"
-                size="xs"
-                leftSection={<ScalableIcon icon={IconRefresh} size={14} />}
-                onClick={fetchUsers}
-                loading={loading}
-              >
-                Refresh
-              </Button>
-            </Flex>
+            </Box>
+          </Flex>
+        }
+        size="xl"
+        radius="md"
+        centered
+        overlayProps={{
+          backgroundOpacity: 0.65,
+          blur: 4,
+        }}
+        styles={{
+          header: {
+            borderBottom: '1px solid var(--chatbox-border-primary, rgba(255, 255, 255, 0.08))',
+            paddingBottom: '14px',
+          },
+          body: {
+            paddingTop: '16px',
+          },
+        }}
+      >
+        <Tabs value={activeTab} onChange={setActiveTab} variant="outline">
+          <Tabs.List mb="md">
+            <Tabs.Tab
+              value="users"
+              leftSection={<ScalableIcon icon={IconUsers} size={16} />}
+              rightSection={
+                <Badge size="xs" variant="filled" color="dark" circle>
+                  {users.length}
+                </Badge>
+              }
+            >
+              User Directory
+            </Tabs.Tab>
+            <Tabs.Tab value="create" leftSection={<ScalableIcon icon={IconUserPlus} size={16} />}>
+              Add User
+            </Tabs.Tab>
+            <Tabs.Tab value="instruction" leftSection={<ScalableIcon icon={IconShield} size={16} />}>
+              Global System Instruction
+            </Tabs.Tab>
+          </Tabs.List>
 
-            {listError && (
+          {/* TAB 1: USER DIRECTORY */}
+          <Tabs.Panel value="users">
+            <Stack gap="md">
+              {/* Summary Metrics & Search Toolbar */}
+              <Flex justify="space-between" align="center" wrap="wrap" gap="sm">
+                <Group gap="xs">
+                  <Badge variant="light" color="gray" size="sm">
+                    Total: {users.length}
+                  </Badge>
+                  <Badge variant="light" color="yellow" size="sm">
+                    Admins: {adminCount}
+                  </Badge>
+                  <Badge variant="light" color="blue" size="sm">
+                    Users: {standardCount}
+                  </Badge>
+                </Group>
+
+                <Group gap="xs">
+                  <TextInput
+                    size="xs"
+                    placeholder="Search users..."
+                    leftSection={<ScalableIcon icon={IconSearch} size={13} />}
+                    rightSection={
+                      searchQuery ? (
+                        <ActionIcon size="xs" variant="subtle" onClick={() => setSearchQuery('')}>
+                          <ScalableIcon icon={IconX} size={11} />
+                        </ActionIcon>
+                      ) : null
+                    }
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.currentTarget.value)}
+                    style={{ minWidth: '180px' }}
+                  />
+                  <Button
+                    variant="subtle"
+                    size="xs"
+                    leftSection={<ScalableIcon icon={IconRefresh} size={13} />}
+                    onClick={fetchUsers}
+                    loading={loading}
+                  >
+                    Refresh
+                  </Button>
+                  <Button
+                    variant="light"
+                    color="yellow"
+                    size="xs"
+                    leftSection={<ScalableIcon icon={IconUserPlus} size={13} />}
+                    onClick={() => setActiveTab('create')}
+                  >
+                    New User
+                  </Button>
+                </Group>
+              </Flex>
+
+              {listError && (
+                <Alert icon={<ScalableIcon icon={IconAlertCircle} size={16} />} title="Error" color="red">
+                  {listError}
+                </Alert>
+              )}
+
+              {loading && users.length === 0 ? (
+                <Flex justify="center" align="center" p="xl">
+                  <Loader size="md" />
+                </Flex>
+              ) : (
+                <Paper withBorder radius="md" style={{ overflow: 'hidden' }}>
+                  <ScrollArea.Autosize mah={360}>
+                    <Table striped highlightOnHover verticalSpacing="xs">
+                      <Table.Thead>
+                        <Table.Tr>
+                          <Table.Th style={{ width: '30%' }}>User</Table.Th>
+                          <Table.Th style={{ width: '32%' }}>Email</Table.Th>
+                          <Table.Th style={{ width: '15%' }}>Role</Table.Th>
+                          <Table.Th style={{ width: '13%' }}>Created</Table.Th>
+                          <Table.Th style={{ width: '10%', textAlign: 'right' }}>Actions</Table.Th>
+                        </Table.Tr>
+                      </Table.Thead>
+                      <Table.Tbody>
+                        {filteredUsers.length === 0 ? (
+                          <Table.Tr>
+                            <Table.Td colSpan={5} style={{ textAlign: 'center', padding: '32px' }}>
+                              <Text size="sm" c="dimmed">
+                                {searchQuery ? `No users match "${searchQuery}"` : 'No users found in database.'}
+                              </Text>
+                            </Table.Td>
+                          </Table.Tr>
+                        ) : (
+                          filteredUsers.map((u) => {
+                            const isSelf = u.id === currentUser?.id
+                            const initial = (u.username[0] || 'U').toUpperCase()
+
+                            return (
+                              <Table.Tr key={u.id}>
+                                <Table.Td>
+                                  <Flex align="center" gap="xs">
+                                    <Avatar size="sm" radius="xl" color={u.role === 'admin' ? 'yellow' : 'blue'}>
+                                      {initial}
+                                    </Avatar>
+                                    <Box style={{ overflow: 'hidden' }}>
+                                      <Flex align="center" gap={6}>
+                                        <Text fw={600} size="sm" truncate>
+                                          {u.username}
+                                        </Text>
+                                        {isSelf && (
+                                          <Badge size="xs" variant="dot" color="green">
+                                            You
+                                          </Badge>
+                                        )}
+                                      </Flex>
+                                    </Box>
+                                  </Flex>
+                                </Table.Td>
+                                <Table.Td>
+                                  <Text size="xs" c="dimmed" truncate>
+                                    {u.email}
+                                  </Text>
+                                </Table.Td>
+                                <Table.Td>
+                                  <Badge
+                                    size="xs"
+                                    color={u.role === 'admin' ? 'yellow' : 'blue'}
+                                    variant="light"
+                                    leftSection={
+                                      u.role === 'admin' ? (
+                                        <ScalableIcon icon={IconShield} size={10} />
+                                      ) : undefined
+                                    }
+                                  >
+                                    {u.role.toUpperCase()}
+                                  </Badge>
+                                </Table.Td>
+                                <Table.Td>
+                                  <Text size="xs" c="dimmed">
+                                    {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}
+                                  </Text>
+                                </Table.Td>
+                                <Table.Td style={{ textAlign: 'right' }}>
+                                  <Group gap={4} justify="flex-end" wrap="nowrap">
+                                    <Tooltip label="Edit user details" position="top">
+                                      <ActionIcon
+                                        color="blue"
+                                        variant="subtle"
+                                        size="sm"
+                                        onClick={() => handleOpenEdit(u)}
+                                      >
+                                        <ScalableIcon icon={IconPencil} size={15} />
+                                      </ActionIcon>
+                                    </Tooltip>
+                                    <Tooltip
+                                      label={isSelf ? 'Cannot delete current account' : 'Delete user'}
+                                      position="top"
+                                    >
+                                      <ActionIcon
+                                        color="red"
+                                        variant="subtle"
+                                        size="sm"
+                                        disabled={isSelf}
+                                        onClick={() => handleDeleteUser(u)}
+                                      >
+                                        <ScalableIcon icon={IconTrash} size={15} />
+                                      </ActionIcon>
+                                    </Tooltip>
+                                  </Group>
+                                </Table.Td>
+                              </Table.Tr>
+                            )
+                          })
+                        )}
+                      </Table.Tbody>
+                    </Table>
+                  </ScrollArea.Autosize>
+                </Paper>
+              )}
+            </Stack>
+          </Tabs.Panel>
+
+          {/* TAB 2: CREATE USER FORM (UI) */}
+          <Tabs.Panel value="create">
+            <Paper withBorder p="lg" radius="md">
+              <form onSubmit={handleCreateUser}>
+                <Stack gap="md">
+                  <Box>
+                    <Text fw={600} size="sm">
+                      Create New Application User
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      Configure a new user account with role-based access. Passwords are securely hashed using salted PBKDF2.
+                    </Text>
+                  </Box>
+
+                  {createError && (
+                    <Alert icon={<ScalableIcon icon={IconAlertCircle} size={16} />} title="Error" color="red">
+                      {createError}
+                    </Alert>
+                  )}
+
+                  {createSuccess && (
+                    <Alert icon={<ScalableIcon icon={IconCheck} size={16} />} title="Success" color="green">
+                      {createSuccess}
+                    </Alert>
+                  )}
+
+                  <Flex gap="md" wrap="wrap">
+                    <TextInput
+                      label="Username"
+                      placeholder="e.g. alex_smith"
+                      leftSection={<ScalableIcon icon={IconUser} size={15} />}
+                      required
+                      style={{ flex: '1 1 200px' }}
+                      value={username}
+                      onChange={(e) => setUsername(e.currentTarget.value)}
+                    />
+                    <TextInput
+                      label="Email Address"
+                      placeholder="e.g. alex@example.com"
+                      leftSection={<ScalableIcon icon={IconMail} size={15} />}
+                      type="email"
+                      required
+                      style={{ flex: '1 1 200px' }}
+                      value={email}
+                      onChange={(e) => setEmail(e.currentTarget.value)}
+                    />
+                  </Flex>
+
+                  <Flex gap="md" wrap="wrap" align="flex-end">
+                    <PasswordInput
+                      label="Password"
+                      placeholder="At least 6 characters"
+                      leftSection={<ScalableIcon icon={IconLock} size={15} />}
+                      required
+                      style={{ flex: '1 1 240px' }}
+                      value={password}
+                      onChange={(e) => setPassword(e.currentTarget.value)}
+                    />
+                    <Button
+                      variant="default"
+                      size="sm"
+                      leftSection={<ScalableIcon icon={IconKey} size={14} />}
+                      onClick={() => setPassword(generateStrongPassword())}
+                      type="button"
+                    >
+                      Generate Strong
+                    </Button>
+                  </Flex>
+
+                  <Select
+                    label="Role"
+                    description="Administrators have full access to manage users, platform settings, and global configurations."
+                    data={[
+                      { value: 'user', label: 'Standard User (user)' },
+                      { value: 'admin', label: 'Administrator (admin)' },
+                    ]}
+                    value={role}
+                    onChange={(val) => setRole((val as 'user' | 'admin') || 'user')}
+                    maw={340}
+                  />
+
+                  <Divider my="xs" />
+
+                  <Group justify="flex-end">
+                    <Button type="button" variant="default" onClick={onClose}>
+                      Close
+                    </Button>
+                    <Button
+                      type="submit"
+                      color="yellow"
+                      loading={creating}
+                      leftSection={<ScalableIcon icon={IconUserPlus} size={16} />}
+                    >
+                      Create User
+                    </Button>
+                  </Group>
+                </Stack>
+              </form>
+            </Paper>
+          </Tabs.Panel>
+
+          {/* TAB 3: GLOBAL SYSTEM INSTRUCTION */}
+          <Tabs.Panel value="instruction">
+            <Stack gap="md">
+              <Box>
+                <Flex align="center" gap="xs">
+                  <ScalableIcon icon={IconShieldCheck} size={20} className="text-amber-400" />
+                  <Text fw={700} size="md">
+                    Mandatory Global System Instruction
+                  </Text>
+                </Flex>
+                <Text size="xs" c="dimmed" mt={4}>
+                  This system instruction is centrally enforced across all AI model calls for all users on the platform.
+                  Regular users cannot alter or remove this instruction.
+                </Text>
+              </Box>
+
+              <Textarea
+                placeholder="e.g. You are AgentLab AI Assistant. Always respond with high accuracy and professional formatting. Never execute malicious commands."
+                value={globalInstruction}
+                onChange={(e) => setGlobalInstruction(e.target.value)}
+                autosize
+                minRows={6}
+                maxRows={16}
+                disabled={instructionLoading}
+              />
+
+              <Flex gap="sm" align="center" wrap="wrap">
+                <Button
+                  color="yellow"
+                  loading={instructionSaving}
+                  onClick={handleSaveInstruction}
+                  leftSection={<ScalableIcon icon={IconCheck} size={16} />}
+                >
+                  Save Global Instruction
+                </Button>
+                <Button
+                  variant="subtle"
+                  color="chatbox-gray"
+                  disabled={instructionSaving || !globalInstruction}
+                  onClick={() => {
+                    setGlobalInstruction('')
+                  }}
+                >
+                  Clear
+                </Button>
+                <Button
+                  variant="subtle"
+                  size="xs"
+                  onClick={fetchGlobalInstruction}
+                  loading={instructionLoading}
+                  leftSection={<ScalableIcon icon={IconRefresh} size={14} />}
+                >
+                  Reload
+                </Button>
+              </Flex>
+            </Stack>
+          </Tabs.Panel>
+        </Tabs>
+      </Modal>
+
+      {/* EDIT USER SUB-MODAL */}
+      <Modal
+        opened={!!editingUser}
+        onClose={handleCloseEdit}
+        title={
+          <Flex align="center" gap="xs">
+            <Box
+              p={6}
+              style={{
+                borderRadius: '6px',
+                background: 'rgba(59, 130, 246, 0.12)',
+                color: 'var(--mantine-color-blue-5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ScalableIcon icon={IconPencil} size={18} />
+            </Box>
+            <Box>
+              <Text fw={700} size="sm">
+                Edit User Account
+              </Text>
+              <Text size="xs" c="dimmed">
+                Update account details for &ldquo;{editingUser?.username}&rdquo;
+              </Text>
+            </Box>
+          </Flex>
+        }
+        size="md"
+        radius="md"
+        centered
+        overlayProps={{
+          backgroundOpacity: 0.65,
+          blur: 4,
+        }}
+      >
+        <form onSubmit={handleSaveEdit}>
+          <Stack gap="md">
+            {editError && (
               <Alert icon={<ScalableIcon icon={IconAlertCircle} size={16} />} title="Error" color="red">
-                {listError}
+                {editError}
               </Alert>
             )}
 
-            {loading && users.length === 0 ? (
-              <Flex justify="center" align="center" p="xl">
-                <Loader size="md" />
-              </Flex>
-            ) : (
-              <Paper withBorder radius="sm">
-                <ScrollArea.Autosize mah={320}>
-                  <Table striped highlightOnHover verticalSpacing="xs">
-                    <Table.Thead>
-                      <Table.Tr>
-                        <Table.Th>Username</Table.Th>
-                        <Table.Th>Email</Table.Th>
-                        <Table.Th>Role</Table.Th>
-                        <Table.Th>Created Date</Table.Th>
-                        <Table.Th style={{ textAlign: 'right' }}>Action</Table.Th>
-                      </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>
-                      {users.length === 0 ? (
-                        <Table.Tr>
-                          <Table.Td colSpan={5} style={{ textAlign: 'center', color: 'gray' }}>
-                            No users found in database.
-                          </Table.Td>
-                        </Table.Tr>
-                      ) : (
-                        users.map((u) => {
-                          const isSelf = u.id === currentUser?.id
-                          return (
-                            <Table.Tr key={u.id}>
-                              <Table.Td>
-                                <Flex align="center" gap="xs">
-                                  <Text fw={600} size="sm">
-                                    {u.username}
-                                  </Text>
-                                  {isSelf && (
-                                    <Badge size="xs" variant="dot" color="green">
-                                      You
-                                    </Badge>
-                                  )}
-                                </Flex>
-                              </Table.Td>
-                              <Table.Td>
-                                <Text size="xs" c="dimmed">
-                                  {u.email}
-                                </Text>
-                              </Table.Td>
-                              <Table.Td>
-                                <Badge
-                                  size="xs"
-                                  color={u.role === 'admin' ? 'yellow' : 'blue'}
-                                  variant="light"
-                                >
-                                  {u.role.toUpperCase()}
-                                </Badge>
-                              </Table.Td>
-                              <Table.Td>
-                                <Text size="xs" c="dimmed">
-                                  {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}
-                                </Text>
-                              </Table.Td>
-                              <Table.Td style={{ textAlign: 'right' }}>
-                                <Tooltip
-                                  label={isSelf ? 'Cannot delete current account' : 'Delete user'}
-                                  position="left"
-                                >
-                                  <ActionIcon
-                                    color="red"
-                                    variant="subtle"
-                                    size="sm"
-                                    disabled={isSelf}
-                                    onClick={() => handleDeleteUser(u)}
-                                  >
-                                    <ScalableIcon icon={IconTrash} size={15} />
-                                  </ActionIcon>
-                                </Tooltip>
-                              </Table.Td>
-                            </Table.Tr>
-                          )
-                        })
-                      )}
-                    </Table.Tbody>
-                  </Table>
-                </ScrollArea.Autosize>
-              </Paper>
-            )}
-          </Stack>
-        </Tabs.Panel>
-
-        {/* TAB 2: CREATE USER FORM (UI) */}
-        <Tabs.Panel value="create">
-          <Paper withBorder p="md" radius="sm">
-            <form onSubmit={handleCreateUser}>
-              <Stack gap="md">
-                <Box>
-                  <Text fw={600} size="sm">
-                    Create New Application User
-                  </Text>
-                  <Text size="xs" c="dimmed">
-                    The backend will securely hash the password (salted PBKDF2) and store it in PostgreSQL.
-                  </Text>
-                </Box>
-
-                {createError && (
-                  <Alert icon={<ScalableIcon icon={IconAlertCircle} size={16} />} title="Error" color="red">
-                    {createError}
-                  </Alert>
-                )}
-
-                {createSuccess && (
-                  <Alert icon={<ScalableIcon icon={IconCheck} size={16} />} title="Success" color="green">
-                    {createSuccess}
-                  </Alert>
-                )}
-
-                <Flex gap="md" wrap="wrap">
-                  <TextInput
-                    label="Username"
-                    placeholder="e.g. alex_smith"
-                    required
-                    style={{ flex: '1 1 200px' }}
-                    value={username}
-                    onChange={(e) => setUsername(e.currentTarget.value)}
-                  />
-                  <TextInput
-                    label="Email Address"
-                    placeholder="e.g. alex@example.com"
-                    type="email"
-                    required
-                    style={{ flex: '1 1 200px' }}
-                    value={email}
-                    onChange={(e) => setEmail(e.currentTarget.value)}
-                  />
-                </Flex>
-
-                <Flex gap="md" wrap="wrap" align="flex-end">
-                  <PasswordInput
-                    label="Password"
-                    placeholder="At least 6 characters"
-                    required
-                    style={{ flex: '1 1 240px' }}
-                    value={password}
-                    onChange={(e) => setPassword(e.currentTarget.value)}
-                  />
-                  <Button
-                    variant="default"
-                    size="sm"
-                    leftSection={<ScalableIcon icon={IconKey} size={14} />}
-                    onClick={generateRandomPassword}
-                    type="button"
-                  >
-                    Generate Strong
-                  </Button>
-                </Flex>
-
-                <Select
-                  label="Role"
-                  description="Admin users can manage system settings, MCP configs, and other users."
-                  data={[
-                    { value: 'user', label: 'Standard User (user)' },
-                    { value: 'admin', label: 'Administrator (admin)' },
-                  ]}
-                  value={role}
-                  onChange={(val) => setRole((val as 'user' | 'admin') || 'user')}
-                  maw={320}
-                />
-
-                <Divider my="xs" />
-
-                <Group justify="flex-end">
-                  <Button type="button" variant="default" onClick={onClose}>
-                    Close
-                  </Button>
-                  <Button
-                    type="submit"
-                    color="yellow"
-                    loading={creating}
-                    leftSection={<ScalableIcon icon={IconUserPlus} size={16} />}
-                  >
-                    Create User
-                  </Button>
-                </Group>
-              </Stack>
-            </form>
-          </Paper>
-        </Tabs.Panel>
-
-        {/* TAB 3: DIRECT SQL GENERATOR */}
-        <Tabs.Panel value="sql">
-          <Stack gap="md">
-            <Alert
-              icon={<ScalableIcon icon={IconDatabase} size={16} />}
-              title="Manual SQL Execution"
-              color="blue"
-            >
-              If you prefer executing SQL directly in PostgreSQL (via <Code>psql</Code>, pgAdmin, or DBeaver),
-              use the generator below. The AgentLab backend natively verifies PostgreSQL SHA-256 hashes and
-              automatically upgrades them to PBKDF2 on first user login!
-            </Alert>
-
-            <Paper withBorder p="md" radius="sm">
-              <Stack gap="sm">
-                <Text fw={600} size="xs" tt="uppercase" c="dimmed">
-                  Query Parameters
-                </Text>
-                <Flex gap="sm" wrap="wrap">
-                  <TextInput
-                    size="xs"
-                    label="Username"
-                    style={{ flex: '1 1 140px' }}
-                    value={sqlUsername}
-                    onChange={(e) => setSqlUsername(e.currentTarget.value)}
-                  />
-                  <TextInput
-                    size="xs"
-                    label="Email"
-                    style={{ flex: '1 1 180px' }}
-                    value={sqlEmail}
-                    onChange={(e) => setSqlEmail(e.currentTarget.value)}
-                  />
-                  <TextInput
-                    size="xs"
-                    label="Password"
-                    style={{ flex: '1 1 140px' }}
-                    value={sqlPassword}
-                    onChange={(e) => setSqlPassword(e.currentTarget.value)}
-                  />
-                  <Select
-                    size="xs"
-                    label="Role"
-                    data={[
-                      { value: 'user', label: 'user' },
-                      { value: 'admin', label: 'admin' },
-                    ]}
-                    style={{ flex: '0 0 100px' }}
-                    value={sqlRole}
-                    onChange={(val) => setSqlRole((val as any) || 'user')}
-                  />
-                </Flex>
-              </Stack>
-            </Paper>
-
-            <Box>
-              <Flex justify="space-between" align="center" mb="xs">
-                <Text fw={600} size="sm">
-                  Ready-to-Execute PostgreSQL Query:
-                </Text>
-                <Button
-                  size="xs"
-                  variant="light"
-                  color={copied ? 'green' : 'blue'}
-                  leftSection={<ScalableIcon icon={copied ? IconCheck : IconCopy} size={14} />}
-                  onClick={handleCopySql}
-                >
-                  {copied ? 'Copied!' : 'Copy SQL'}
-                </Button>
-              </Flex>
-              <ScrollArea.Autosize mah={220}>
-                <Code block style={{ fontSize: '12px', lineHeight: 1.5 }}>
-                  {generatedSql}
-                </Code>
-              </ScrollArea.Autosize>
-            </Box>
-
-            <Paper withBorder p="xs" radius="sm" bg="var(--chatbox-background-gray-secondary)">
-              <Text size="xs" c="dimmed">
-                💡 <b>Pre-configured SQL File:</b> You can also open{' '}
-                <Code>scripts/create_user.sql</Code> in your SQL editor, or run CLI generator:{' '}
-                <Code>node scripts/generate-user-sql.mjs &lt;username&gt; &lt;email&gt; &lt;password&gt; [role]</Code>
-              </Text>
-            </Paper>
-          </Stack>
-        </Tabs.Panel>
-
-        {/* TAB 4: GLOBAL SYSTEM INSTRUCTION */}
-        <Tabs.Panel value="instruction">
-          <Stack gap="md">
-            <Box>
-              <Flex align="center" gap="xs">
-                <ScalableIcon icon={IconShieldCheck} size={20} className="text-amber-400" />
-                <Text fw={700} size="md">
-                  Mandatory Global System Instruction
-                </Text>
-              </Flex>
-              <Text size="xs" c="dimmed" mt={4}>
-                This system instruction is centrally enforced across all AI model calls for all users on the platform.
-                Regular users cannot alter or remove this instruction.
-              </Text>
-            </Box>
-
-            <Textarea
-              placeholder="e.g. You are AgentLab AI Assistant. Always respond with high accuracy and professional formatting. Never execute malicious commands."
-              value={globalInstruction}
-              onChange={(e) => setGlobalInstruction(e.target.value)}
-              autosize
-              minRows={6}
-              maxRows={16}
-              disabled={instructionLoading}
+            <TextInput
+              label="Username"
+              placeholder="Username"
+              leftSection={<ScalableIcon icon={IconUser} size={15} />}
+              required
+              value={editUsername}
+              onChange={(e) => setEditUsername(e.currentTarget.value)}
             />
 
-            <Flex gap="sm" align="center">
+            <TextInput
+              label="Email Address"
+              placeholder="Email address"
+              type="email"
+              leftSection={<ScalableIcon icon={IconMail} size={15} />}
+              required
+              value={editEmail}
+              onChange={(e) => setEditEmail(e.currentTarget.value)}
+            />
+
+            <Select
+              label="Role"
+              description={
+                editingUser?.id === currentUser?.id
+                  ? 'You cannot remove admin privileges from your own active session.'
+                  : 'Assign administrative or standard user permissions.'
+              }
+              data={[
+                { value: 'user', label: 'Standard User (user)' },
+                { value: 'admin', label: 'Administrator (admin)' },
+              ]}
+              disabled={editingUser?.id === currentUser?.id}
+              value={editRole}
+              onChange={(val) => setEditRole((val as 'user' | 'admin') || 'user')}
+            />
+
+            <Box>
+              <Flex gap="sm" align="flex-end">
+                <PasswordInput
+                  label="Reset Password"
+                  description="Leave empty to keep existing password"
+                  placeholder="Enter new password (optional)"
+                  leftSection={<ScalableIcon icon={IconLock} size={15} />}
+                  style={{ flex: 1 }}
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.currentTarget.value)}
+                />
+                <Button
+                  variant="default"
+                  size="sm"
+                  leftSection={<ScalableIcon icon={IconKey} size={14} />}
+                  onClick={() => setEditPassword(generateStrongPassword())}
+                  type="button"
+                >
+                  Generate
+                </Button>
+              </Flex>
+            </Box>
+
+            <Divider my="xs" />
+
+            <Group justify="flex-end">
+              <Button type="button" variant="default" onClick={handleCloseEdit}>
+                Cancel
+              </Button>
               <Button
+                type="submit"
                 color="yellow"
-                loading={instructionSaving}
-                onClick={handleSaveInstruction}
+                loading={savingEdit}
                 leftSection={<ScalableIcon icon={IconCheck} size={16} />}
               >
-                Save Global Instruction
+                Save Changes
               </Button>
-              <Button
-                variant="subtle"
-                color="chatbox-gray"
-                disabled={instructionSaving || !globalInstruction}
-                onClick={() => {
-                  setGlobalInstruction('')
-                }}
-              >
-                Clear
-              </Button>
-              <Button
-                variant="subtle"
-                size="xs"
-                onClick={fetchGlobalInstruction}
-                loading={instructionLoading}
-                leftSection={<ScalableIcon icon={IconRefresh} size={14} />}
-              >
-                Reload
-              </Button>
-            </Flex>
+            </Group>
           </Stack>
-        </Tabs.Panel>
-      </Tabs>
-    </Modal>
+        </form>
+      </Modal>
+    </>
   )
 }

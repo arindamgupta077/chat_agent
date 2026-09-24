@@ -161,7 +161,7 @@ export async function handleAuthRoute(req, res, pathname) {
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     })
     res.end()
@@ -179,26 +179,28 @@ export async function handleAuthRoute(req, res, pathname) {
   // 1. POST /api/auth/login
   if (pathname === '/api/auth/login' && req.method === 'POST') {
     try {
-      const { identifier, password } = await parseJsonBody(req)
-      if (!identifier || !password) {
-        sendJson(400, { error: 'Username/Email and Password are required' })
+      const { email, identifier, password } = await parseJsonBody(req)
+      const loginEmail = (email || identifier || '').trim()
+      if (!loginEmail || !password) {
+        sendJson(400, { error: 'Email and password are required' })
         return true
       }
 
+      // Restrict login to email ID only
       const result = await query(
-        'SELECT id, username, email, password_hash, role FROM users WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($1) LIMIT 1',
-        [identifier.trim()]
+        'SELECT id, username, email, password_hash, role FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1',
+        [loginEmail]
       )
 
       if (result.rows.length === 0) {
-        sendJson(401, { error: 'Invalid username or password' })
+        sendJson(401, { error: 'Invalid email or password' })
         return true
       }
 
       const user = result.rows[0]
       const isValid = verifyPassword(password, user.password_hash)
       if (!isValid) {
-        sendJson(401, { error: 'Invalid username or password' })
+        sendJson(401, { error: 'Invalid email or password' })
         return true
       }
 
@@ -235,66 +237,12 @@ export async function handleAuthRoute(req, res, pathname) {
     }
   }
 
-  // 2. POST /api/auth/register
+  // 2. POST /api/auth/register (Disabled: Only administrators can create users)
   if (pathname === '/api/auth/register' && req.method === 'POST') {
-    try {
-      const { username, email, password } = await parseJsonBody(req)
-      if (!username || !email || !password) {
-        sendJson(400, { error: 'Username, Email and Password are required' })
-        return true
-      }
-
-      if (username.length < 3) {
-        sendJson(400, { error: 'Username must be at least 3 characters long' })
-        return true
-      }
-      if (password.length < 6) {
-        sendJson(400, { error: 'Password must be at least 6 characters long' })
-        return true
-      }
-
-      // Check uniqueness
-      const existing = await query(
-        'SELECT id FROM users WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($2) LIMIT 1',
-        [username.trim(), email.trim()]
-      )
-      if (existing.rows.length > 0) {
-        sendJson(409, { error: 'Username or email already exists' })
-        return true
-      }
-
-      const id = 'user-' + crypto.randomUUID()
-      const passwordHash = hashPassword(password)
-      const role = 'user'
-
-      await query(
-        'INSERT INTO users (id, username, email, password_hash, role) VALUES ($1, $2, $3, $4, $5)',
-        [id, username.trim(), email.trim().toLowerCase(), passwordHash, role]
-      )
-
-      const token = createToken({
-        id,
-        username: username.trim(),
-        email: email.trim().toLowerCase(),
-        role,
-      })
-
-      sendJson(201, {
-        success: true,
-        token,
-        user: {
-          id,
-          username: username.trim(),
-          email: email.trim().toLowerCase(),
-          role,
-        },
-      })
-      return true
-    } catch (err) {
-      console.error('[Auth Register Error]:', err)
-      sendJson(500, { error: 'Registration failed: ' + err.message })
-      return true
-    }
+    sendJson(403, {
+      error: 'Public registration is disabled. User accounts can only be created by an administrator.',
+    })
+    return true
   }
 
   // 3. GET /api/auth/me
@@ -410,6 +358,94 @@ export async function handleAuthRoute(req, res, pathname) {
       return true
     } catch (err) {
       sendJson(500, { error: 'Failed to delete user: ' + err.message })
+      return true
+    }
+  }
+
+  // 4d. PUT or PATCH /api/admin/users/:id (Admin updates existing user details)
+  if (pathname.startsWith('/api/admin/users/') && (req.method === 'PUT' || req.method === 'PATCH')) {
+    const authUser = extractAuthUser(req)
+    if (!authUser || authUser.role !== 'admin') {
+      sendJson(403, { error: 'Forbidden: Admin access required' })
+      return true
+    }
+
+    const targetUserId = pathname.slice('/api/admin/users/'.length)
+    if (!targetUserId) {
+      sendJson(400, { error: 'Missing user ID in request URL' })
+      return true
+    }
+
+    try {
+      const { username, email, role, password } = await parseJsonBody(req)
+
+      if (!username || !email) {
+        sendJson(400, { error: 'Username and Email are required' })
+        return true
+      }
+
+      const trimmedUsername = username.trim()
+      const trimmedEmail = email.trim().toLowerCase()
+
+      if (trimmedUsername.length < 3) {
+        sendJson(400, { error: 'Username must be at least 3 characters' })
+        return true
+      }
+
+      const assignedRole = role === 'admin' ? 'admin' : 'user'
+
+      // Prevent logged-in admin from demoting themselves to standard user and getting locked out
+      if (targetUserId === authUser.id && assignedRole !== 'admin') {
+        sendJson(400, { error: 'You cannot remove administrator privileges from your own active account' })
+        return true
+      }
+
+      // Check if username or email is already taken by another account
+      const existing = await query(
+        'SELECT id FROM users WHERE (LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($2)) AND id != $3 LIMIT 1',
+        [trimmedUsername, trimmedEmail, targetUserId]
+      )
+      if (existing.rows.length > 0) {
+        sendJson(409, { error: 'Username or email already in use by another account' })
+        return true
+      }
+
+      let updateRes
+      if (password && password.trim().length > 0) {
+        if (password.length < 6) {
+          sendJson(400, { error: 'Password must be at least 6 characters' })
+          return true
+        }
+        const passwordHash = hashPassword(password)
+        updateRes = await query(
+          `UPDATE users
+           SET username = $1, email = $2, role = $3, password_hash = $4, updated_at = CURRENT_TIMESTAMP
+           WHERE id = $5
+           RETURNING id, username, email, role, created_at, updated_at`,
+          [trimmedUsername, trimmedEmail, assignedRole, passwordHash, targetUserId]
+        )
+      } else {
+        updateRes = await query(
+          `UPDATE users
+           SET username = $1, email = $2, role = $3, updated_at = CURRENT_TIMESTAMP
+           WHERE id = $4
+           RETURNING id, username, email, role, created_at, updated_at`,
+          [trimmedUsername, trimmedEmail, assignedRole, targetUserId]
+        )
+      }
+
+      if (updateRes.rows.length === 0) {
+        sendJson(404, { error: 'User not found' })
+        return true
+      }
+
+      sendJson(200, {
+        success: true,
+        user: updateRes.rows[0],
+      })
+      return true
+    } catch (err) {
+      sendJson(500, { error: 'Failed to update user: ' + err.message })
       return true
     }
   }

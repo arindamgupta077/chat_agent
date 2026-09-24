@@ -14,7 +14,7 @@ interface AppAuthState {
   isLoading: boolean
   error: string | null
 
-  login: (identifier: string, password: string) => Promise<boolean>
+  login: (email: string, password: string) => Promise<boolean>
   register: (username: string, email: string, password: string) => Promise<boolean>
   logout: () => void
   checkAuth: () => Promise<boolean>
@@ -45,13 +45,13 @@ export const useAppAuthStore = create<AppAuthState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  login: async (identifier: string, password: string) => {
+  login: async (email: string, password: string) => {
     set({ isLoading: true, error: null })
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, password }),
+        body: JSON.stringify({ email: email.trim(), identifier: email.trim(), password }),
       })
 
       const data = await res.json()
