@@ -125,6 +125,14 @@ export async function testConnection() {
     const requiredTables = ['users', 'admin_global_config', 'app_key_value', 'session_meta', 'chat_sessions', 'chat_messages', 'app_blobs', 'image_generations']
     const missingTables = requiredTables.filter(t => !tables.includes(t))
 
+    if (tables.includes('admin_global_config')) {
+      try {
+        await pool.query('ALTER TABLE admin_global_config ADD COLUMN IF NOT EXISTS global_system_instruction TEXT NOT NULL DEFAULT \'\'')
+      } catch (colErr) {
+        console.warn('[DB] Auto-migration for global_system_instruction column failed:', colErr.message)
+      }
+    }
+
     return {
       connected: true,
       time: result.rows[0].current_time,

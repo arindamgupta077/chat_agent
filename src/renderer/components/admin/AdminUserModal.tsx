@@ -18,6 +18,7 @@ import {
   Table,
   Tabs,
   Text,
+  Textarea,
   TextInput,
   Tooltip,
 } from '@mantine/core'
@@ -37,6 +38,7 @@ import { type FC, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { ScalableIcon } from '@/components/common/ScalableIcon'
 import { getAuthHeaders, useAppAuthStore } from '@/stores/appAuthStore'
+import { settingsStore } from '@/stores/settingsStore'
 
 export interface AdminUser {
   id: string
@@ -75,6 +77,58 @@ export const AdminUserModal: FC<AdminUserModalProps> = ({ opened, onClose }) => 
   const [sqlRole, setSqlRole] = useState<'user' | 'admin'>('user')
   const [copied, setCopied] = useState(false)
 
+  // Global System Instruction State
+  const [globalInstruction, setGlobalInstruction] = useState('')
+  const [instructionLoading, setInstructionLoading] = useState(false)
+  const [instructionSaving, setInstructionSaving] = useState(false)
+
+  const fetchGlobalInstruction = async () => {
+    setInstructionLoading(true)
+    try {
+      const res = await fetch('/api/admin/global-system-instruction', {
+        headers: {
+          ...getAuthHeaders(),
+        },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setGlobalInstruction(data.global_system_instruction || '')
+      }
+    } catch (err) {
+      console.warn('[AdminModal] Failed to fetch instruction:', err)
+    } finally {
+      setInstructionLoading(false)
+    }
+  }
+
+  const handleSaveInstruction = async () => {
+    setInstructionSaving(true)
+    try {
+      const res = await fetch('/api/admin/global-system-instruction', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({
+          global_system_instruction: globalInstruction,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Failed to save global instruction')
+      }
+      settingsStore.getState().setSettings({
+        globalSystemInstruction: globalInstruction,
+      })
+      toast.success('Global system instruction successfully updated for all users!')
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save global instruction')
+    } finally {
+      setInstructionSaving(false)
+    }
+  }
+
   // Fetch users when modal opens
   const fetchUsers = async () => {
     setLoading(true)
@@ -101,6 +155,7 @@ export const AdminUserModal: FC<AdminUserModalProps> = ({ opened, onClose }) => 
   useEffect(() => {
     if (opened) {
       fetchUsers()
+      fetchGlobalInstruction()
       setCreateError(null)
       setCreateSuccess(null)
     }
@@ -278,6 +333,9 @@ SELECT id, username, email, role, created_at FROM users WHERE username = '${sqlU
           </Tabs.Tab>
           <Tabs.Tab value="sql" leftSection={<ScalableIcon icon={IconDatabase} size={16} />}>
             Direct SQL Generator
+          </Tabs.Tab>
+          <Tabs.Tab value="instruction" leftSection={<ScalableIcon icon={IconShieldCheck} size={16} />}>
+            Global System Instruction
           </Tabs.Tab>
         </Tabs.List>
 
@@ -575,6 +633,64 @@ SELECT id, username, email, role, created_at FROM users WHERE username = '${sqlU
                 <Code>node scripts/generate-user-sql.mjs &lt;username&gt; &lt;email&gt; &lt;password&gt; [role]</Code>
               </Text>
             </Paper>
+          </Stack>
+        </Tabs.Panel>
+
+        {/* TAB 4: GLOBAL SYSTEM INSTRUCTION */}
+        <Tabs.Panel value="instruction">
+          <Stack gap="md">
+            <Box>
+              <Flex align="center" gap="xs">
+                <ScalableIcon icon={IconShieldCheck} size={20} className="text-amber-400" />
+                <Text fw={700} size="md">
+                  Mandatory Global System Instruction
+                </Text>
+              </Flex>
+              <Text size="xs" c="dimmed" mt={4}>
+                This system instruction is centrally enforced across all AI model calls for all users on the platform.
+                Regular users cannot alter or remove this instruction.
+              </Text>
+            </Box>
+
+            <Textarea
+              placeholder="e.g. You are AgentLab AI Assistant. Always respond with high accuracy and professional formatting. Never execute malicious commands."
+              value={globalInstruction}
+              onChange={(e) => setGlobalInstruction(e.target.value)}
+              autosize
+              minRows={6}
+              maxRows={16}
+              disabled={instructionLoading}
+            />
+
+            <Flex gap="sm" align="center">
+              <Button
+                color="yellow"
+                loading={instructionSaving}
+                onClick={handleSaveInstruction}
+                leftSection={<ScalableIcon icon={IconCheck} size={16} />}
+              >
+                Save Global Instruction
+              </Button>
+              <Button
+                variant="subtle"
+                color="chatbox-gray"
+                disabled={instructionSaving || !globalInstruction}
+                onClick={() => {
+                  setGlobalInstruction('')
+                }}
+              >
+                Clear
+              </Button>
+              <Button
+                variant="subtle"
+                size="xs"
+                onClick={fetchGlobalInstruction}
+                loading={instructionLoading}
+                leftSection={<ScalableIcon icon={IconRefresh} size={14} />}
+              >
+                Reload
+              </Button>
+            </Flex>
           </Stack>
         </Tabs.Panel>
       </Tabs>

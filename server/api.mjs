@@ -97,12 +97,13 @@ export async function handleApiRequest(req, res) {
 
         let val = result.rows[0]?.value ?? null
 
-        // If reading settings, merge admin-configured global LLM API credentials & selected AI model!
+        // If reading settings, merge admin-configured global LLM API credentials & selected AI model & global system instruction!
         if (key === 'settings') {
           try {
-            const adminConfigRes = await query('SELECT llm_providers, selected_model FROM admin_global_config WHERE id = $1', ['global'])
+            const adminConfigRes = await query('SELECT llm_providers, selected_model, global_system_instruction FROM admin_global_config WHERE id = $1', ['global'])
             const globalConfig = adminConfigRes.rows[0]
             if (!val) val = {}
+            val.globalSystemInstruction = globalConfig?.global_system_instruction || ''
             if (user.role !== 'admin') {
               val.providers = sanitizeProviders(globalConfig?.llm_providers || {})
               if (globalConfig?.selected_model && (globalConfig.selected_model.provider || globalConfig.selected_model.modelId)) {
@@ -137,9 +138,9 @@ export async function handleApiRequest(req, res) {
         let finalValue = value
         if (key === 'settings' && value && typeof value === 'object') {
           if (user.role !== 'admin') {
-            // Normal users cannot configure LLM API models; enforce administrator's global model providers & selected model.
+            // Normal users cannot configure LLM API models or global system instruction; enforce administrator's settings.
             try {
-              const adminConfigRes = await query('SELECT llm_providers, selected_model FROM admin_global_config WHERE id = $1', ['global'])
+              const adminConfigRes = await query('SELECT llm_providers, selected_model, global_system_instruction FROM admin_global_config WHERE id = $1', ['global'])
               const globalConfig = adminConfigRes.rows[0]
               finalValue = {
                 ...value,
@@ -150,6 +151,7 @@ export async function handleApiRequest(req, res) {
                       model: globalConfig.selected_model.model || globalConfig.selected_model.modelId,
                     }
                   : undefined,
+                globalSystemInstruction: globalConfig?.global_system_instruction || '',
               }
             } catch (err) {
               console.warn('[Storage] Failed to preserve global admin LLM config on normal user update:', err.message)
@@ -175,9 +177,22 @@ export async function handleApiRequest(req, res) {
           [userId, key, JSON.stringify(finalValue)]
         )
 
-        // If admin updates settings, propagate LLM providers and selected model to global config for all users (MCP is user-unique)
+        // If admin updates settings, propagate LLM providers, selected model, and global system instruction to global config for all users (MCP is user-unique)
         if (key === 'settings' && user.role === 'admin' && value && typeof value === 'object') {
           try {
+            if (typeof value.globalSystemInstruction === 'string') {
+              await query(
+                `INSERT INTO admin_global_config (id, global_system_instruction, updated_by)
+                 VALUES ('global', $1, $2)
+                 ON CONFLICT (id) DO UPDATE SET
+                   global_system_instruction = EXCLUDED.global_system_instruction,
+                   updated_by = EXCLUDED.updated_by,
+                   updated_at = CURRENT_TIMESTAMP`,
+                [value.globalSystemInstruction.trim(), userId]
+              )
+              console.log('[Admin] Automatically synchronized global system instruction for all users.')
+            }
+
             const hasProvidersUpdate = Boolean(value.providers && typeof value.providers === 'object' && Object.keys(value.providers).length > 0)
             const providers = hasProvidersUpdate ? sanitizeProviders(value.providers) : null
             const selectedModel = value.defaultChatModel && value.defaultChatModel.provider
@@ -266,8 +281,9 @@ export async function handleApiRequest(req, res) {
         }
         if (valuesMap.settings) {
           try {
-            const adminConfigRes = await query('SELECT llm_providers, selected_model FROM admin_global_config WHERE id = $1', ['global'])
+            const adminConfigRes = await query('SELECT llm_providers, selected_model, global_system_instruction FROM admin_global_config WHERE id = $1', ['global'])
             const globalConfig = adminConfigRes.rows[0]
+            valuesMap.settings.globalSystemInstruction = globalConfig?.global_system_instruction || ''
             if (user.role !== 'admin') {
               valuesMap.settings.providers = sanitizeProviders(globalConfig?.llm_providers || {})
               if (globalConfig?.selected_model && (globalConfig.selected_model.provider || globalConfig.selected_model.modelId)) {
@@ -301,7 +317,7 @@ export async function handleApiRequest(req, res) {
           if (key === 'settings' && value && typeof value === 'object') {
             if (user.role !== 'admin') {
               try {
-                const adminConfigRes = await query('SELECT llm_providers, selected_model FROM admin_global_config WHERE id = $1', ['global'])
+                const adminConfigRes = await query('SELECT llm_providers, selected_model, global_system_instruction FROM admin_global_config WHERE id = $1', ['global'])
                 const globalConfig = adminConfigRes.rows[0]
                 batchValue = {
                   ...value,
@@ -312,6 +328,7 @@ export async function handleApiRequest(req, res) {
                         model: globalConfig.selected_model.model || globalConfig.selected_model.modelId,
                       }
                     : undefined,
+                  globalSystemInstruction: globalConfig?.global_system_instruction || '',
                 }
               } catch (err) {}
             } else {
@@ -331,6 +348,19 @@ export async function handleApiRequest(req, res) {
           )
           if (key === 'settings' && user.role === 'admin' && value && typeof value === 'object') {
             try {
+              if (typeof value.globalSystemInstruction === 'string') {
+                await query(
+                  `INSERT INTO admin_global_config (id, global_system_instruction, updated_by)
+                   VALUES ('global', $1, $2)
+                   ON CONFLICT (id) DO UPDATE SET
+                     global_system_instruction = EXCLUDED.global_system_instruction,
+                     updated_by = EXCLUDED.updated_by,
+                     updated_at = CURRENT_TIMESTAMP`,
+                  [value.globalSystemInstruction.trim(), userId]
+                )
+                console.log('[Admin] Automatically synchronized global system instruction for all users (batch).')
+              }
+
               const hasProvidersUpdate = Boolean(value.providers && typeof value.providers === 'object' && Object.keys(value.providers).length > 0)
               const providers = hasProvidersUpdate ? sanitizeProviders(value.providers) : null
               const selectedModel = value.defaultChatModel && value.defaultChatModel.provider

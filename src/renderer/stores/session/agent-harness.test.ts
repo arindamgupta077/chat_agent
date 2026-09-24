@@ -497,6 +497,76 @@ describe('prepareAgentGenerationHarness', () => {
     expect(serialized.indexOf('## Runtime')).toBeLessThan(serialized.indexOf('USER_QUESTION_TEXT'))
   })
 
+  test('injects admin global system instruction in chat mode', async () => {
+    const userMessage: Message = {
+      id: 'msg-1',
+      role: MessageRoleEnum.User,
+      timestamp: Date.now(),
+      contentParts: [{ type: 'text', text: 'Hello' }],
+    }
+
+    const prepared = await prepareAgentGenerationHarness({
+      session: createSession(),
+      settings: {
+        provider: ModelProviderEnum.ChatboxAI,
+        modelId: 'test-model',
+      } as SessionSettings,
+      globalSettings: {
+        globalSystemInstruction: 'ADMIN_GLOBAL_POLICY_ENFORCED',
+      } as Settings,
+      configs: { uuid: 'config-1' } as Config,
+      messages: [userMessage],
+      targetMsgIx: 1,
+      model: createMockModel(),
+      dependencies: createModelDependencies(),
+      webBrowsing: false,
+      agentModeValue: 'off',
+      agentModeLocked: false,
+      agentModeSupported: true,
+      signal: new AbortController().signal,
+      sandboxProviderFactory: () => sandboxProviderMock as unknown as SandboxProvider,
+      isPro: () => true,
+    })
+
+    expect(prepared.systemPrompt).toContain('## Global System Instruction (Administrator Policy)')
+    expect(prepared.systemPrompt).toContain('ADMIN_GLOBAL_POLICY_ENFORCED')
+  })
+
+  test('injects admin global system instruction in agent mode', async () => {
+    const userMessage: Message = {
+      id: 'msg-1',
+      role: MessageRoleEnum.User,
+      timestamp: Date.now(),
+      contentParts: [{ type: 'text', text: 'Hello' }],
+    }
+
+    const prepared = await prepareAgentGenerationHarness({
+      session: createSession(),
+      settings: {
+        provider: ModelProviderEnum.ChatboxAI,
+        modelId: 'test-model',
+      } as SessionSettings,
+      globalSettings: {
+        globalSystemInstruction: 'ADMIN_GLOBAL_AGENT_POLICY_ENFORCED',
+      } as Settings,
+      configs: { uuid: 'config-1' } as Config,
+      messages: [userMessage],
+      targetMsgIx: 1,
+      model: createMockModel(),
+      dependencies: createModelDependencies(),
+      webBrowsing: false,
+      agentModeValue: 'on',
+      agentModeLocked: false,
+      agentModeSupported: true,
+      signal: new AbortController().signal,
+      sandboxProviderFactory: () => sandboxProviderMock as unknown as SandboxProvider,
+      isPro: () => true,
+    })
+
+    expect(prepared.systemPrompt).toContain('## Global System Instruction (Administrator Policy)')
+    expect(prepared.systemPrompt).toContain('ADMIN_GLOBAL_AGENT_POLICY_ENFORCED')
+  })
+
   test('injects no time reminder during a rapid exchange', async () => {
     const userMessage: Message = {
       id: 'msg-1',

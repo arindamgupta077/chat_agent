@@ -19,6 +19,7 @@ describe('defaults', () => {
     expect(result.showTokenCount).toBe(false)
     expect(result.showTokenUsed).toBe(true)
     expect(result.messageLayout).toBe('bubble')
+    expect(result.globalSystemInstruction).toBe('')
   })
 
   it('settings() returns allowReportingAndTracking as true', () => {

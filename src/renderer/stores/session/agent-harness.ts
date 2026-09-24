@@ -418,6 +418,7 @@ export async function prepareAgentGenerationHarness(
   // time-gap reminder walk below: snapshot capture when one exists, otherwise
   // the first surface message.
   const conversationStartedAt = promptContextSnapshot?.capturedAt ?? messages[0]?.timestamp
+  const adminGlobalSystemInstruction = globalSettings.globalSystemInstruction?.trim()
 
   let injectedMessages: Message[]
   let systemPrompt: string
@@ -433,8 +434,11 @@ export async function prepareAgentGenerationHarness(
       platformType: platform.type,
       os: getOS(),
     })
+    const globalInstructionSection = adminGlobalSystemInstruction
+      ? `\n## Global System Instruction (Administrator Policy)\n${adminGlobalSystemInstruction}\n`
+      : ''
     const runtimeMetadata = `\n## Runtime\nCurrent model: ${model.modelId}\nSession context captured: ${formatTimestampWithZone(promptContextSnapshot.capturedAt, promptContextSnapshot.capturedUtcOffsetMinutes)}\n${SYSTEM_REMINDER_PROMPT_INSTRUCTION}`
-    const systemText = `${personaPrompt}\n${instructions}${runtimeMetadata}`
+    const systemText = `${personaPrompt}${globalInstructionSection}\n${instructions}${runtimeMetadata}`
     systemPrompt = systemText
     injectedMessages = [
       {
@@ -451,7 +455,10 @@ export async function prepareAgentGenerationHarness(
     // volatile model/date metadata sits last with a date frozen at the
     // conversation start (snapshot capture when one exists, otherwise the
     // first surface message) — a day rollover must not rewrite the prefix.
-    systemPrompt = buildModelSystemPrompt(model.modelId, instructions, {
+    const effectiveInstructions = adminGlobalSystemInstruction
+      ? `## Global System Instruction (Administrator Policy)\n${adminGlobalSystemInstruction}${instructions ? `\n\n${instructions}` : ''}`
+      : instructions
+    systemPrompt = buildModelSystemPrompt(model.modelId, effectiveInstructions, {
       conversationStartedAt,
       // Frozen with the snapshot so a device timezone change never rewrites the
       // prefix; snapshot-less sessions derive it from the anchor instant.
@@ -462,7 +469,7 @@ export async function prepareAgentGenerationHarness(
     // it with the first user turn — instructions still precede the request.
     // Injecting into the first user message directly would append them AFTER
     // the user's own text (appended-metadata ordering) and flip precedence.
-    injectedMessages = injectModelSystemPrompt(model.modelId, promptMsgs, instructions, 'system', systemPrompt)
+    injectedMessages = injectModelSystemPrompt(model.modelId, promptMsgs, effectiveInstructions, 'system', systemPrompt)
   }
 
   // Time reminders ride ephemeral `<system-reminder>`s injected at conversation

@@ -520,5 +520,54 @@ export async function handleAuthRoute(req, res, pathname) {
     }
   }
 
+  // 9. GET /api/admin/global-system-instruction (Read administrator's global system instruction)
+  if (pathname === '/api/admin/global-system-instruction' && req.method === 'GET') {
+    try {
+      const result = await query(
+        'SELECT global_system_instruction, updated_at FROM admin_global_config WHERE id = $1',
+        ['global']
+      )
+      const config = result.rows[0] || { global_system_instruction: '' }
+      sendJson(200, { global_system_instruction: config.global_system_instruction || '' })
+      return true
+    } catch (err) {
+      sendJson(500, { error: 'Failed to fetch global system instruction: ' + err.message })
+      return true
+    }
+  }
+
+  // 10. POST /api/admin/global-system-instruction (Admin Only: Set administrator's global system instruction)
+  if (pathname === '/api/admin/global-system-instruction' && req.method === 'POST') {
+    const authUser = extractAuthUser(req)
+    if (!authUser || authUser.role !== 'admin') {
+      sendJson(403, { error: 'Forbidden: Admin access required' })
+      return true
+    }
+
+    try {
+      const { global_system_instruction } = await parseJsonBody(req)
+      const instruction = typeof global_system_instruction === 'string' ? global_system_instruction.trim() : ''
+      const result = await query(
+        `INSERT INTO admin_global_config (id, global_system_instruction, updated_by)
+         VALUES ('global', $1, $2)
+         ON CONFLICT (id) DO UPDATE
+         SET global_system_instruction = EXCLUDED.global_system_instruction,
+             updated_by = EXCLUDED.updated_by,
+             updated_at = CURRENT_TIMESTAMP
+         RETURNING global_system_instruction, updated_at`,
+        [instruction, authUser.id]
+      )
+
+      sendJson(200, {
+        success: true,
+        global_system_instruction: result.rows[0]?.global_system_instruction || '',
+      })
+      return true
+    } catch (err) {
+      sendJson(500, { error: 'Failed to update global system instruction: ' + err.message })
+      return true
+    }
+  }
+
   return false // Route not handled by auth
 }

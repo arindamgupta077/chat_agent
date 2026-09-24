@@ -54,16 +54,18 @@ CREATE TABLE IF NOT EXISTS admin_global_config (
     llm_providers JSONB NOT NULL DEFAULT '{}'::jsonb, -- Global Model providers
     mcp_servers JSONB NOT NULL DEFAULT '[]'::jsonb,   -- Deprecated/Unused (MCP is now unique per user)
     selected_model JSONB NOT NULL DEFAULT '{}'::jsonb, -- Administrator chosen global AI model for all users
+    global_system_instruction TEXT NOT NULL DEFAULT '', -- Administrator configured global system instruction
     updated_by VARCHAR(64) REFERENCES users(id) ON DELETE SET NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Ensure column exists if table was previously created without it
 ALTER TABLE admin_global_config ADD COLUMN IF NOT EXISTS selected_model JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE admin_global_config ADD COLUMN IF NOT EXISTS global_system_instruction TEXT NOT NULL DEFAULT '';
 
 -- Seed global config row if missing
-INSERT INTO admin_global_config (id, llm_providers, mcp_servers, selected_model)
-VALUES ('global', '{}'::jsonb, '[]'::jsonb, '{}'::jsonb)
+INSERT INTO admin_global_config (id, llm_providers, mcp_servers, selected_model, global_system_instruction)
+VALUES ('global', '{}'::jsonb, '[]'::jsonb, '{}'::jsonb, '')
 ON CONFLICT (id) DO NOTHING;
 
 -- Ensure dummy model provider API credentials (openai, gemini, claude) are NOT configured by default.

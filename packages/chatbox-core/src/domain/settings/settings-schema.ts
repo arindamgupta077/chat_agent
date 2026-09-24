@@ -539,6 +539,7 @@ export const SettingsSchema = GlobalSessionSettingsSchema.extend({
   startupPage: z.enum(['home', 'session']).optional(),
 
   defaultPrompt: z.string().optional(),
+  globalSystemInstruction: z.string().optional(),
 
   proxy: z.string().optional(),
 

@@ -39,6 +39,7 @@ export function createDefaultSettings(): Settings {
     fontSize: 14,
     spellCheck: true,
     defaultPrompt: DEFAULT_SYSTEM_PROMPT,
+    globalSystemInstruction: '',
     allowReportingAndTracking: true,
     hasExpiredLicense: false,
     chatboxAIDesktopPromptDismissed: false,

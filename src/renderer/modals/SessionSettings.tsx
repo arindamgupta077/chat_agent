@@ -5,7 +5,7 @@ import { TestId } from '@shared/automation/testids'
 import { chatSessionSettings } from '@shared/defaults'
 import { createMessage, isChatSession, ModelProviderEnum, type Session } from '@shared/types'
 import { MAX_TOOL_CALLS_BEFORE_CONFIRMATION, shouldPauseOnToolCallLimit } from '@shared/utils/tool-call-limit-pause'
-import { IconTrash, IconUpload } from '@tabler/icons-react'
+import { IconShieldCheck, IconTrash, IconUpload } from '@tabler/icons-react'
 import { pick } from 'lodash'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -35,6 +35,7 @@ const SessionSettingsModal = NiceModal.create(
     const modal = useModal()
     const { t } = useTranslation()
     const isSmallScreen = useIsSmallScreen()
+    const globalSystemInstruction = useSettingsStore((s) => s.globalSystemInstruction)
 
     const [editingData, setEditingData] = useState<Session | null>(session || null)
     useEffect(() => {
@@ -218,6 +219,20 @@ const SessionSettingsModal = NiceModal.create(
 
             {isChatSession(session) && (
               <>
+                {globalSystemInstruction && (
+                  <Box p="xs" className="border border-solid border-amber-500/30 rounded-md bg-amber-500/10">
+                    <Flex align="center" gap="xs">
+                      <ScalableIcon icon={IconShieldCheck} size={16} className="text-amber-400" />
+                      <Text size="xs" fw={600} className="text-amber-400">
+                        {t('Global System Instruction (Enforced by Admin)')}
+                      </Text>
+                    </Flex>
+                    <Text size="xs" c="dimmed" mt={4} lineClamp={3}>
+                      {globalSystemInstruction}
+                    </Text>
+                  </Box>
+                )}
+
                 {showSystemPrompt ? (
                   <Textarea
                     data-testid={TestId.settings.sessionPrompt}

@@ -1,8 +1,9 @@
-import { Box, Button, FileButton, Flex, Slider, Stack, Switch, Text, Textarea, Title } from '@mantine/core'
+import { Badge, Box, Button, FileButton, Flex, Slider, Stack, Switch, Text, Textarea, Title } from '@mantine/core'
 import { TestId } from '@shared/automation/testids'
 import { chatSessionSettings, getDefaultPrompt } from '@shared/defaults'
 import { getDefaultCompactionPrompt } from '@shared/prompts'
 import { MAX_TOOL_CALLS_BEFORE_CONFIRMATION } from '@shared/utils/tool-call-limit-pause'
+import { IconShieldCheck } from '@tabler/icons-react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -10,6 +11,7 @@ import { AssistantAvatar, UserAvatar } from '@/components/common/Avatar'
 import { Divider } from '@/components/common/Divider'
 import MaxContextMessageCountSlider from '@/components/common/MaxContextMessageCountSlider'
 import { MessageLayoutSelector } from '@/components/common/MessageLayoutPreview'
+import { ScalableIcon } from '@/components/common/ScalableIcon'
 import SliderWithInput from '@/components/common/SliderWithInput'
 import { TooltipInfoTrigger } from '@/components/common/TooltipInfoTrigger'
 import { handleImageInputAndSave, ImageInStorage } from '@/components/Image'
@@ -17,6 +19,8 @@ import { AppTooltip as Tooltip } from '@/components/ui/tooltip'
 import { languageNameMap } from '@/i18n/locales'
 import storage from '@/storage'
 import { StorageKeyGenerator } from '@/storage/StoreStorage'
+import { syncAdminGlobalSystemInstruction } from '@/stores/adminModelSync'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { add as addToast } from '@/stores/toastActions'
 
@@ -29,6 +33,8 @@ export const Route = createFileRoute('/settings/chat')({
 export function RouteComponent() {
   const { t } = useTranslation()
   const { setSettings, ...settings } = useSettingsStore((state) => state)
+  const user = useAppAuthStore((state) => state.user)
+  const isAdmin = user?.role === 'admin'
 
   return (
     <Stack gap="xxl" p="md">
@@ -131,6 +137,93 @@ export function RouteComponent() {
       {/* Default Settings */}
       <Stack gap="md">
         <Text fw="600">{t('Default Settings for New Conversation')}</Text>
+
+        {/* Global System Instruction (Admin Only) */}
+        <Stack gap="xs" p="sm" className="border border-solid border-chatbox-border-primary rounded-lg bg-black/5 dark:bg-white/5">
+          <Flex align="center" justify="space-between">
+            <Flex align="center" gap="xs">
+              <ScalableIcon icon={IconShieldCheck} size={18} className={isAdmin ? 'text-amber-400' : 'text-blue-400'} />
+              <Text fw="600">{t('Global System Instruction')}</Text>
+            </Flex>
+            <Badge size="xs" color={isAdmin ? 'yellow' : 'blue'} variant="light">
+              {isAdmin ? t('Admin Only') : t('Enforced by Administrator')}
+            </Badge>
+          </Flex>
+
+          <Text size="xs" c="dimmed">
+            {isAdmin
+              ? t('Set a global system instruction enforced across all AI conversations and all users in this application. Only administrators can configure this.')
+              : t('This system instruction is centrally configured by administrators and automatically applied to all AI conversations. Normal users cannot modify it.')}
+          </Text>
+
+          {isAdmin ? (
+            <Stack gap="xs">
+              <Textarea
+                placeholder={
+                  t(
+                    'Enter mandatory global system instructions for all users... (e.g., Tone guidelines, safety policies, company instructions)'
+                  ) || ''
+                }
+                value={settings.globalSystemInstruction || ''}
+                autosize
+                minRows={2}
+                maxRows={12}
+                onChange={(e) => {
+                  const val = e.currentTarget.value
+                  setSettings({
+                    globalSystemInstruction: val,
+                  })
+                }}
+              />
+              <Flex gap="xs">
+                <Button
+                  size="xs"
+                  variant="filled"
+                  color="yellow"
+                  onClick={async () => {
+                    const ok = await syncAdminGlobalSystemInstruction(settings.globalSystemInstruction || '')
+                    if (ok) {
+                      addToast(t('Global system instruction saved and synchronized for all users.'))
+                    } else {
+                      addToast(t('Saved locally.'))
+                    }
+                  }}
+                  className="self-start"
+                >
+                  {t('Save Global Instruction')}
+                </Button>
+                <Button
+                  size="xs"
+                  variant="subtle"
+                  color="chatbox-gray"
+                  onClick={async () => {
+                    setSettings({
+                      globalSystemInstruction: '',
+                    })
+                    await syncAdminGlobalSystemInstruction('')
+                    addToast(t('Global system instruction cleared.'))
+                  }}
+                  className="self-start"
+                >
+                  {t('Clear')}
+                </Button>
+              </Flex>
+            </Stack>
+          ) : (
+            <Textarea
+              value={settings.globalSystemInstruction || t('No global system instruction currently set by administrator.') || ''}
+              readOnly
+              disabled
+              autosize
+              minRows={2}
+              maxRows={6}
+              styles={{
+                input: { opacity: 0.75, cursor: 'not-allowed' },
+              }}
+            />
+          )}
+        </Stack>
+
         <Stack gap="xxs">
           <Text fw="500">{t('Prompt')}</Text>
           <Textarea
