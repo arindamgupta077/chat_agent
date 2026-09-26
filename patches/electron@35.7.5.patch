@@ -1,0 +1,31 @@
+diff --git a/install.js b/install.js
+index a0c177dea41609f8adfe75fb17bd39ae65b0ad0c..b1732151da5e98af18b1d2441ea378fd1a0db9f5 100644
+--- a/install.js
++++ b/install.js
+@@ -11,7 +11,13 @@ const path = require('path');
+ 
+ const { version } = require('./package');
+ 
+-if (process.env.ELECTRON_SKIP_BINARY_DOWNLOAD) {
++if (
++  process.env.ELECTRON_SKIP_BINARY_DOWNLOAD ||
++  process.env.npm_config_electron_skip_binary_download === 'true' ||
++  process.env.npm_config_electron_skip_binary_download === '1' ||
++  process.env.npm_config_ELECTRON_SKIP_BINARY_DOWNLOAD === '1' ||
++  process.env.npm_package_config_electron_skip_binary_download === '1'
++) {
+   process.exit(0);
+ }
+ 
+@@ -48,8 +54,9 @@ downloadArtifact({
+   platform,
+   arch
+ }).then(extractFile).catch(err => {
+-  console.error(err.stack);
+-  process.exit(1);
++  console.warn(`[electron] Warning: Unable to download Electron prebuilt binary (${err.message}).`);
++  console.warn('[electron] Skipping binary download. Web build and server runtime are unaffected.');
++  process.exit(0);
+ });
+ 
+ function isInstalled () {

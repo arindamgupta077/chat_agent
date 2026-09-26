@@ -47,7 +47,7 @@
     "mobile:ios": "pnpm run mobile:sync:ios && npx cap open ios",
     "mobile:android": "pnpm run mobile:sync:android && npx cap open android",
     "mobile:assets": "npx capacitor-assets generate --ios --android",
-    "prepare": "node -e \"try { require('husky') } catch(e) { process.exit(0) }\" && husky || true",
+    "prepare": "node -e \"if (require('fs').existsSync('.git')) { try { require('child_process').execSync('husky', { stdio: 'inherit' }); } catch(e) {} }\" || true",
     "check:error-i18n-keys": "node script/sync-error-i18n-keys.mjs --check",
     "sync:error-i18n-keys": "node script/sync-error-i18n-keys.mjs",
     "translate": "pnpm run sync:error-i18n-keys && i18next && node script/translate.mjs",
@@ -343,14 +343,16 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@parcel/watcher",
-      "@sentry/cli",
       "core-js",
       "core-js-pure",
-      "electron",
       "esbuild",
       "msw",
-      "protobufjs",
-      "sharp"
+      "protobufjs"
+    ],
+    "ignoredBuiltDependencies": [
+      "electron",
+      "sharp",
+      "@sentry/cli"
     ],
     "overrides": {
       "@tanstack/router-generator": "1.120.15",
@@ -361,6 +363,12 @@
       "convict": ">=6.2.5",
       "fast-xml-parser": ">=5.5.7",
       "shell-quote": "1.10.0"
+    },
+    "patchedDependencies": {
+      "fflate@0.8.3": "patches/fflate@0.8.3.patch",
+      "libsql@0.5.22": "patches/libsql@0.5.22.patch",
+      "mdast-util-gfm-autolink-literal@2.0.1": "patches/mdast-util-gfm-autolink-literal@2.0.1.patch",
+      "electron@35.7.5": "patches/electron@35.7.5.patch"
     }
   },
   "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319"
