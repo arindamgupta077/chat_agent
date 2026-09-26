@@ -122,6 +122,15 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/proxy\/ollama/, ''),
+        headers: {
+          Origin: 'http://127.0.0.1:11434',
+        },
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Origin', 'http://127.0.0.1:11434')
+            proxyReq.removeHeader('referer')
+          })
+        },
       },
       '/proxy/bing': {
         target: 'https://www.bing.com',
@@ -153,6 +162,15 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/proxy\/ollama/, ''),
+        headers: {
+          Origin: 'http://127.0.0.1:11434',
+        },
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Origin', 'http://127.0.0.1:11434')
+            proxyReq.removeHeader('referer')
+          })
+        },
       },
       '/proxy/bing': {
         target: 'https://www.bing.com',

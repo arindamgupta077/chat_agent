@@ -47,11 +47,12 @@ export default class Ollama extends OpenAICompatible {
   public name = 'Ollama'
   public options: OllamaOptions
 
-  constructor(options: Omit<OllamaOptions, 'apiKey' | 'apiHost'>, dependencies: ModelDependencies) {
+  constructor(options: Omit<OllamaOptions, 'apiHost'> & { apiKey?: string }, dependencies: ModelDependencies) {
     const apiHost = normalizeOpenAIApiHostAndPath({ apiHost: options.ollamaHost }).apiHost
+    const apiKey = options.apiKey?.trim() || 'ollama'
     super(
       {
-        apiKey: 'ollama',
+        apiKey,
         apiHost,
         model: options.model,
         temperature: options.temperature,
@@ -64,7 +65,7 @@ export default class Ollama extends OpenAICompatible {
     )
     this.options = {
       ...options,
-      apiKey: 'ollama',
+      apiKey,
       apiHost,
     }
   }
@@ -82,12 +83,16 @@ export default class Ollama extends OpenAICompatible {
     // 1. First attempt: Query Ollama native /api/tags endpoint
     try {
       const tagsUrl = `${baseHost}/api/tags`
+      const headers: Record<string, string> = {
+        Accept: 'application/json',
+      }
+      if (this.options.apiKey && this.options.apiKey !== 'ollama') {
+        headers.Authorization = `Bearer ${this.options.apiKey}`
+      }
       const response = await this.dependencies.request.apiRequest({
         url: tagsUrl,
         method: 'GET',
-        headers: {
-          Accept: 'application/json',
-        },
+        headers,
         useProxy: this.options.useProxy,
       })
       const json = await response.json()

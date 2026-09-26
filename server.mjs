@@ -83,6 +83,11 @@ function proxyHttpRequest(req, res, targetUrlStr, pathPrefixToRemove, customHead
     delete headers['host']
     headers['host'] = targetUrl.host
 
+    if (pathPrefixToRemove === '/proxy/ollama') {
+      delete headers['origin']
+      delete headers['referer']
+    }
+
     for (const [key, value] of Object.entries(customHeaders)) {
       headers[key.toLowerCase()] = value
     }

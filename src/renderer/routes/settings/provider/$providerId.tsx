@@ -620,7 +620,7 @@ function ProviderSettings({ providerId }: { providerId: string }) {
 
         {/* API Key */}
         {!isOAuthOnlyProvider &&
-          ![ModelProviderEnum.Ollama, ModelProviderEnum.LMStudio, ModelProviderEnum.Bedrock, ''].includes(
+          ![ModelProviderEnum.LMStudio, ModelProviderEnum.Bedrock, ''].includes(
             baseInfo.id
           ) && (
             <Stack gap="xxs" style={isOAuthActive ? { opacity: 0.5 } : undefined}>
@@ -628,6 +628,11 @@ function ProviderSettings({ providerId }: { providerId: string }) {
                 <Text span fw="600">
                   {t('API Key')}
                 </Text>
+                {baseInfo.id === ModelProviderEnum.Ollama && (
+                  <Text span size="xs" c="chatbox-tertiary">
+                    ({t('Optional - Ollama does not require an API key by default')})
+                  </Text>
+                )}
                 {isOAuthActive && (
                   <Text span size="xs" c="chatbox-tertiary">
                     ({t('Using OAuth')})
@@ -641,6 +646,7 @@ function ProviderSettings({ providerId }: { providerId: string }) {
                   value={isDummyApiKey(providerSettings?.apiKey) ? '' : providerSettings?.apiKey || ''}
                   onChange={handleApiKeyChange}
                   disabled={isOAuthActive}
+                  placeholder={baseInfo.id === ModelProviderEnum.Ollama ? t('Optional (leave empty for default local Ollama)') : undefined}
                   autoComplete="new-password"
                   name={`llm-api-key-${baseInfo.id}`}
                   data-1p-ignore="true"
@@ -650,9 +656,14 @@ function ProviderSettings({ providerId }: { providerId: string }) {
                 />
                 <Tooltip
                   openOnTouch
-                  disabled={isValidApiKey(providerSettings?.apiKey, baseInfo.isCustom) && displayModels.length > 0}
+                  disabled={
+                    (isValidApiKey(providerSettings?.apiKey, baseInfo.isCustom) || baseInfo.id === ModelProviderEnum.Ollama) &&
+                    displayModels.length > 0
+                  }
                   label={
-                    !isValidApiKey(providerSettings?.apiKey, baseInfo.isCustom) && !baseInfo.isCustom
+                    !isValidApiKey(providerSettings?.apiKey, baseInfo.isCustom) &&
+                    !baseInfo.isCustom &&
+                    baseInfo.id !== ModelProviderEnum.Ollama
                       ? t('API Key is required to check connection')
                       : displayModels.length === 0
                         ? t('Add at least one model to check connection')
@@ -662,7 +673,12 @@ function ProviderSettings({ providerId }: { providerId: string }) {
                   <Button
                     data-testid={TestId.settings.providerCheck}
                     size="sm"
-                    disabled={isOAuthActive || (!isValidApiKey(providerSettings?.apiKey, baseInfo.isCustom) && !baseInfo.isCustom)}
+                    disabled={
+                      isOAuthActive ||
+                      (!isValidApiKey(providerSettings?.apiKey, baseInfo.isCustom) &&
+                        !baseInfo.isCustom &&
+                        baseInfo.id !== ModelProviderEnum.Ollama)
+                    }
                     loading={modelTestResult?.testing || fetchingModels}
                     onClick={async () => {
                       if (displayModels.length === 0) {
@@ -706,27 +722,6 @@ function ProviderSettings({ providerId }: { providerId: string }) {
                 autoCorrect="off"
                 spellCheck={false}
               />
-              {baseInfo.id === ModelProviderEnum.Ollama && (
-                <Button
-                  data-testid={TestId.settings.providerCheck}
-                  size="sm"
-                  loading={modelTestResult?.testing || fetchingModels}
-                  onClick={async () => {
-                    if (displayModels.length === 0) {
-                      const discovered = await handleFetchModels()
-                      if (discovered.length > 0) {
-                        await handleCheckModel(discovered[0])
-                      }
-                    } else if (displayModels.length === 1) {
-                      await handleCheckModel(displayModels[0])
-                    } else {
-                      setShowTestModelSelector(true)
-                    }
-                  }}
-                >
-                  {t('Check')}
-                </Button>
-              )}
             </Flex>
             <Text span size="xs" flex="0 1 auto" c="chatbox-secondary">
               {t('Preview')}: {normalizedBuiltinApiHost.apiHost + normalizedBuiltinApiHost.apiPath}

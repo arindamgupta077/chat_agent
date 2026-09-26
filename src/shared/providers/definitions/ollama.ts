@@ -13,6 +13,7 @@ export const ollamaProvider = defineProvider({
     return new Ollama(
       {
         ollamaHost: config.formattedApiHost,
+        apiKey: config.providerSetting.apiKey,
         model: config.model,
         temperature: config.settings.temperature,
         topP: config.settings.topP,
