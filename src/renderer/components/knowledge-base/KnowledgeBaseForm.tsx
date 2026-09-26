@@ -93,17 +93,17 @@ export const KnowledgeBaseChatboxAIInfo: React.FC<KnowledgeBaseChatboxAIInfoProp
     <Stack gap="sm">
       {showModelsLabel && (
         <Group>
-          {t('Models')}: <Pill>Chatbox AI</Pill>
+          {t('Models')}: <Pill>AgentLab AI</Pill>
         </Group>
       )}
       <Text size="sm" c="dimmed">
         {t(
-          'Chatbox AI provides all the essential model support required for knowledge base processing. Consumes compute points.'
+          'AgentLab AI provides all the essential model support required for knowledge base processing. Consumes compute points.'
         )}
       </Text>
       {hasError && (
         <Text size="sm" c="red">
-          {t('Failed to load Chatbox AI models configuration')}
+          {t('Failed to load AgentLab AI models configuration')}
         </Text>
       )}
     </Stack>
@@ -130,7 +130,7 @@ export const KnowledgeBaseProviderModeSelect: React.FC<KnowledgeBaseProviderMode
       onChange={(value) => onChange(value as 'chatbox-ai' | 'custom')}
     >
       <Group mt="xs">
-        <Radio value="chatbox-ai" label="Chatbox AI" disabled={isChatboxAIDisabled} />
+        <Radio value="chatbox-ai" label="AgentLab AI" disabled={isChatboxAIDisabled} />
         <Radio value="custom" label={t('Custom')} />
       </Group>
     </Radio.Group>
@@ -224,7 +224,7 @@ const PARSER_OPTIONS: { value: DocumentParserType; label: string; description: s
   },
   {
     value: 'chatbox-ai',
-    label: 'Chatbox AI',
+    label: 'AgentLab AI',
     description:
       'Cloud-based document parsing service, supports PDF, Office files, EPUB and many other file types. Consumes compute points.',
   },

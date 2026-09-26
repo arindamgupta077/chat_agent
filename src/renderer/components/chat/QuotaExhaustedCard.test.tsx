@@ -65,7 +65,7 @@ describe('QuotaExhaustedCard', () => {
     expect(screen.getByText(/Free points reset daily/)).toBeTruthy()
   })
 
-  test('explains Chatbox AI OCR quota exhaustion and opens OCR model settings', () => {
+  test('explains AgentLab AI OCR quota exhaustion and opens OCR model settings', () => {
     const onConfigureOcr = vi.fn()
     render(
       <MantineProvider>
@@ -78,12 +78,12 @@ describe('QuotaExhaustedCard', () => {
       </MantineProvider>
     )
 
-    expect(screen.getByText(/uses Chatbox AI OCR to process images/)).toBeTruthy()
+    expect(screen.getByText(/uses AgentLab AI OCR to process images/)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'OCR model settings' }))
     expect(onConfigureOcr).toHaveBeenCalledOnce()
   })
 
-  test('uses daily-reset copy for free Chatbox AI OCR quota exhaustion', () => {
+  test('uses daily-reset copy for free AgentLab AI OCR quota exhaustion', () => {
     render(
       <MantineProvider>
         <QuotaExhaustedCard

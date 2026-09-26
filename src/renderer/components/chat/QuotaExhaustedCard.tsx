@@ -20,14 +20,14 @@ export function QuotaExhaustedCard({ kind, action, onAction, onConfigureOcr }: Q
   if (kind === 'ocr-quota-exhausted') {
     description = shouldBuyExpansionPack
       ? t(
-          'The current model uses Chatbox AI OCR to process images, and its quota for the current period is used up. Buy an expansion pack or change the default OCR model to continue.'
+          'The current model uses AgentLab AI OCR to process images, and its quota for the current period is used up. Buy an expansion pack or change the default OCR model to continue.'
         )
       : t(
-          'The current model uses Chatbox AI OCR to process images, and its quota for the current period is used up. Upgrade your plan or change the default OCR model to continue.'
+          'The current model uses AgentLab AI OCR to process images, and its quota for the current period is used up. Upgrade your plan or change the default OCR model to continue.'
         )
   } else if (kind === 'free-ocr-quota-exhausted') {
     description = t(
-      "The current model uses Chatbox AI OCR to process images, and today's free OCR points are used up. Free points reset daily; upgrade your plan or change the default OCR model to continue."
+      "The current model uses AgentLab AI OCR to process images, and today's free OCR points are used up. Free points reset daily; upgrade your plan or change the default OCR model to continue."
     )
   } else if (isFreeQuota) {
     description = t("Today's free points are used up. Free points reset daily; upgrade your plan to continue now.")
@@ -65,7 +65,7 @@ export function QuotaExhaustedCard({ kind, action, onAction, onConfigureOcr }: Q
         <Box style={{ flex: 1, minWidth: 0 }}>
           <Stack gap={4}>
             <Text size="sm" fw={600} lh={1.45}>
-              {isOcrQuota ? t('Chatbox AI OCR points are used up') : t('Your points are used up')}
+              {isOcrQuota ? t('AgentLab AI OCR points are used up') : t('Your points are used up')}
             </Text>
             <Text size="13px" c="var(--chatbox-tint-secondary)" lh={1.6}>
               {description}

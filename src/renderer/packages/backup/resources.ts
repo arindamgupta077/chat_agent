@@ -60,7 +60,7 @@ function collectMessageReferences(
         code: 'external-resource-skipped',
         itemType: 'resource',
         itemId: file.name,
-        message: `External file was not included because it is not managed by Chatbox: ${file.name}`,
+        message: `External file was not included because it is not managed by AgentLab: ${file.name}`,
       })
     }
   }

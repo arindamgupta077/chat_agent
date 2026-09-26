@@ -416,6 +416,20 @@ export enum Theme {
   System,
 }
 
+export const ThemeSchema = z.preprocess((val) => {
+  if (typeof val === 'string') {
+    const lower = val.toLowerCase().trim()
+    if (lower === 'dark') return Theme.Dark
+    if (lower === 'light') return Theme.Light
+    if (lower === 'system') return Theme.System
+    const num = parseInt(lower, 10)
+    if (!Number.isNaN(num) && (num === Theme.Dark || num === Theme.Light || num === Theme.System)) {
+      return num
+    }
+  }
+  return val
+}, z.nativeEnum(Theme).catch(Theme.System))
+
 const HexColorSchema = z.string().regex(/^#[0-9a-f]{6}$/i)
 
 const createInterfaceThemeColorsSchema = (defaultBrand: string) =>
@@ -527,7 +541,7 @@ export const SettingsSchema = GlobalSessionSettingsSchema.extend({
   messageLayout: z.enum(['left', 'bubble']).optional().catch(undefined),
   autoScrollNewMessagesToTop: z.boolean().default(false),
 
-  theme: z.nativeEnum(Theme),
+  theme: ThemeSchema,
   interfaceColors: InterfaceColorsSchema,
   interfaceColorPresets: z.array(InterfaceColorPresetSchema).default([]),
   language: z.enum(['en']).catch('en'),

@@ -18,7 +18,7 @@ import {
 describe('buildAgentIdentityPrompt', () => {
   test('formats desktop macOS', () => {
     const prompt = buildAgentIdentityPrompt({ platformType: 'desktop', os: 'Mac' })
-    expect(prompt).toContain('You are Chatbox agent, running inside the Chatbox client.')
+    expect(prompt).toContain('You are AgentLab agent, running inside the AgentLab client.')
     expect(prompt).toContain('Current platform: Desktop (macOS)')
   })
 
@@ -33,7 +33,7 @@ describe('extractSoulContent', () => {
   test('treats an unedited template as empty', () => {
     const template = `# Soul
 
-> This file defines who your Chatbox agent is.
+> This file defines who your AgentLab agent is.
 > Keep it short and sharp.
 
 ## Personality & Tone
@@ -173,7 +173,7 @@ describe('buildAgentPersonaPrompt', () => {
       soul: 'Persona body text.',
       memories: [{ id: 'm1', content: 'A fact', createdAt: 1 }],
     })
-    const identityIx = prompt.indexOf('You are Chatbox agent')
+    const identityIx = prompt.indexOf('You are AgentLab agent')
     const soulIx = prompt.indexOf('## Soul')
     const memoriesIx = prompt.indexOf('## Memories')
     expect(identityIx).toBeGreaterThanOrEqual(0)

@@ -81,7 +81,7 @@ export default class OpenAIResponses extends AbstractAISDKModel {
     if (this.options.apiHost.includes('openrouter.ai')) {
       return {
         'HTTP-Referer': 'https://chatboxai.app',
-        'X-Title': 'Chatbox AI',
+        'X-Title': 'AgentLab AI',
       }
     }
     if (this.options.apiHost.includes('aihubmix.com')) {

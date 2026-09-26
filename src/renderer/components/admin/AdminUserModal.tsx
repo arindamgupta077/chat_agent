@@ -44,6 +44,7 @@ import { toast } from 'sonner'
 import { ScalableIcon } from '@/components/common/ScalableIcon'
 import { getAuthHeaders, useAppAuthStore } from '@/stores/appAuthStore'
 import { settingsStore } from '@/stores/settingsStore'
+import { add as addToast } from '@/stores/toastActions'
 
 export interface AdminUser {
   id: string
@@ -92,6 +93,8 @@ export const AdminUserModal: FC<AdminUserModalProps> = ({ opened, onClose }) => 
   const [globalInstruction, setGlobalInstruction] = useState('')
   const [instructionLoading, setInstructionLoading] = useState(false)
   const [instructionSaving, setInstructionSaving] = useState(false)
+  const [instructionSuccess, setInstructionSuccess] = useState<string | null>(null)
+  const [instructionError, setInstructionError] = useState<string | null>(null)
 
   const fetchGlobalInstruction = async () => {
     setInstructionLoading(true)
@@ -103,7 +106,13 @@ export const AdminUserModal: FC<AdminUserModalProps> = ({ opened, onClose }) => 
       })
       if (res.ok) {
         const data = await res.json()
-        setGlobalInstruction(data.global_system_instruction || '')
+        const instr = data.global_system_instruction || ''
+        setGlobalInstruction(instr)
+        if (instr) {
+          settingsStore.getState().setSettings({
+            globalSystemInstruction: instr,
+          })
+        }
       }
     } catch (err) {
       console.warn('[AdminModal] Failed to fetch instruction:', err)
@@ -114,6 +123,8 @@ export const AdminUserModal: FC<AdminUserModalProps> = ({ opened, onClose }) => 
 
   const handleSaveInstruction = async () => {
     setInstructionSaving(true)
+    setInstructionSuccess(null)
+    setInstructionError(null)
     try {
       const res = await fetch('/api/admin/global-system-instruction', {
         method: 'POST',
@@ -132,9 +143,16 @@ export const AdminUserModal: FC<AdminUserModalProps> = ({ opened, onClose }) => 
       settingsStore.getState().setSettings({
         globalSystemInstruction: globalInstruction,
       })
-      toast.success('Global system instruction successfully updated for all users!')
+      const successMsg = 'Global system instruction successfully updated and synchronized for all users!'
+      setInstructionSuccess(successMsg)
+      toast.success(successMsg)
+      addToast(successMsg)
+      setTimeout(() => setInstructionSuccess(null), 5000)
     } catch (err: any) {
-      toast.error(err.message || 'Failed to save global instruction')
+      const errMsg = err.message || 'Failed to save global instruction'
+      setInstructionError(errMsg)
+      toast.error(errMsg)
+      addToast(errMsg)
     } finally {
       setInstructionSaving(false)
     }
@@ -738,14 +756,42 @@ export const AdminUserModal: FC<AdminUserModalProps> = ({ opened, onClose }) => 
                 disabled={instructionLoading}
               />
 
+              {instructionSuccess && (
+                <Alert
+                  icon={<ScalableIcon icon={IconCheck} size={16} />}
+                  color="green"
+                  variant="light"
+                  withCloseButton
+                  onClose={() => setInstructionSuccess(null)}
+                >
+                  <Text size="xs" fw={600}>
+                    {instructionSuccess}
+                  </Text>
+                </Alert>
+              )}
+
+              {instructionError && (
+                <Alert
+                  icon={<ScalableIcon icon={IconAlertCircle} size={16} />}
+                  color="red"
+                  variant="light"
+                  withCloseButton
+                  onClose={() => setInstructionError(null)}
+                >
+                  <Text size="xs">
+                    {instructionError}
+                  </Text>
+                </Alert>
+              )}
+
               <Flex gap="sm" align="center" wrap="wrap">
                 <Button
-                  color="yellow"
+                  color={instructionSuccess ? 'teal' : 'yellow'}
                   loading={instructionSaving}
                   onClick={handleSaveInstruction}
                   leftSection={<ScalableIcon icon={IconCheck} size={16} />}
                 >
-                  Save Global Instruction
+                  {instructionSuccess ? 'Saved Successfully!' : 'Save Global Instruction'}
                 </Button>
                 <Button
                   variant="subtle"

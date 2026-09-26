@@ -7,16 +7,16 @@ export function buildChatboxCliToolSet(options: ChatboxCliOptions = {}) {
 
   const chatbox_cli: ToolSet[string] = {
     description:
-      'Run a controlled virtual Chatbox CLI command (not a shell). Supports account, read-only settings, ' +
+      'Run a controlled virtual AgentLab CLI command (not a shell). Supports account, read-only settings, ' +
       'conversation history, and asynchronous image-generation background tasks. Image generation requires a ' +
-      'localized approval; after an accepted result, end the turn and wait for Chatbox callback instead of polling. ' +
+      'localized approval; after an accepted result, end the turn and wait for AgentLab callback instead of polling. ' +
       'Prefer argv for deterministic argument handling.',
     inputSchema: jsonSchema({
       type: 'object',
       properties: {
         command: {
           type: 'string',
-          description: 'Legacy CLI-style command string, e.g. "chatbox account status".',
+          description: 'Legacy CLI-style command string, e.g. "agentlab account status".',
         },
         argv: {
           type: 'array',
@@ -36,7 +36,7 @@ export function buildChatboxCliToolSet(options: ChatboxCliOptions = {}) {
       const existing = executionCache.get(cacheKey)
       if (existing) {
         if (existing.signature !== signature) {
-          return Promise.reject(new Error(`Tool call ${cacheKey} was reused with different Chatbox CLI arguments.`))
+          return Promise.reject(new Error(`Tool call ${cacheKey} was reused with different AgentLab CLI arguments.`))
         }
         return existing.promise
       }

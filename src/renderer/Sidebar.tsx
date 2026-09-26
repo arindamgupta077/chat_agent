@@ -261,7 +261,7 @@ export default function Sidebar() {
                 label={t('My workflows')}
                 leftSection={<ScalableIcon icon={IconRoute} size={20} />}
                 onClick={() => {
-                  platform.openLink('http://localhost:5678/home/workflows')
+                  platform.openLink('http://10.10.66.209:5678/home/workflows')
                   setShowSidebar(false)
                 }}
                 variant="light"
@@ -289,7 +289,7 @@ export default function Sidebar() {
                 label={t('My workflows')}
                 leftSection={<ScalableIcon icon={IconRoute} size={20} />}
                 onClick={() => {
-                  platform.openLink('http://localhost:5678/home/workflows')
+                  platform.openLink('http://10.10.66.209:5678/home/workflows')
                   if (isSmallScreen) {
                     setShowSidebar(false)
                   }

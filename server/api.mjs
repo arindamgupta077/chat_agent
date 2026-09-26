@@ -187,13 +187,23 @@ export async function handleApiRequest(req, res) {
             }
           } else {
             // Admin user: sanitize credentials if providers are provided; preserve existing providers if not provided in payload!
-            if (value.providers && typeof value.providers === 'object') {
-              finalValue = {
-                ...value,
-                providers: sanitizeProviders(value.providers),
+            let providers = value.providers && typeof value.providers === 'object'
+              ? sanitizeProviders(value.providers)
+              : value.providers
+            finalValue = {
+              ...value,
+              ...(providers ? { providers } : {}),
+            }
+
+            // Always preserve existing global system instruction if incoming payload does not specify an explicit non-empty one!
+            try {
+              const adminConfigRes = await query('SELECT global_system_instruction FROM admin_global_config WHERE id = $1', ['global'])
+              const existingInstruction = adminConfigRes.rows[0]?.global_system_instruction || ''
+              if (!finalValue.globalSystemInstruction?.trim() && existingInstruction) {
+                finalValue.globalSystemInstruction = existingInstruction
               }
-            } else {
-              finalValue = value
+            } catch (err) {
+              console.warn('[Storage] Failed to preserve global admin system instruction on admin update:', err.message)
             }
           }
 
@@ -229,7 +239,9 @@ export async function handleApiRequest(req, res) {
         // If admin updates settings, propagate LLM providers, selected model, and global system instruction to global config for all users (MCP is user-unique)
         if (key === 'settings' && user.role === 'admin' && value && typeof value === 'object') {
           try {
-            if (typeof value.globalSystemInstruction === 'string') {
+            // NEVER wipe out global_system_instruction from generic settings saves!
+            // Only update admin_global_config if the admin explicitly provided a non-empty instruction string.
+            if (typeof value.globalSystemInstruction === 'string' && value.globalSystemInstruction.trim().length > 0) {
               await query(
                 `INSERT INTO admin_global_config (id, global_system_instruction, updated_by)
                  VALUES ('global', $1, $2)
@@ -403,11 +415,21 @@ export async function handleApiRequest(req, res) {
                 }
               } catch (err) {}
             } else {
-              if (value.providers && typeof value.providers === 'object') {
-                batchValue = { ...value, providers: sanitizeProviders(value.providers) }
-              } else {
-                batchValue = value
+              let providers = value.providers && typeof value.providers === 'object'
+                ? sanitizeProviders(value.providers)
+                : value.providers
+              batchValue = {
+                ...value,
+                ...(providers ? { providers } : {}),
               }
+              // Preserve existing global system instruction if incoming payload does not specify an explicit non-empty one!
+              try {
+                const adminConfigRes = await query('SELECT global_system_instruction FROM admin_global_config WHERE id = $1', ['global'])
+                const existingInstruction = adminConfigRes.rows[0]?.global_system_instruction || ''
+                if (!batchValue.globalSystemInstruction?.trim() && existingInstruction) {
+                  batchValue.globalSystemInstruction = existingInstruction
+                }
+              } catch (err) {}
             }
 
             // MCP server preservation & synchronization:
@@ -435,7 +457,7 @@ export async function handleApiRequest(req, res) {
           )
           if (key === 'settings' && user.role === 'admin' && value && typeof value === 'object') {
             try {
-              if (typeof value.globalSystemInstruction === 'string') {
+              if (typeof value.globalSystemInstruction === 'string' && value.globalSystemInstruction.trim().length > 0) {
                 await query(
                   `INSERT INTO admin_global_config (id, global_system_instruction, updated_by)
                    VALUES ('global', $1, $2)

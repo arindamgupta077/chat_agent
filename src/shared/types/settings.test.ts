@@ -277,3 +277,24 @@ describe('SessionSettingsSchema command approval mode', () => {
     expect(parsed.agentFullAccess).toBe(true)
   })
 })
+
+describe('SettingsSchema theme compatibility', () => {
+  test('coerces legacy string theme values correctly', () => {
+    expect(SettingsSchema.parse({ ...defaultSettings(), theme: 'dark' }).theme).toBe(0)
+    expect(SettingsSchema.parse({ ...defaultSettings(), theme: 'light' }).theme).toBe(1)
+    expect(SettingsSchema.parse({ ...defaultSettings(), theme: 'system' }).theme).toBe(2)
+  })
+
+  test('preserves numeric theme values', () => {
+    expect(SettingsSchema.parse({ ...defaultSettings(), theme: 0 }).theme).toBe(0)
+    expect(SettingsSchema.parse({ ...defaultSettings(), theme: 1 }).theme).toBe(1)
+    expect(SettingsSchema.parse({ ...defaultSettings(), theme: 2 }).theme).toBe(2)
+  })
+
+  test('gracefully falls back to Theme.System for invalid theme values', () => {
+    expect(SettingsSchema.parse({ ...defaultSettings(), theme: 'invalid' }).theme).toBe(2)
+    expect(SettingsSchema.parse({ ...defaultSettings(), theme: 999 }).theme).toBe(2)
+    expect(SettingsSchema.parse({ ...defaultSettings(), theme: null }).theme).toBe(2)
+  })
+})
+

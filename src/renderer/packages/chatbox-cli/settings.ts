@@ -14,7 +14,7 @@ interface SafeSettingSpec {
 }
 
 function manualChangeGuidance(page: SettingsPage): string {
-  return `Open Chatbox Settings > ${page} and ask the user to change this setting manually.`
+  return `Open AgentLab Settings > ${page} and ask the user to change this setting manually.`
 }
 
 function themeName(theme: Theme): 'dark' | 'light' | 'system' {
@@ -79,7 +79,7 @@ const safeSettings: SafeSettingSpec[] = [
       ['chat.mermaid', 'Render Mermaid diagrams.', 'enableMermaidRendering', 'Chat Settings'],
       ['chat.auto-generate-title', 'Automatically name new chats.', 'autoGenerateTitle', 'Chat Settings'],
       ['chat.auto-compaction', 'Automatically compact long contexts.', 'autoCompaction', 'Chat Settings'],
-      ['app.auto-launch', 'Launch Chatbox at system startup.', 'autoLaunch', 'General Settings'],
+      ['app.auto-launch', 'Launch AgentLab at system startup.', 'autoLaunch', 'General Settings'],
       ['app.auto-update', 'Automatically check for stable updates.', 'autoUpdate', 'General Settings'],
       ['app.beta-update', 'Include beta updates.', 'betaUpdate', 'General Settings'],
     ] as const
@@ -121,11 +121,11 @@ export const settingsCommands: ChatboxCliCommandDefinition[] = [
   {
     path: ['settings', 'list'],
     description: 'List settings exposed through the read-only CLI allowlist.',
-    usage: 'chatbox settings list',
+    usage: 'agentlab settings list',
     execute() {
       return {
         readOnly: true,
-        changeGuidance: 'Guide the user to the listed Chatbox Settings page to make changes manually.',
+        changeGuidance: 'Guide the user to the listed AgentLab Settings page to make changes manually.',
         settings: safeSettings.map((setting) => ({
           key: setting.key,
           value: setting.read(),
@@ -138,7 +138,7 @@ export const settingsCommands: ChatboxCliCommandDefinition[] = [
   {
     path: ['settings', 'get'],
     description: 'Read one allowlisted setting.',
-    usage: 'chatbox settings get <key>',
+    usage: 'agentlab settings get <key>',
     execute({ parsed }) {
       const key = parsed.positionals[0]
       if (!key) throw new ChatboxCliUsageError('Missing setting key.')

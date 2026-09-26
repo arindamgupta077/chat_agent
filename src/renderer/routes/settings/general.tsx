@@ -957,7 +957,7 @@ const ExportLogsSection = () => {
 
       const date = new Date()
       const dateStr = dayjs(date).format('YYYY-M-D_H-m')
-      await platform.exporter.exportTextFile(`chatbox-logs-${dateStr}.txt`, logs)
+      await platform.exporter.exportTextFile(`agentlab-logs-${dateStr}.txt`, logs)
       setExportResult({ success: true })
     } catch (error) {
       console.error('Failed to export logs:', error)

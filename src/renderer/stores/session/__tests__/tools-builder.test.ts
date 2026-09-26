@@ -138,6 +138,10 @@ vi.mock('@/stores/settingActions', () => ({
   isPro: isProMock,
 }))
 
+vi.mock('@/packages/web-search', () => ({
+  PROVIDERS_WITH_PARSE_LINK: new Set(['build-in']),
+}))
+
 vi.mock('@/packages/model-calls/toolsets/code-execution', () => ({
   buildCodeExecutionTools: buildCodeExecutionToolsMock,
 }))
@@ -310,7 +314,7 @@ describe('buildToolsForSession', () => {
     expect(result.tools.save_memory).toBeDefined()
     expect(result.instructions).toContain('## Persistent Memory')
     expect(result.instructions).not.toContain('## Workspace Instructions')
-    expect(result.instructions).not.toContain('Co-authored-by: Chatbox <chatbox@chatboxai.com>')
+    expect(result.instructions).not.toContain('Co-authored-by: AgentLab <support@agentlab.local>')
     expect(readWorkspaceInstructionsMock).not.toHaveBeenCalled()
     expect(discoverSkillsMock).not.toHaveBeenCalled()
     for (const name of sandboxToolNames) {
@@ -404,8 +408,8 @@ describe('buildToolsForSession', () => {
     }
     expect(result.tools.code_execution).toBeDefined()
     expect(result.instructions).toContain('## Git')
-    expect(result.instructions).toContain('prefix its name with `chatbox/`')
-    expect(result.instructions).toContain('Co-authored-by: Chatbox <chatbox@chatboxai.com>')
+    expect(result.instructions).toContain('prefix its name with `agentlab/`')
+    expect(result.instructions).toContain('Co-authored-by: AgentLab <support@agentlab.local>')
   })
 
   test('v2 command contract exposes run_command and retires legacy command tools', async () => {

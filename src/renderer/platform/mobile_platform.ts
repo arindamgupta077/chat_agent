@@ -224,7 +224,7 @@ export default class MobilePlatform extends MobileSQLiteStorage implements Platf
   public async initTracking() {
     const conf = await this.getConfig()
     window.gtag('config', GOOGLE_ANALYTICS_MEASUREMENT_ID, {
-      app_name: 'chatbox',
+      app_name: 'agentlab',
       user_id: conf.uuid,
       client_id: conf.uuid,
       app_version: await this.getVersion(),

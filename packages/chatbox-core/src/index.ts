@@ -121,6 +121,7 @@ export {
   shortcutSendValues,
   shortcutToggleWindowValues,
   Theme,
+  ThemeSchema,
   type UnifiedTokenUsageDetail,
 } from './domain/settings'
 export {

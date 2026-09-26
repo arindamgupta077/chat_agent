@@ -30,7 +30,7 @@ export function getChatboxAIModelName(model: { modelName?: string; modelId: stri
 export function modelMatchesSearch(
   model: { modelId: string; modelName?: string },
   search: string,
-  providerName = 'Chatbox AI'
+  providerName = 'AgentLab AI'
 ): boolean {
   const query = search.trim().toLowerCase()
   if (!query) return true

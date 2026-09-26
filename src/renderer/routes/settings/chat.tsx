@@ -3,9 +3,9 @@ import { TestId } from '@shared/automation/testids'
 import { chatSessionSettings, getDefaultPrompt } from '@shared/defaults'
 import { getDefaultCompactionPrompt } from '@shared/prompts'
 import { MAX_TOOL_CALLS_BEFORE_CONFIRMATION } from '@shared/utils/tool-call-limit-pause'
-import { IconShieldCheck } from '@tabler/icons-react'
+import { IconAlertCircle, IconCheck, IconShieldCheck } from '@tabler/icons-react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AssistantAvatar, UserAvatar } from '@/components/common/Avatar'
 import { Divider } from '@/components/common/Divider'
@@ -20,7 +20,7 @@ import { languageNameMap } from '@/i18n/locales'
 import storage from '@/storage'
 import { StorageKeyGenerator } from '@/storage/StoreStorage'
 import { syncAdminGlobalSystemInstruction } from '@/stores/adminModelSync'
-import { useAppAuthStore } from '@/stores/appAuthStore'
+import { getAuthHeaders, useAppAuthStore } from '@/stores/appAuthStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { add as addToast } from '@/stores/toastActions'
 
@@ -35,6 +35,30 @@ export function RouteComponent() {
   const { setSettings, ...settings } = useSettingsStore((state) => state)
   const user = useAppAuthStore((state) => state.user)
   const isAdmin = user?.role === 'admin'
+
+  const [isSavingInstruction, setIsSavingInstruction] = useState(false)
+  const [instructionSaveSuccess, setInstructionSaveSuccess] = useState(false)
+  const [instructionSaveError, setInstructionSaveError] = useState<string | null>(null)
+
+  // Synchronize admin global system instruction from backend on mount
+  useEffect(() => {
+    if (isAdmin) {
+      fetch('/api/admin/global-system-instruction', {
+        headers: { ...getAuthHeaders() },
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.global_system_instruction !== undefined && data.global_system_instruction !== '') {
+            setSettings({
+              globalSystemInstruction: data.global_system_instruction,
+            })
+          }
+        })
+        .catch((err) => {
+          console.warn('[ChatSettings] Failed to fetch global instruction:', err)
+        })
+    }
+  }, [isAdmin, setSettings])
 
   return (
     <Stack gap="xxl" p="md">
@@ -175,39 +199,84 @@ export function RouteComponent() {
                   })
                 }}
               />
-              <Flex gap="xs">
+              <Flex gap="xs" align="center" wrap="wrap">
                 <Button
                   size="xs"
                   variant="filled"
-                  color="yellow"
+                  color={instructionSaveSuccess ? 'teal' : 'yellow'}
+                  loading={isSavingInstruction}
+                  leftSection={<ScalableIcon icon={IconCheck} size={14} />}
                   onClick={async () => {
-                    const ok = await syncAdminGlobalSystemInstruction(settings.globalSystemInstruction || '')
-                    if (ok) {
-                      addToast(t('Global system instruction saved and synchronized for all users.'))
-                    } else {
-                      addToast(t('Saved locally.'))
+                    setIsSavingInstruction(true)
+                    setInstructionSaveSuccess(false)
+                    setInstructionSaveError(null)
+                    try {
+                      const ok = await syncAdminGlobalSystemInstruction(settings.globalSystemInstruction || '')
+                      if (ok) {
+                        setInstructionSaveSuccess(true)
+                        addToast(t('Global system instruction saved and synchronized for all users.'))
+                        setTimeout(() => setInstructionSaveSuccess(false), 4000)
+                      } else {
+                        setInstructionSaveError(t('Failed to synchronize with server. Please check your network or admin permissions.'))
+                        addToast(t('Failed to save to server.'))
+                      }
+                    } catch (err: any) {
+                      setInstructionSaveError(err.message || t('Failed to save global instruction'))
+                      addToast(err.message || t('Failed to save global instruction'))
+                    } finally {
+                      setIsSavingInstruction(false)
                     }
                   }}
                   className="self-start"
                 >
-                  {t('Save Global Instruction')}
+                  {instructionSaveSuccess ? t('Saved Successfully!') : t('Save Global Instruction')}
                 </Button>
                 <Button
                   size="xs"
                   variant="subtle"
                   color="chatbox-gray"
+                  disabled={isSavingInstruction || !settings.globalSystemInstruction}
                   onClick={async () => {
-                    setSettings({
-                      globalSystemInstruction: '',
-                    })
-                    await syncAdminGlobalSystemInstruction('')
-                    addToast(t('Global system instruction cleared.'))
+                    setIsSavingInstruction(true)
+                    setInstructionSaveSuccess(false)
+                    setInstructionSaveError(null)
+                    try {
+                      setSettings({
+                        globalSystemInstruction: '',
+                      })
+                      await syncAdminGlobalSystemInstruction('')
+                      setInstructionSaveSuccess(true)
+                      addToast(t('Global system instruction cleared.'))
+                      setTimeout(() => setInstructionSaveSuccess(false), 4000)
+                    } catch (err: any) {
+                      setInstructionSaveError(err.message || t('Failed to clear global instruction'))
+                    } finally {
+                      setIsSavingInstruction(false)
+                    }
                   }}
                   className="self-start"
                 >
                   {t('Clear')}
                 </Button>
               </Flex>
+
+              {instructionSaveSuccess && (
+                <Flex align="center" gap="xs" className="text-teal-600 dark:text-teal-400">
+                  <ScalableIcon icon={IconCheck} size={16} />
+                  <Text size="xs" fw={500}>
+                    {t('Global system instruction successfully saved and synchronized for all users!')}
+                  </Text>
+                </Flex>
+              )}
+
+              {instructionSaveError && (
+                <Flex align="center" gap="xs" className="text-red-500">
+                  <ScalableIcon icon={IconAlertCircle} size={16} />
+                  <Text size="xs" fw={500}>
+                    {instructionSaveError}
+                  </Text>
+                </Flex>
+              )}
             </Stack>
           </Stack>
         )}

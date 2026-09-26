@@ -13,7 +13,8 @@ export function isChatboxAIPlanFree(detail?: LicensePlanSource, fallbackPlanName
   if (detail?.plan) {
     return detail.plan === 'free'
   }
-  return getLegacyPlanName(detail, fallbackPlanName) === 'chatbox ai free'
+  const legacyName = getLegacyPlanName(detail, fallbackPlanName)
+  return legacyName === 'agentlab ai free' || legacyName === 'chatbox ai free'
 }
 
 export function isChatboxAILowTierPlan(detail?: LicensePlanSource, fallbackPlanName?: string): boolean {

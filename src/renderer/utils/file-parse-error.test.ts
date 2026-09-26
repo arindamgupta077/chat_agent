@@ -14,7 +14,7 @@ describe('getFileParseErrorI18nKey', () => {
 
   test('uses the registered error key for other file parsing failures', () => {
     expect(getFileParseErrorI18nKey('chatbox_ai_parser_failed', false)).toBe(
-      'Chatbox AI document parsing failed. Please try again later.'
+      'AgentLab AI document parsing failed. Please try again later.'
     )
   })
 })

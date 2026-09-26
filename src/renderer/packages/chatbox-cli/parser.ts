@@ -57,12 +57,18 @@ export function parseChatboxCliInput(input: ChatboxCliInput): ParsedChatboxComma
     : typeof input.command === 'string'
       ? tokenizeVirtualCommand(input.command)
       : []
-  if (argv[0]?.toLowerCase() === 'chatbox' || argv[0]?.toLowerCase() === 'chatbox_cli') {
+  let prefix = 'agentlab'
+  const first = argv[0]?.toLowerCase()
+  if (first === 'chatbox' || first === 'chatbox_cli') {
+    prefix = first
+    argv.shift()
+  } else if (first === 'agentlab' || first === 'agentlab_cli') {
+    prefix = first
     argv.shift()
   }
   return {
     argv,
-    displayCommand: `chatbox${argv.length ? ` ${argv.join(' ')}` : ''}`,
+    displayCommand: `${prefix}${argv.length ? ` ${argv.join(' ')}` : ''}`,
   }
 }
 

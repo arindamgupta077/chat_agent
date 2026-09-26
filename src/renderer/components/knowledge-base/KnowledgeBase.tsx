@@ -259,7 +259,7 @@ const KnowledgeBasePage: React.FC = () => {
   function formatParserType(parserType?: DocumentParserType): string {
     switch (parserType) {
       case 'chatbox-ai':
-        return 'Chatbox AI'
+        return 'AgentLab AI'
       case 'mineru':
         return 'MinerU'
       default:
@@ -307,7 +307,7 @@ const KnowledgeBasePage: React.FC = () => {
           setChatboxAIModels(config.knowledge_base_models)
         }
       } catch (error) {
-        toastError(t('Failed to fetch Chatbox AI models config, Error: {{error}}', { error: error }))
+        toastError(t('Failed to fetch AgentLab AI models config, Error: {{error}}', { error: error }))
       }
     }
     void fetchChatboxAIModels()
@@ -540,11 +540,11 @@ const KnowledgeBasePage: React.FC = () => {
               variant="light"
               color="orange"
               icon={<IconAlertTriangle size={16} />}
-              title={t('Sign in to Chatbox AI')}
+              title={t('Sign in to AgentLab AI')}
             >
               <Text size="sm">
                 {t(
-                  'Your Chatbox AI knowledge base requires an active login. Please sign in to Chatbox AI to use this knowledge base.'
+                  'Your AgentLab AI knowledge base requires an active login. Please sign in to AgentLab AI to use this knowledge base.'
                 )}
               </Text>
               <Group mt="sm">
@@ -554,7 +554,7 @@ const KnowledgeBasePage: React.FC = () => {
                   leftSection={<IconLogin size={14} />}
                   onClick={() => navigateToSettings('chatbox-ai')}
                 >
-                  {t('Log in to Chatbox AI')}
+                  {t('Log in to AgentLab AI')}
                 </Button>
               </Group>
             </Alert>
@@ -601,14 +601,14 @@ const KnowledgeBasePage: React.FC = () => {
                             {t('Models')}:
                           </Text>
                           <ModelPill
-                            modelValue={'Chatbox AI'}
-                            formatModelName={() => 'Chatbox AI'}
+                            modelValue={'AgentLab AI'}
+                            formatModelName={() => 'AgentLab AI'}
                             isProviderAvailable={() => canUseChatboxAIProvider}
                             type="embedding"
                             t={t}
                             unavailableTooltip={
                               !isLoggedIn
-                                ? String(t('Sign in to Chatbox AI to use this knowledge base'))
+                                ? String(t('Sign in to AgentLab AI to use this knowledge base'))
                                 : String(t('Provider unavailable'))
                             }
                             onUnavailableClick={!isLoggedIn ? () => navigateToSettings('chatbox-ai') : undefined}

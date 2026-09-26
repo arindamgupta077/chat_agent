@@ -16,7 +16,7 @@ export interface NativeWebSearchResultItem {
 export type NativeWebSearchProvider = 'build-in' | 'bing' | 'tavily' | 'bocha' | 'querit'
 
 export const nativeWebSearchProviderOptions: Array<{ id: NativeWebSearchProvider; label: string }> = [
-  { id: 'build-in', label: 'Chatbox AI' },
+  { id: 'build-in', label: 'AgentLab AI' },
   { id: 'bing', label: 'Bing Search' },
   { id: 'tavily', label: 'Tavily' },
   { id: 'bocha', label: 'BoCha' },

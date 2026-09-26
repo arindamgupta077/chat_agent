@@ -1,7 +1,7 @@
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
 import dayjs from 'dayjs'
 
-const LOG_FILE_NAME = 'chatbox-app.log'
+const LOG_FILE_NAME = 'agentlab-app.log'
 const LOG_DIRECTORY = Directory.Data
 const MAX_LOG_SIZE = 5 * 1024 * 1024
 const MAX_LOG_AGE_DAYS = 30
@@ -55,7 +55,7 @@ export class MobileLogger {
   private async rotateLog(): Promise<void> {
     try {
       const timestamp = dayjs().format('YYYY-MM-DD_HH-mm-ss')
-      const backupName = `chatbox-app-${timestamp}.log`
+      const backupName = `agentlab-app-${timestamp}.log`
 
       await Filesystem.rename({
         from: LOG_FILE_NAME,
@@ -77,7 +77,11 @@ export class MobileLogger {
       })
 
       const logBackups = result.files
-        .filter((file) => file.name.startsWith('chatbox-app-') && file.name.endsWith('.log'))
+        .filter(
+          (file) =>
+            (file.name.startsWith('agentlab-app-') || file.name.startsWith('chatbox-app-')) &&
+            file.name.endsWith('.log')
+        )
         .sort((a, b) => (b.mtime || 0) - (a.mtime || 0))
 
       const toDelete = logBackups.slice(3)

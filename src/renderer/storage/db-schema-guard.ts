@@ -10,7 +10,7 @@ export class DbSchemaTooNewError extends Error {
     readonly dbName: string,
     options?: { cause?: unknown }
   ) {
-    super(`IndexedDB database "${dbName}" was created by a newer version of Chatbox`, options)
+    super(`IndexedDB database "${dbName}" was created by a newer version of AgentLab`, options)
     this.name = 'DbSchemaTooNewError'
   }
 }

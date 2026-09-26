@@ -340,7 +340,7 @@ async function canUseSessionAttachmentRag(): Promise<boolean> {
 
   if (!hasUsableLicense) {
     log.debug(
-      `${SESSION_ATTACHMENT_RAG_LOG_PREFIX} Capability skipped: missing active Chatbox license, hasLicense=${Boolean(licenseKey)}, method=${settingsStore.getState().licenseActivationMethod ?? 'none'}, platform=${platform.type}`
+      `${SESSION_ATTACHMENT_RAG_LOG_PREFIX} Capability skipped: missing active AgentLab license, hasLicense=${Boolean(licenseKey)}, method=${settingsStore.getState().licenseActivationMethod ?? 'none'}, platform=${platform.type}`
     )
     sessionRagCapabilityCache = { key: capabilityCacheKey, value: false }
     return false
@@ -381,12 +381,12 @@ async function fallbackToChatboxAIParser(
   file: File,
   reason: 'local_parser_failed' | 'empty_content'
 ): Promise<ParsedAttachmentContent> {
-  log.warn(`Falling back to Chatbox AI parser for "${file.name}" due to ${reason}`)
+  log.warn(`Falling back to AgentLab AI parser for "${file.name}" due to ${reason}`)
 
   try {
     return await parseFileWithChatboxAI(file)
   } catch (error) {
-    log.error(`Chatbox AI fallback parsing failed for "${file.name}":`, error)
+    log.error(`AgentLab AI fallback parsing failed for "${file.name}":`, error)
     if (isStorageQuotaError(error)) {
       throw new FilePreprocessFailure(FILE_STORAGE_QUOTA_EXCEEDED_ERROR, 'cloud_parse', error)
     }

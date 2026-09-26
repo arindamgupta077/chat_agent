@@ -1,7 +1,8 @@
 import dayjs from 'dayjs'
 import localforage from 'localforage'
 
-const LOG_STORAGE_KEY = 'chatbox-app-logs'
+const LOG_STORAGE_KEY = 'agentlab-app-logs'
+const LEGACY_LOG_STORAGE_KEY = 'chatbox-app-logs'
 const MAX_LOG_ENTRIES = 1000
 const MAX_LOG_AGE_DAYS = 30
 
@@ -60,7 +61,10 @@ export class WebLogger {
 
   private async getStoredLogs(): Promise<LogEntry[]> {
     try {
-      const logs = await localforage.getItem<LogEntry[]>(LOG_STORAGE_KEY)
+      let logs = await localforage.getItem<LogEntry[]>(LOG_STORAGE_KEY)
+      if (!logs) {
+        logs = await localforage.getItem<LogEntry[]>(LEGACY_LOG_STORAGE_KEY)
+      }
       return logs || []
     } catch (error) {
       return []
@@ -134,6 +138,7 @@ export class WebLogger {
 
     try {
       await localforage.removeItem(LOG_STORAGE_KEY)
+      await localforage.removeItem(LEGACY_LOG_STORAGE_KEY)
     } catch (error) {
       console.error('Failed to clear logs:', error)
     }

@@ -47,7 +47,7 @@ type SoulRecord = z.infer<typeof SoulRecordSchema>
 export function buildSoulTemplate(): string {
   return `# Soul
 
-> ${t('This file defines who your Chatbox agent is. It is loaded when an agent session starts.')}
+> ${t('This file defines who your AgentLab agent is. It is loaded when an agent session starts.')}
 > ${t('Keep it short and sharp — operating rules belong in your workspace AGENTS.md, not here.')}
 
 ## ${t('Personality & Tone')}

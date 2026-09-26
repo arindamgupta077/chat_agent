@@ -28,7 +28,7 @@ vi.mock('react-i18next', () => ({
 }))
 
 describe('FileMiniCard session attachment failure', () => {
-  test('shows the available action for a missing Chatbox AI account license', async () => {
+  test('shows the available action for a missing AgentLab AI account license', async () => {
     const onErrorClick = vi.fn()
     render(
       <MantineProvider>
@@ -46,7 +46,7 @@ describe('FileMiniCard session attachment failure', () => {
     expect(screen.getByText('Sign in needed')).toBeTruthy()
     fireEvent.pointerMove(screen.getByText('lecture.pdf').parentElement as HTMLElement)
     const tooltip = await screen.findByRole('tooltip')
-    expect(tooltip.textContent).toContain('Sign in to Chatbox AI')
+    expect(tooltip.textContent).toContain('Configure AgentLab AI License Key')
     expect(tooltip.textContent).not.toContain('choose a different document parser')
     fireEvent.click(screen.getByRole('button', { name: 'lecture.pdf: Sign in needed' }))
     expect(onErrorClick).toHaveBeenCalledOnce()

@@ -487,7 +487,7 @@ AgentLab is an **all-in-one AI chat client** that supports 30+ mainstream models
     if (claimWaitingShownRef.current) return
     claimWaitingShownRef.current = true
 
-    await streamFixedMessage(t("We're waiting for you to finish on chatboxai.app..."), [
+    await streamFixedMessage(t("We're waiting for you to finish on agentlab.local..."), [
       {
         type: 'tool-show_claim_waiting',
         toolCallId: `claim-waiting-${Date.now()}`,

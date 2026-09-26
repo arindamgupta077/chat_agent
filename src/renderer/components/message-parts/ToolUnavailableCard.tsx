@@ -62,13 +62,13 @@ export const ToolUnavailableCard: FC<ToolUnavailableCardProps> = ({ toolLabel, t
           <Stack gap={4}>
             <Text size="sm" fw={600} lh={1.45}>
               {isChatboxSearchSignInRequired
-                ? t('Web Search was not run: sign in to use Chatbox AI Search')
+                ? t('Web Search was not run: sign in to use AgentLab AI Search')
                 : t('{{tool}} could not run', { tool: toolLabel })}
             </Text>
             <Text size="13px" c="var(--chatbox-tint-secondary)" lh={1.6} component="div">
               {isChatboxSearchSignInRequired ? (
                 t(
-                  'Chatbox AI Search is built in and does not require an API key. Sign in to use web search and webpage reading. No web results were used in this response.'
+                  'AgentLab AI Search is built in and does not require an API key. Sign in to use web search and webpage reading. No web results were used in this response.'
                 )
               ) : (
                 <ChatboxAIErrorMessage errorCode={errorCode} trackingSource="msg_tool_error" />
@@ -92,7 +92,7 @@ export const ToolUnavailableCard: FC<ToolUnavailableCardProps> = ({ toolLabel, t
                   background: 'var(--chatbox-background-brand-primary)',
                 }}
               >
-                {t('Sign in to Chatbox AI')}
+                {t('Sign in to AgentLab AI')}
               </Button>
               <Button
                 h={isSmallScreen ? 40 : 32}

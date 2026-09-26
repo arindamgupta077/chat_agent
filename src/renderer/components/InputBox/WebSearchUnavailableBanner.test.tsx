@@ -222,7 +222,7 @@ describe('WebSearchUnavailableBanner', () => {
     )
 
     expect(screen.getByRole('status')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in to Chatbox AI' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in to AgentLab AI' }))
     fireEvent.click(screen.getByRole('button', { name: 'Web Search settings' }))
     expect(mocks.navigateToSettings).toHaveBeenNthCalledWith(1)
     expect(mocks.navigateToSettings).toHaveBeenNthCalledWith(2, '/web-search')

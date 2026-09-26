@@ -136,4 +136,4 @@ export const SESSION_PROMPT_CONTEXT_SNAPSHOT_VERSION = 1
  * edit_file). Backed by app storage, not the filesystem; the explicit scheme avoids
  * colliding with real SOUL.md files in user directories.
  */
-export const SOUL_VIRTUAL_PATH = 'chatbox://SOUL.md'
+export const SOUL_VIRTUAL_PATH = 'agentlab://SOUL.md'

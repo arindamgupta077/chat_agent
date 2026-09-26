@@ -9,7 +9,8 @@ import { readSoul, updateSoul, writeSoul } from '@/stores/agentPersonaStore'
  */
 
 export function isSoulVirtualPath(filePath: string): boolean {
-  return filePath.trim().toLowerCase() === SOUL_VIRTUAL_PATH.toLowerCase()
+  const normalized = filePath.trim().toLowerCase()
+  return normalized === SOUL_VIRTUAL_PATH.toLowerCase() || normalized === 'chatbox://soul.md'
 }
 
 const SNAPSHOT_NOTE = 'The change takes effect in future agent sessions; this session keeps its frozen Soul snapshot.'
