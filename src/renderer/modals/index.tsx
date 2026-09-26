@@ -14,10 +14,12 @@ import ModelEdit from './ModelEdit'
 import ReportContent from './ReportContent'
 import SessionSettings from './SessionSettings'
 import ThreadNameEdit from './ThreadNameEdit'
+import { AutomationTemplateModal } from './AutomationTemplateModal'
 import VibedropPublish from './VibedropPublish'
 import Welcome from './Welcome'
 
 NiceModal.register('welcome', Welcome)
+NiceModal.register('automation-templates', AutomationTemplateModal)
 NiceModal.register('agent-mode-reward-claim-success', AgentModeRewardClaimSuccess)
 NiceModal.register('file-parse-error', FileParseError)
 NiceModal.register('content-viewer', ContentViewer)

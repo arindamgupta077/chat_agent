@@ -57,6 +57,8 @@ import ActionMenu from '../ActionMenu'
 import { ErrorBoundary } from '../common/ErrorBoundary'
 import { ScalableIcon } from '../common/ScalableIcon'
 import { BlockCodeCollapsedStateProvider } from '../Markdown'
+import { AutomationTemplateGrid } from './AutomationTemplateGrid'
+import { fetchPromptToEditor } from '@/packages/templates/automationTemplates'
 import ForkGroup from './ForkGroup'
 import ForkMarkerMessage from './ForkMarkerMessage'
 import Message from './Message'
@@ -611,8 +613,12 @@ const MessageList = forwardRef<MessageListRef, MessageListProps>((props, ref) =>
           className={cn('overflow-hidden h-full pr-0 relative', showMinimap ? 'pl-[28px]' : 'pl-1 sm:pl-0')}
           ref={messageListRef}
         >
-          {/* Virtuoso smooths appended items but snaps same-item height growth; the controller below owns both cases. */}
-          <Virtuoso
+          {renderItems.length === 0 ? (
+            <div className="h-full overflow-y-auto py-6 flex flex-col justify-center">
+              <AutomationTemplateGrid onSelectTemplate={(tmpl) => fetchPromptToEditor(tmpl.prompt, tmpl.title)} />
+            </div>
+          ) : (
+            <Virtuoso
             style={{ scrollbarGutter: isSmallScreen ? 'auto' : 'stable' }}
             className={platformType === 'win32' ? 'scrollbar-custom' : ''}
             data={renderItems}
@@ -676,6 +682,7 @@ const MessageList = forwardRef<MessageListRef, MessageListProps>((props, ref) =>
             totalListHeightChanged={smoothFollowOutput.handleHeightChange}
             onScroll={handleScroll}
           />
+          )}
 
           {showMinimap && <MessageMinimapRail anchors={userMessageAnchors} onJump={handleMinimapJump} />}
 

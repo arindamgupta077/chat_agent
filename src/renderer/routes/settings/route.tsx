@@ -143,7 +143,7 @@ export function SettingsRoot() {
   const isAdmin = user?.role === 'admin'
 
   const visibleItems = ITEMS.filter((item) => {
-    if (!isAdmin && (item.key === 'provider' || item.key === 'default-models')) {
+    if (!isAdmin && (item.key === 'provider' || item.key === 'default-models' || item.key === 'document-parser')) {
       return false
     }
     return true
@@ -219,12 +219,13 @@ export function SettingsRoot() {
         <Box flex="1 1 80%" className="overflow-auto">
           {!isAdmin &&
           (routerState.location.pathname.startsWith('/settings/provider') ||
-            routerState.location.pathname.startsWith('/settings/default-models')) ? (
+            routerState.location.pathname.startsWith('/settings/default-models') ||
+            routerState.location.pathname.startsWith('/settings/document-parser')) ? (
             <Stack p="xl" align="center" justify="center" h="100%" gap="md" ta="center">
               <ScalableIcon icon={IconShieldCheck} size={48} className="text-amber-400" />
               <Title order={4}>Admin Configuration Only</Title>
               <Text size="sm" c="dimmed" maw={450}>
-                AI models, providers, and default model selections are configured centrally by administrators. Normal users cannot view or modify these settings.
+                AI models, providers, default model selections, and document parser settings are configured centrally by administrators. Normal users cannot view or modify these settings.
               </Text>
             </Stack>
           ) : (

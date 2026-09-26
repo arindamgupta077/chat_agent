@@ -178,7 +178,7 @@ export default function Sidebar() {
               gap="sm"
               style={{ minWidth: 0 }}
             >
-              <Image src={icon} w={20} h={20} style={{ flexShrink: 0 }} />
+              <Image src={icon} w={32} h={32} style={{ flexShrink: 0 }} />
               <Text span c="chatbox-secondary" size="xl" lh={1.2} fw="700" truncate>
                 AgentLab
               </Text>

@@ -1,7 +1,8 @@
-import { Alert, Box, Button, Card, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core'
-import { IconAlertCircle, IconArrowRight, IconBrain, IconCheck, IconLock, IconMail } from '@tabler/icons-react'
+import { Alert, Box, Button, Card, Image, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core'
+import { IconAlertCircle, IconArrowRight, IconCheck, IconLock, IconMail } from '@tabler/icons-react'
 import React, { useState } from 'react'
 import { useAppAuthStore } from '@/stores/appAuthStore'
+import icon from '@/static/icon.png'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -66,44 +67,32 @@ export default function LoginPage() {
       <div className="w-full max-w-[420px] z-10 flex flex-col items-center">
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="relative mb-3">
-            <div
-              className="absolute -inset-1 rounded-2xl opacity-40 blur-md"
-              style={{
-                background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
-              }}
+          <div className="flex items-center justify-center gap-3.5 mb-2">
+            <Image
+              src={icon}
+              w={52}
+              h={52}
+              style={{ flexShrink: 0 }}
+              alt="AgentLab Logo"
             />
-            <div
-              className="relative rounded-2xl flex items-center justify-center shadow-lg"
+            <Title
+              order={2}
               style={{
-                width: '52px',
-                height: '52px',
-                background: 'linear-gradient(135deg, #2563eb 0%, #4338ca 50%, #6d28d9 100%)',
-                border: '1px solid rgba(255, 255, 255, 0.4)',
-                boxShadow: '0 8px 20px -4px rgba(37, 99, 235, 0.35)',
-                color: '#ffffff',
+                fontWeight: 800,
+                letterSpacing: '-0.5px',
+                fontSize: '2.1rem',
+                color: '#0f172a',
+                lineHeight: 1.2,
               }}
             >
-              <IconBrain size={28} stroke={2.2} />
-            </div>
+              AgentLab
+            </Title>
           </div>
-
-          <Title
-            order={2}
-            style={{
-              fontWeight: 800,
-              letterSpacing: '-0.5px',
-              fontSize: '1.75rem',
-              color: '#0f172a',
-            }}
-          >
-            AgentLab
-          </Title>
 
           <Text
             size="sm"
             ta="center"
-            mt={6}
+            mt={4}
             style={{
               color: '#475569',
               lineHeight: 1.45,

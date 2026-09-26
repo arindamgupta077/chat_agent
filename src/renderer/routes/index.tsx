@@ -44,6 +44,8 @@ import { initEmptyChatSession } from '@/stores/sessionHelpers'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useUIStore } from '@/stores/uiStore'
 import { getHomeWelcomeCardMode } from '@/utils/homeWelcomeCard'
+import { AutomationTemplateGrid } from '@/components/chat/AutomationTemplateGrid'
+import { fetchPromptToEditor } from '@/packages/templates/automationTemplates'
 import { NewUserScenarioGrid } from './-new-user-scenarios/NewUserScenarioGrid'
 import { type NewUserScenario, newUserScenarios, resolveNewUserScenarioContent } from './-new-user-scenarios/scenarios'
 
@@ -453,12 +455,9 @@ function Index() {
               <NewUserScenarioGrid scenarios={newUserScenarios} onSelect={handleScenarioSelect} />
             </Stack>
           ) : (
-            <Stack align="center" justify="center" gap="sm" className="min-h-full">
-              <HomepageIcon className="h-8" />
-              <Text fw="600" size={isSmallScreen ? 'sm' : 'md'}>
-                {t('What can I help you with today?')}
-              </Text>
-            </Stack>
+            <div className="min-h-full flex flex-col justify-center py-6">
+              <AutomationTemplateGrid onSelectTemplate={(tmpl) => fetchPromptToEditor(tmpl.prompt, tmpl.title)} />
+            </div>
           )}
         </div>
 

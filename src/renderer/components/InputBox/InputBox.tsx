@@ -21,6 +21,7 @@ import {
   IconAlertCircle,
   IconArrowBackUp,
   IconArrowUp,
+  IconBolt,
   IconChevronRight,
   IconCirclePlus,
   IconFilePencil,
@@ -1462,6 +1463,8 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
 
     const quote = useUIStore((state) => state.quote)
     const setQuote = useUIStore((state) => state.setQuote)
+    const pendingPromptTemplate = useUIStore((state) => state.pendingPromptTemplate)
+    const setPendingPromptTemplate = useUIStore((state) => state.setPendingPromptTemplate)
     // const [quote, setQuote] = useUIStore(state => [state]) useAtom(atoms.quoteAtom)
     // biome-ignore lint/correctness/useExhaustiveDependencies: todo
     useEffect(() => {
@@ -1478,6 +1481,17 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
         dom.setMessageInputCursorToEnd()
       }
     }, [quote])
+
+    useEffect(() => {
+      if (pendingPromptTemplate !== null && pendingPromptTemplate !== undefined) {
+        setPendingPromptTemplate(null)
+        messageInputFieldRef.current?.setValue(pendingPromptTemplate)
+        setTimeout(() => {
+          dom.focusMessageInput()
+          dom.setMessageInputCursorToEnd()
+        }, 50)
+      }
+    }, [pendingPromptTemplate, setPendingPromptTemplate])
 
     const handleKnowledgeBaseSelect = useCallback(
       (kb: KnowledgeBase | null) => {
@@ -1944,6 +1958,20 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                   draftCopilotName={draftCopilotName}
                 />
 
+                <Tooltip label={t('Automation Workflow Templates')} position="top" withArrow>
+                  <UnstyledButton
+                    data-testid="automation-templates-button"
+                    aria-label={t('Automation Workflow Templates')}
+                    onClick={() => void NiceModal.show('automation-templates')}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-[var(--chatbox-background-tertiary)] transition-colors"
+                  >
+                    <IconBolt size={toolbarIconSize} strokeWidth={1.8} className="text-[var(--chatbox-tint-brand)]" />
+                    {!isSmallScreen && (
+                      <span className="text-xs font-semibold text-[var(--chatbox-tint-brand)]">{t('Templates')}</span>
+                    )}
+                  </UnstyledButton>
+                </Tooltip>
+
                 {!isSmallScreen &&
                   canCreateThread &&
                   (showRollbackThreadButton ? (
@@ -2091,8 +2119,6 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
               </Flex>
             </Flex>
           </Box>
-
-          <Disclaimer />
         </Stack>
         {currentSession && (
           <CompressionModal

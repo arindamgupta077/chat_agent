@@ -89,8 +89,12 @@ export const uiStore = createStore(
         agentModeLastSelected: 'off' as Extract<AgentModeValue, 'on' | 'off'>,
         sessionAgentModeMap: {} as Record<string, AgentModeEntry>,
         promptCacheBreakConfirmDismissed: {} as Record<string, boolean>,
+        pendingPromptTemplate: null as string | null,
       },
       (set, get) => ({
+        setPendingPromptTemplate: (pendingPromptTemplate: string | null) => {
+          set({ pendingPromptTemplate })
+        },
         addToast: (content: string, duration?: number, action?: Toast['action']) => {
           const newToast = { id: `toast:${uuidv4()}`, content, duration, action }
           set((state) => ({

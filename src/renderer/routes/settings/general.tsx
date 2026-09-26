@@ -57,6 +57,7 @@ import { getMetaStorage } from '@/stores/sessionHelpers'
 import { migrateOnData } from '@/stores/migration'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { useUIStore } from '@/stores/uiStore'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 
 export const Route = createFileRoute('/settings/general')({
   component: RouteComponent,
@@ -82,6 +83,8 @@ function serializeErrorForLog(error: unknown) {
 
 export function RouteComponent() {
   const { t } = useTranslation()
+  const user = useAppAuthStore((state) => state.user)
+  const isAdmin = user?.role === 'admin'
   const { setSettings, ...settings } = useSettingsStore((state) => state)
   const realTheme = useUIStore((state) => state.realTheme)
   const storedInterfaceColors = (settings.interfaceColors ?? getDefaultInterfaceColors())[realTheme]
@@ -433,35 +436,39 @@ export function RouteComponent() {
       {/* Data Recovery */}
       <DataRecoverySection />
 
-      <Divider />
+      {isAdmin && (
+        <>
+          <Divider />
 
-      {/* import and export data */}
-      <ImportExportDataSection />
+          {/* import and export data */}
+          <ImportExportDataSection />
 
-      <Divider />
+          <Divider />
 
-      {/* Export Logs */}
-      <ExportLogsSection />
+          {/* Export Logs */}
+          <ExportLogsSection />
 
-      <Divider />
+          <Divider />
 
-      {/* Error Reporting */}
-      <Stack gap="md">
-        <Stack gap="xxs">
-          <Title order={5}>{t('Error Reporting')}</Title>
-          <Text c="chatbox-tertiary">
-            {t(
-              'AgentLab respects your privacy and only uploads anonymous error data and events when necessary. You can change your preferences at any time in the settings.'
-            )}
-          </Text>
-        </Stack>
+          {/* Error Reporting */}
+          <Stack gap="md">
+            <Stack gap="xxs">
+              <Title order={5}>{t('Error Reporting')}</Title>
+              <Text c="chatbox-tertiary">
+                {t(
+                  'AgentLab respects your privacy and only uploads anonymous error data and events when necessary. You can change your preferences at any time in the settings.'
+                )}
+              </Text>
+            </Stack>
 
-        <Checkbox
-          label={t('Enable optional anonymous reporting of crash and event data')}
-          checked={settings.allowReportingAndTracking}
-          onChange={(e) => setSettings({ allowReportingAndTracking: e.target.checked })}
-        />
-      </Stack>
+            <Checkbox
+              label={t('Enable optional anonymous reporting of crash and event data')}
+              checked={settings.allowReportingAndTracking}
+              onChange={(e) => setSettings({ allowReportingAndTracking: e.target.checked })}
+            />
+          </Stack>
+        </>
+      )}
     </Stack>
   )
 }

@@ -7,7 +7,7 @@ export function navigateToSettings(path?: string) {
   const user = useAppAuthStore.getState().user
   const isAdmin = user?.role === 'admin'
 
-  // Restrict model provider and default models configuration to admin users only
+  // Restrict model provider, default models, and document parser configuration to admin users only
   if (!isAdmin) {
     if (
       !targetPath ||
@@ -18,7 +18,11 @@ export function navigateToSettings(path?: string) {
       targetPath === '/default-models' ||
       targetPath === 'default-models' ||
       targetPath.startsWith('/default-models/') ||
-      targetPath.startsWith('default-models/')
+      targetPath.startsWith('default-models/') ||
+      targetPath === '/document-parser' ||
+      targetPath === 'document-parser' ||
+      targetPath.startsWith('/document-parser/') ||
+      targetPath.startsWith('document-parser/')
     ) {
       targetPath = '/general'
     }
