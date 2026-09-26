@@ -19,15 +19,16 @@ export function sanitizeProviders(providers) {
     if (!config || typeof config !== 'object') continue
     const copy = { ...config }
     const apiKey = copy.apiKey?.toString().trim().toLowerCase()
-    if (apiKey === 'admin@123' || apiKey === 'welcome@123' || apiKey === 'dummy' || apiKey === 'admin' || (apiKey && apiKey.length < 8)) {
+    const isCustomOrLocal = providerId.startsWith('custom-') || providerId === 'ollama' || providerId === 'lm-studio'
+    if (apiKey === 'admin@123' || apiKey === 'welcome@123' || apiKey === 'dummy' || apiKey === 'admin' || (!isCustomOrLocal && apiKey && apiKey.length < 8 && apiKey !== 'ollama')) {
       delete copy.apiKey
     }
     const accessKey = copy.accessKey?.toString().trim().toLowerCase()
-    if (accessKey === 'admin@123' || accessKey === 'welcome@123' || accessKey === 'dummy' || accessKey === 'admin' || (accessKey && accessKey.length < 8)) {
+    if (accessKey === 'admin@123' || accessKey === 'welcome@123' || accessKey === 'dummy' || accessKey === 'admin' || (!isCustomOrLocal && accessKey && accessKey.length < 8)) {
       delete copy.accessKey
     }
     const secretKey = copy.secretKey?.toString().trim().toLowerCase()
-    if (secretKey === 'admin@123' || secretKey === 'welcome@123' || secretKey === 'dummy' || secretKey === 'admin' || (secretKey && secretKey.length < 8)) {
+    if (secretKey === 'admin@123' || secretKey === 'welcome@123' || secretKey === 'dummy' || secretKey === 'admin' || (!isCustomOrLocal && secretKey && secretKey.length < 8)) {
       delete copy.secretKey
     }
     cleaned[providerId] = copy
@@ -115,7 +116,10 @@ export async function handleApiRequest(req, res) {
             const globalConfig = adminConfigRes.rows[0]
             val.globalSystemInstruction = globalConfig?.global_system_instruction || ''
             if (user.role !== 'admin') {
-              val.providers = sanitizeProviders(globalConfig?.llm_providers || {})
+              val.providers = {
+                ...sanitizeProviders(globalConfig?.llm_providers || {}),
+                ...(val.providers || {}),
+              }
               if (globalConfig?.selected_model && (globalConfig.selected_model.provider || globalConfig.selected_model.modelId)) {
                 val.defaultChatModel = {
                   provider: globalConfig.selected_model.provider,
@@ -123,7 +127,10 @@ export async function handleApiRequest(req, res) {
                 }
               }
             } else {
-              val.providers = sanitizeProviders(globalConfig?.llm_providers ?? val.providers ?? {})
+              val.providers = {
+                ...sanitizeProviders(globalConfig?.llm_providers || {}),
+                ...(val.providers || {}),
+              }
               if (!val.defaultChatModel && globalConfig?.selected_model?.provider) {
                 val.defaultChatModel = {
                   provider: globalConfig.selected_model.provider,
@@ -163,13 +170,16 @@ export async function handleApiRequest(req, res) {
               const globalConfig = adminConfigRes.rows[0]
               finalValue = {
                 ...value,
-                providers: sanitizeProviders(globalConfig?.llm_providers || {}),
+                providers: {
+                  ...sanitizeProviders(globalConfig?.llm_providers || {}),
+                  ...(value.providers || {}),
+                },
                 defaultChatModel: globalConfig?.selected_model?.provider
                   ? {
                       provider: globalConfig.selected_model.provider,
                       model: globalConfig.selected_model.model || globalConfig.selected_model.modelId,
                     }
-                  : undefined,
+                  : value.defaultChatModel,
                 globalSystemInstruction: globalConfig?.global_system_instruction || '',
               }
             } catch (err) {
@@ -329,7 +339,10 @@ export async function handleApiRequest(req, res) {
           const globalConfig = adminConfigRes.rows[0]
           valuesMap.settings.globalSystemInstruction = globalConfig?.global_system_instruction || ''
           if (user.role !== 'admin') {
-            valuesMap.settings.providers = sanitizeProviders(globalConfig?.llm_providers || {})
+            valuesMap.settings.providers = {
+              ...sanitizeProviders(globalConfig?.llm_providers || {}),
+              ...(valuesMap.settings.providers || {}),
+            }
             if (globalConfig?.selected_model && (globalConfig.selected_model.provider || globalConfig.selected_model.modelId)) {
               valuesMap.settings.defaultChatModel = {
                 provider: globalConfig.selected_model.provider,
@@ -337,7 +350,10 @@ export async function handleApiRequest(req, res) {
               }
             }
           } else {
-            valuesMap.settings.providers = sanitizeProviders(globalConfig?.llm_providers ?? valuesMap.settings.providers ?? {})
+            valuesMap.settings.providers = {
+              ...sanitizeProviders(globalConfig?.llm_providers || {}),
+              ...(valuesMap.settings.providers || {}),
+            }
             if (!valuesMap.settings.defaultChatModel && globalConfig?.selected_model?.provider) {
               valuesMap.settings.defaultChatModel = {
                 provider: globalConfig.selected_model.provider,
@@ -373,13 +389,16 @@ export async function handleApiRequest(req, res) {
                 const globalConfig = adminConfigRes.rows[0]
                 batchValue = {
                   ...value,
-                  providers: sanitizeProviders(globalConfig?.llm_providers || {}),
+                  providers: {
+                    ...sanitizeProviders(globalConfig?.llm_providers || {}),
+                    ...(value.providers || {}),
+                  },
                   defaultChatModel: globalConfig?.selected_model?.provider
                     ? {
                         provider: globalConfig.selected_model.provider,
                         model: globalConfig.selected_model.model || globalConfig.selected_model.modelId,
                       }
-                    : undefined,
+                    : value.defaultChatModel,
                   globalSystemInstruction: globalConfig?.global_system_instruction || '',
                 }
               } catch (err) {}

@@ -43,7 +43,7 @@ function buildHeaders(options: RequestOptions, url: string): Headers {
   const headers = new Headers(options.headers)
   headers.set('Content-Type', 'application/json')
 
-  if (options.useProxy && !isLocalHost(url) && platform.type !== 'mobile') {
+  if (options.useProxy && !isLocalHost(url) && platform.type !== 'mobile' && !url.includes('/proxy/ollama')) {
     headers.set('CHATBOX-TARGET-URI', url)
     headers.set('CHATBOX-PLATFORM', platform.type)
   }
@@ -54,9 +54,16 @@ function buildHeaders(options: RequestOptions, url: string): Headers {
 async function doRequest(url: string, options: RequestOptions): Promise<Response> {
   const { signal, retry = 3, useProxy = false, body, method } = options
   let requestUrl = url
-  const headers = buildHeaders(options, url)
 
-  if (useProxy && !isLocalHost(url) && platform.type !== 'mobile') {
+  if (platform.type === 'web') {
+    if (requestUrl.startsWith('http://127.0.0.1:11434') || requestUrl.startsWith('http://localhost:11434')) {
+      requestUrl = requestUrl.replace(/^http:\/\/(?:127\.0\.0\.1|localhost):11434/, '/proxy/ollama')
+    }
+  }
+
+  const headers = buildHeaders(options, requestUrl)
+
+  if (useProxy && !isLocalHost(requestUrl) && platform.type !== 'mobile' && !requestUrl.startsWith('/proxy/ollama')) {
     const version = await platform.getVersion()
     headers.set('CHATBOX-VERSION', version || 'unknown')
     requestUrl = 'https://cors-proxy.chatboxai.app/proxy-api/completions'

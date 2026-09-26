@@ -26,11 +26,15 @@ export function normalizeOpenAIApiHostAndPath(
   }
   // URL schemes are case-insensitive. Mobile keyboards may capitalize the first
   // character, so normalize an explicit HTTP(S) scheme before applying defaults.
-  const scheme = apiHost.match(/^https?:\/\//i)?.[0]
-  if (scheme) {
-    apiHost = `${scheme.toLowerCase()}${apiHost.slice(scheme.length)}`
+  if (apiHost.startsWith('/')) {
+    // Relative URL (e.g., /proxy/ollama)
   } else {
-    apiHost = `https://${apiHost}`
+    const scheme = apiHost.match(/^https?:\/\//i)?.[0]
+    if (scheme) {
+      apiHost = `${scheme.toLowerCase()}${apiHost.slice(scheme.length)}`
+    } else {
+      apiHost = `https://${apiHost}`
+    }
   }
   //   apiHost=https://my.proxy.com/v1/chat/completions
   if (apiHost.endsWith(DEFAULT_PATH)) {

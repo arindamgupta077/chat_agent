@@ -4,7 +4,7 @@
  * High-performance, zero-dependency Node.js server optimized for hosting
  * on Linux (RHEL, Rocky, Alma, Ubuntu) or container environments.
  * 
- * Default Port: 3002 (Configurable via PORT env var)
+ * Default Port: 3001 (Configurable via PORT env var)
  * Default Host: 0.0.0.0 (Configurable via HOST env var)
  */
 
@@ -21,10 +21,11 @@ import { handleApiRequest } from './server/api.mjs'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const PORT = Number(process.env.PORT) || 3002
+const PORT = Number(process.env.PORT) || 3001
 const HOST = process.env.HOST || '0.0.0.0'
 const STATIC_DIR = path.resolve(process.env.STATIC_DIR || path.join(__dirname, 'dist'))
 const N8N_URL = process.env.N8N_URL || 'http://localhost:5678'
+const OLLAMA_URL = process.env.OLLAMA_URL || process.env.OLLAMA_HOST || 'http://127.0.0.1:11434'
 const BING_TARGET = 'https://www.bing.com'
 
 const MIME_TYPES = {
@@ -272,6 +273,12 @@ const server = http.createServer((req, res) => {
       'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     })
+    return
+  }
+
+  // 3.5 Reverse proxy: Ollama local LLM
+  if (pathname.startsWith('/proxy/ollama')) {
+    proxyHttpRequest(req, res, OLLAMA_URL, '/proxy/ollama')
     return
   }
 

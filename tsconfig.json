@@ -17,7 +17,7 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "allowJs": true,
-    "outDir": ".erb/dll",
+    "outDir": "dist",
     "skipLibCheck": true
   },
   "exclude": [
@@ -27,12 +27,10 @@
     "test",
     "release",
     "out",
-    ".erb/dll",
     "ios",
     "android",
     "**/*.stories.tsx",
     "**/*.stories.ts",
-    ".storybook",
-    ".pnpm-store",
+    ".pnpm-store"
   ]
 }

@@ -1,3 +1,4 @@
+import type { ProviderModelInfo } from '../../../types'
 import OpenAICompatible, { type OpenAICompatibleSettings } from '../../../models/openai-compatible'
 import type { ModelDependencies } from '../../../types/adapters'
 import { normalizeOpenAIApiHostAndPath } from '../../../utils/llm_utils'
@@ -73,4 +74,75 @@ export default class Ollama extends OpenAICompatible {
   public isSupportVision(): boolean {
     return helpers.isModelSupportVision(this.options.model.modelId) || super.isSupportVision()
   }
+
+  public async listModels(): Promise<ProviderModelInfo[]> {
+    const rawHost = (this.options.ollamaHost || 'http://127.0.0.1:11434').trim()
+    const baseHost = rawHost.replace(/\/v1\/?$/, '').replace(/\/$/, '')
+
+    // 1. First attempt: Query Ollama native /api/tags endpoint
+    try {
+      const tagsUrl = `${baseHost}/api/tags`
+      const response = await this.dependencies.request.apiRequest({
+        url: tagsUrl,
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
+        useProxy: this.options.useProxy,
+      })
+      const json = await response.json()
+      if (Array.isArray(json?.models) && json.models.length > 0) {
+        return json.models.map((item: any) => {
+          const modelId: string = item.name || item.model
+          const capabilities: ProviderModelInfo['capabilities'] = []
+          if (helpers.isModelSupportVision(modelId)) {
+            capabilities.push('vision')
+          }
+          if (helpers.isModelSupportToolUse(modelId)) {
+            capabilities.push('tool_use')
+          }
+          const modelInfo: ProviderModelInfo = {
+            modelId,
+            nickname: item.name || item.model,
+            type: 'chat',
+          }
+          if (capabilities.length > 0) {
+            modelInfo.capabilities = capabilities
+          }
+          return modelInfo
+        })
+      }
+    } catch (err) {
+      console.warn('[Ollama] Failed to fetch models from /api/tags, trying /v1/models fallback:', err)
+    }
+
+    // 2. Second attempt: Query OpenAI-compatible /v1/models endpoint via super.listModels()
+    try {
+      const models = await super.listModels()
+      if (models.length > 0) {
+        return models.map((m) => {
+          const capabilities: ProviderModelInfo['capabilities'] = [...(m.capabilities || [])]
+          if (helpers.isModelSupportVision(m.modelId) && !capabilities.includes('vision')) {
+            capabilities.push('vision')
+          }
+          if (helpers.isModelSupportToolUse(m.modelId) && !capabilities.includes('tool_use')) {
+            capabilities.push('tool_use')
+          }
+          return {
+            ...m,
+            nickname: m.nickname || m.modelId,
+            capabilities: capabilities.length > 0 ? capabilities : undefined,
+          }
+        })
+      }
+    } catch (err) {
+      console.warn('[Ollama] Failed to fetch models from /v1/models:', err)
+    }
+
+    if (this.options.listModelsFallback) {
+      return this.options.listModelsFallback
+    }
+    return []
+  }
 }
+

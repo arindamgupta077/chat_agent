@@ -27,6 +27,9 @@ export default abstract class BaseConfig implements ModelSettingUtil {
   protected abstract listProviderModels(settings: ProviderSettings): Promise<ProviderModelInfo[]>
 
   private async listRemoteProviderModels(): Promise<ProviderModelInfo[]> {
+    if (this.provider === 'ollama' || this.provider === 'lm-studio') {
+      return []
+    }
     return await remote
       .getModelManifest({
         aiProvider: this.provider,

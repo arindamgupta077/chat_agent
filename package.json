@@ -17,7 +17,7 @@
     "dev:local": "cross-env USE_LOCAL_API=true vite --config vite.config.web.ts",
     "dev:web": "vite --config vite.config.web.ts",
     "dev:web:standalone": "vite --config vite.config.web.ts",
-    "start": "vite --config vite.config.web.ts",
+    "start": "node server.mjs",
     "serve": "node server.mjs",
     "serve:prod": "node server.mjs",
     "start:prod": "pnpm run build && node server.mjs",
@@ -47,12 +47,10 @@
     "mobile:ios": "pnpm run mobile:sync:ios && npx cap open ios",
     "mobile:android": "pnpm run mobile:sync:android && npx cap open android",
     "mobile:assets": "npx capacitor-assets generate --ios --android",
-    "prepare": "node -e \"if (require('fs').existsSync('.git')) { try { require('child_process').execSync('husky', { stdio: 'inherit' }); } catch(e) {} }\" || true",
+    "prepare": "node -e \"\"",
     "check:error-i18n-keys": "node script/sync-error-i18n-keys.mjs --check",
     "sync:error-i18n-keys": "node script/sync-error-i18n-keys.mjs",
-    "translate": "pnpm run sync:error-i18n-keys && i18next && node script/translate.mjs",
-    "storybook": "cross-env NODE_OPTIONS=\"--require=./.storybook/ignore-root-env.cjs\" storybook dev -p 6006",
-    "build-storybook": "cross-env NODE_OPTIONS=\"--require=./.storybook/ignore-root-env.cjs\" storybook build"
+    "translate": "pnpm run sync:error-i18n-keys && i18next && node script/translate.mjs"
   },
   "repository": {
     "type": "git",

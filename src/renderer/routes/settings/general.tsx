@@ -63,7 +63,7 @@ export const Route = createFileRoute('/settings/general')({
 })
 
 const presetBadgeButtonClassName =
-  'transition-transform duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none'
+  'transition-transform duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none'
 
 function serializeErrorForLog(error: unknown) {
   if (error instanceof Error || error instanceof DOMException) {

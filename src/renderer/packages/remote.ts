@@ -104,7 +104,7 @@ export function getAPIOrigin() {
 
 export function getChatboxOrigin() {
   if (USE_LOCAL_CHATBOX) {
-    return 'http://localhost:3002'
+    return 'http://localhost:3001'
   } else if (USE_BETA_CHATBOX) {
     return 'https://beta.chatboxai.app'
   } else {

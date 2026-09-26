@@ -108,7 +108,7 @@ export default defineConfig({
   },
   server: {
     host: process.env.HOST || process.env.DEV_HOST || '0.0.0.0',
-    port: Number(process.env.PORT || process.env.DEV_PORT) || 3002,
+    port: Number(process.env.PORT || process.env.DEV_PORT) || 3001,
     proxy: {
       '/n8n-mcp': {
         target: process.env.N8N_URL || 'http://localhost:5678',
@@ -116,6 +116,12 @@ export default defineConfig({
         secure: false,
         ws: true,
         rewrite: (path) => path.replace(/^\/n8n-mcp/, ''),
+      },
+      '/proxy/ollama': {
+        target: process.env.OLLAMA_URL || process.env.OLLAMA_HOST || 'http://127.0.0.1:11434',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/proxy\/ollama/, ''),
       },
       '/proxy/bing': {
         target: 'https://www.bing.com',
@@ -133,7 +139,7 @@ export default defineConfig({
   },
   preview: {
     host: process.env.HOST || process.env.DEV_HOST || '0.0.0.0',
-    port: Number(process.env.PORT || process.env.DEV_PORT) || 3002,
+    port: Number(process.env.PORT || process.env.DEV_PORT) || 3001,
     proxy: {
       '/n8n-mcp': {
         target: process.env.N8N_URL || 'http://localhost:5678',
@@ -141,6 +147,12 @@ export default defineConfig({
         secure: false,
         ws: true,
         rewrite: (path) => path.replace(/^\/n8n-mcp/, ''),
+      },
+      '/proxy/ollama': {
+        target: process.env.OLLAMA_URL || process.env.OLLAMA_HOST || 'http://127.0.0.1:11434',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/proxy\/ollama/, ''),
       },
       '/proxy/bing': {
         target: 'https://www.bing.com',
