@@ -115,7 +115,6 @@ import * as toastActions from '../../stores/toastActions'
 import type { PreprocessedFile } from '../../types/input-box'
 import { CompactionStatus } from '../chat/CompactionStatus'
 import { AdaptiveModal } from '../common/AdaptiveModal'
-import { CompressionModal } from '../common/CompressionModal'
 import { ScalableIcon } from '../common/ScalableIcon'
 import Disclaimer from '../Disclaimer'
 import ProviderImageIcon from '../icons/ProviderImageIcon'
@@ -487,8 +486,6 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
     // Items already queued before the mode split still drain in order.
     const queueEnabled = isActionAvailableInMode('queue-message', sessionMode)
     const canCreateThread = isActionAvailableInMode('create-thread', sessionMode)
-
-    const [showCompressionModal, setShowCompressionModal] = useState(false)
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const activeSubmitRef = useRef<{ token: symbol; startedWhileGenerating: boolean } | null>(null)
@@ -2029,7 +2026,6 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                   contextWindow={effectiveContextWindow ?? undefined}
                   currentMessageCount={currentContextMessageIds?.length ?? 0}
                   maxContextMessageCount={currentSessionMergedSettings?.maxContextMessageCount}
-                  onCompressClick={isAdmin && sessionId && !isNewSession ? () => setShowCompressionModal(true) : undefined}
                   isCompacting={isCompacting}
                   contextWindowKnown={contextWindowKnown}
                 >
@@ -2096,13 +2092,6 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
             </Flex>
           </Box>
         </Stack>
-        {isAdmin && currentSession && (
-          <CompressionModal
-            opened={showCompressionModal}
-            onClose={() => setShowCompressionModal(false)}
-            session={currentSession}
-          />
-        )}
         <AdaptiveModal
           opened={unreadyAttachmentSubmitPrompt.opened}
           onClose={() => setUnreadyAttachmentSubmitPrompt((prev) => ({ ...prev, opened: false }))}

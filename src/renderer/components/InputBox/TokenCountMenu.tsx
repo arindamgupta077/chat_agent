@@ -1,11 +1,8 @@
 import { Flex, Loader, Menu, Text } from '@mantine/core'
 import { formatNumber } from '@shared/utils'
-import { IconFileZip } from '@tabler/icons-react'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useIsSmallScreen } from '@/hooks/useScreenChange'
-import { useAppAuthStore } from '@/stores/appAuthStore'
-import { ScalableIcon } from '../common/ScalableIcon'
 
 type Props = {
   currentInputTokens: number
@@ -22,7 +19,6 @@ type Props = {
   currentMessageCount?: number
   maxContextMessageCount?: number
   children?: React.ReactNode
-  onCompressClick?: () => void
   isCompacting?: boolean
   contextWindowKnown?: boolean
 }
@@ -42,14 +38,11 @@ const TokenCountMenu: FC<Props> = ({
   currentMessageCount,
   maxContextMessageCount,
   children,
-  onCompressClick,
   isCompacting,
   contextWindowKnown = true,
 }) => {
   const { t } = useTranslation()
   const isSmallScreen = useIsSmallScreen()
-  const user = useAppAuthStore((s) => s.user)
-  const isAdmin = user?.role === 'admin'
 
   return (
     <Menu
@@ -143,19 +136,6 @@ const TokenCountMenu: FC<Props> = ({
           </Menu.Item>
         )}
 
-
-        {isAdmin && onCompressClick && contextTokens > 0 && (
-          <>
-            <Menu.Divider />
-            <Menu.Item
-              leftSection={<ScalableIcon icon={IconFileZip} size={16} />}
-              onClick={onCompressClick}
-              color="chatbox-brand"
-            >
-              {t('Compress Conversation')}
-            </Menu.Item>
-          </>
-        )}
       </Menu.Dropdown>
     </Menu>
   )

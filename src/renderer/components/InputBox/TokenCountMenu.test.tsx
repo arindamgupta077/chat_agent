@@ -116,7 +116,7 @@ describe('TokenCountMenu', () => {
     expect(screen.queryByText('Auto Compaction')).toBeNull()
   })
 
-  it('renders Compress Conversation option for admin user when onCompressClick is provided and contextTokens > 0', () => {
+  it('never renders Compress Conversation option even for admin user', () => {
     useAppAuthStore.setState({
       user: {
         id: 'admin-1',
@@ -129,40 +129,6 @@ describe('TokenCountMenu', () => {
 
     renderMenu({
       contextTokens: 500,
-      onCompressClick: vi.fn(),
-    })
-
-    expect(screen.getByText('Compress Conversation')).toBeTruthy()
-  })
-
-  it('hides Compress Conversation option for regular non-admin user even when onCompressClick is provided', () => {
-    useAppAuthStore.setState({
-      user: {
-        id: 'user-1',
-        username: 'user',
-        email: 'user@test.com',
-        role: 'user',
-      },
-      isAuthenticated: true,
-    })
-
-    renderMenu({
-      contextTokens: 500,
-      onCompressClick: vi.fn(),
-    })
-
-    expect(screen.queryByText('Compress Conversation')).toBeNull()
-  })
-
-  it('hides Compress Conversation option when unauthenticated', () => {
-    useAppAuthStore.setState({
-      user: null,
-      isAuthenticated: false,
-    })
-
-    renderMenu({
-      contextTokens: 500,
-      onCompressClick: vi.fn(),
     })
 
     expect(screen.queryByText('Compress Conversation')).toBeNull()
