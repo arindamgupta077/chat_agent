@@ -113,6 +113,12 @@ function RouteComponent() {
       return currentSession
     }
     if (!isAdmin && defaultChatModel?.provider && defaultChatModel?.model) {
+      if (
+        currentSession.settings?.provider === defaultChatModel.provider &&
+        currentSession.settings?.modelId === defaultChatModel.model
+      ) {
+        return currentSession
+      }
       return {
         ...currentSession,
         settings: {
@@ -247,12 +253,19 @@ function RouteComponent() {
     messageListRef.current?.scrollToMessage(summaryMessageId)
   }, [])
 
-  const model = useMemo(() => {
+  const enforcedNonAdminModel = useMemo(() => {
     if (!isAdmin && defaultChatModel?.provider && defaultChatModel?.model) {
       return {
         provider: defaultChatModel.provider,
         modelId: defaultChatModel.model,
       }
+    }
+    return undefined
+  }, [isAdmin, defaultChatModel?.provider, defaultChatModel?.model])
+
+  const model = useMemo(() => {
+    if (enforcedNonAdminModel) {
+      return enforcedNonAdminModel
     }
     const provider = currentSessionWithDefaultModel?.settings?.provider
     const modelId = currentSessionWithDefaultModel?.settings?.modelId
@@ -263,7 +276,7 @@ function RouteComponent() {
       provider,
       modelId,
     }
-  }, [isAdmin, defaultChatModel, currentSessionWithDefaultModel?.settings?.provider, currentSessionWithDefaultModel?.settings?.modelId])
+  }, [enforcedNonAdminModel, currentSessionWithDefaultModel?.settings?.provider, currentSessionWithDefaultModel?.settings?.modelId])
 
   const onArchiveBrokenSession = useCallback(async () => {
     try {

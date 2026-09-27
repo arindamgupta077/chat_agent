@@ -120,7 +120,7 @@ function useDraftTextTokens(options: { text: string; tokenizerType: TokenizerTyp
 export function useTokenEstimation(options: UseTokenEstimationOptions): TokenEstimationResult {
   const { sessionId, constructedMessage, contextMessages, model, modelSupportToolUseForFile, sandboxMode } = options
 
-  const tokenizerType = useMemo(() => getTokenizerType(model), [model])
+  const tokenizerType = useMemo(() => getTokenizerType(model), [model?.provider, model?.modelId])
 
   const [queueStatus, setQueueStatus] = useState<QueueStatus>({
     pending: 0,

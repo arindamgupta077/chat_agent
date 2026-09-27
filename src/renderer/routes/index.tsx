@@ -116,12 +116,19 @@ function Index() {
     [providers.length, isLoggedIn, hasLicense, hasExpiredLicense, isExceeded, isExceededResolved]
   )
 
-  const selectedModel = useMemo(() => {
+  const enforcedNonAdminModel = useMemo(() => {
     if (!isAdmin && defaultChatModel?.provider && defaultChatModel?.model) {
       return {
         provider: defaultChatModel.provider,
         modelId: defaultChatModel.model,
       }
+    }
+    return undefined
+  }, [isAdmin, defaultChatModel?.provider, defaultChatModel?.model])
+
+  const selectedModel = useMemo(() => {
+    if (enforcedNonAdminModel) {
+      return enforcedNonAdminModel
     }
     if (
       session.settings?.provider &&
@@ -134,7 +141,7 @@ function Index() {
         modelId: session.settings.modelId,
       }
     }
-  }, [isAdmin, defaultChatModel, session.settings?.provider, session.settings?.modelId])
+  }, [enforcedNonAdminModel, session.settings?.provider, session.settings?.modelId])
 
   useEffect(() => {
     let cancelled = false
@@ -162,6 +169,12 @@ function Index() {
   useEffect(() => {
     setSession((old) => {
       if (!isAdmin && defaultChatModel?.provider && defaultChatModel?.model) {
+        if (
+          old.settings?.provider === defaultChatModel.provider &&
+          old.settings?.modelId === defaultChatModel.model
+        ) {
+          return old
+        }
         return {
           ...old,
           settings: {
