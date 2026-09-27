@@ -14,6 +14,7 @@ import { createSandboxProvider } from '@/sandbox'
 import { resolveContextSandbox } from '@/sandbox/context'
 import { settingsService } from '@/settings-runtime'
 import { setCompactionUIState } from '@/stores/atoms/compactionAtoms'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import queryClient from '@/stores/queryClient'
 import { getSessionAgentModeEntry } from '@/stores/session/agent-mode'
 import { getSessionSettings } from '@/stores/session/session-settings'
@@ -123,8 +124,8 @@ export function isCompactionInProgress(sessionId: string): boolean {
   return compactionService.isInProgress(sessionId)
 }
 
-export function needsCompaction(sessionId: string): Promise<boolean> {
-  return compactionService.needsCompaction(sessionId)
+export function needsCompaction(_sessionId: string): Promise<boolean> {
+  return Promise.resolve(false)
 }
 
 export async function runCompactionWithUIState(
@@ -134,7 +135,13 @@ export async function runCompactionWithUIState(
   if (compactionService.isInProgress(sessionId)) {
     return { success: true, compacted: false, alreadyRunning: true }
   }
-  if (!options.force && !(await compactionService.needsCompaction(sessionId))) {
+  // Auto compaction is strictly disabled for all users.
+  // Only manual compression initiated by admin with force: true is permitted.
+  if (!options.force) {
+    return { success: true, compacted: false }
+  }
+  const user = useAppAuthStore.getState().user
+  if (user?.role !== 'admin') {
     return { success: true, compacted: false }
   }
 

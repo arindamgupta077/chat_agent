@@ -75,7 +75,7 @@ export function isAutoCompactionEnabled(sessionSettings?: SessionSettings, globa
   if (sessionSettings?.autoCompaction !== undefined) {
     return sessionSettings.autoCompaction
   }
-  return globalSettings?.autoCompaction ?? true
+  return globalSettings?.autoCompaction ?? false
 }
 
 export class CompactionService {

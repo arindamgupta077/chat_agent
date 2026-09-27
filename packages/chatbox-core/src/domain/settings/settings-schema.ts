@@ -574,7 +574,7 @@ export const SettingsSchema = GlobalSessionSettingsSchema.extend({
 
   autoGenerateTitle: z.boolean().default(true),
 
-  autoCompaction: z.boolean().default(true),
+  autoCompaction: z.boolean().default(false),
   compactionThreshold: z.number().min(0.4).max(0.9).default(0.6),
   compactionPrompt: z.string().optional(),
 

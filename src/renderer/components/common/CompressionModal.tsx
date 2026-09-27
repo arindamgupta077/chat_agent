@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { languageNameMap } from '@/i18n/locales'
 import { runCompactionWithUIState } from '@/packages/context-management/compaction'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { AdaptiveModal } from './AdaptiveModal'
 
@@ -16,6 +17,10 @@ interface CompressionModalProps {
 
 export function CompressionModal({ opened, onClose, session }: CompressionModalProps) {
   const { t } = useTranslation()
+  const user = useAppAuthStore((s) => s.user)
+  const isAdmin = user?.role === 'admin'
+
+  if (!isAdmin) return null
 
   return (
     <AdaptiveModal opened={opened} onClose={onClose} title={t('Compress Conversation')} centered size="lg">

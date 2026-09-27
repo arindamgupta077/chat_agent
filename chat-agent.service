@@ -1,0 +1,59 @@
+[Unit]
+Description=Chat Agent Service (AgentLab)
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# User and Group (change if running under a dedicated non-root user)
+User=root
+# Group=root
+
+WorkingDirectory=/data1/agent_builder/chat_agent-main
+
+# Environment variables
+Environment=NODE_ENV=production
+Environment=PORT=3001
+Environment=HOST=0.0.0.0
+# Include common pnpm / node directories in PATH
+Environment="PATH=/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/root/.local/share/pnpm"
+# Proactively triggers V8 garbage collection before reaching the systemd MemoryMax limit
+Environment="NODE_OPTIONS=--max-old-space-size=384"
+
+# Execution command
+# Verify your pnpm path with: which pnpm
+ExecStart=/usr/bin/env pnpm run start
+
+# Restart policy
+Restart=always
+RestartSec=10
+KillMode=process
+
+# ==========================================
+# Resource Limits (Low CPU & RAM Constraints)
+# ==========================================
+# CPU quota: 50% = max 0.5 CPU core (use 100% for 1 full core)
+CPUQuota=50%
+# Process priority / CPU weight in cgroup
+CPUWeight=50
+
+# Memory limits (cgroups v2 supported on RHEL 8/9):
+# MemoryHigh: soft limit - triggers page cache reclaim & throttling
+MemoryHigh=400M
+# MemoryMax: hard limit - prevents RAM consumption exceeding this threshold
+MemoryMax=512M
+
+# Restrict maximum threads/subprocesses to prevent thread exhaustion
+TasksMax=100
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=chat-agent
+
+# Basic sandboxing
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -23,6 +23,8 @@ function mergeDefaultSessionSettings(session: Session): SessionSettings {
       ...defaults.chatSessionSettings(),
       ...session.settings,
     }
+    // Auto compaction is strictly disabled for all users
+    chatSettings.autoCompaction = false
     // If not admin, strictly enforce administrator's chosen model
     if (!isAdmin && defaultChatModel?.provider && defaultChatModel?.model) {
       chatSettings.provider = defaultChatModel.provider
@@ -40,6 +42,7 @@ export function useSessionSettings(sessionId: string | null) {
   const sessionSettings = useMemo(() => {
     if (!session) {
       const parsed = SessionSettingsSchema.parse(globalSettings)
+      parsed.autoCompaction = false
       const user = useAppAuthStore.getState().user
       if (user?.role !== 'admin' && globalSettings.defaultChatModel?.provider && globalSettings.defaultChatModel?.model) {
         parsed.provider = globalSettings.defaultChatModel.provider
@@ -58,6 +61,7 @@ export async function getSessionSettings(sessionId: string) {
   if (!session) {
     const globalSettings = settingsStore.getState().getSettings()
     const parsed = SessionSettingsSchema.parse(globalSettings)
+    parsed.autoCompaction = false
     const user = useAppAuthStore.getState().user
     if (user?.role !== 'admin' && globalSettings.defaultChatModel?.provider && globalSettings.defaultChatModel?.model) {
       parsed.provider = globalSettings.defaultChatModel.provider

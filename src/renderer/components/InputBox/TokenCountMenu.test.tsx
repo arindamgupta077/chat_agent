@@ -3,6 +3,7 @@
 import { MantineProvider } from '@mantine/core'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import TokenCountMenu from './TokenCountMenu'
 
 vi.mock('react-i18next', async (importOriginal) => ({
@@ -97,5 +98,109 @@ describe('TokenCountMenu', () => {
     expect(getMenuRow('Context').textContent).not.toContain('~')
     expect(getMenuRow('Total').textContent).toContain('Total:~1K')
     expect(getMenuRow('Total').querySelector('.mantine-Loader-root')).toBeNull()
+  })
+
+  it('renders Auto Compaction toggle for admin user when onAutoCompactionChange is provided', () => {
+    useAppAuthStore.setState({
+      user: {
+        id: 'admin-1',
+        username: 'admin',
+        email: 'admin@test.com',
+        role: 'admin',
+      },
+      isAuthenticated: true,
+    })
+
+    renderMenu({
+      onAutoCompactionChange: vi.fn(),
+      autoCompactionEnabled: false,
+    })
+
+    expect(screen.getByText('Auto Compaction')).toBeTruthy()
+  })
+
+  it('hides Auto Compaction toggle for regular non-admin user even when onAutoCompactionChange is provided', () => {
+    useAppAuthStore.setState({
+      user: {
+        id: 'user-1',
+        username: 'user',
+        email: 'user@test.com',
+        role: 'user',
+      },
+      isAuthenticated: true,
+    })
+
+    renderMenu({
+      onAutoCompactionChange: vi.fn(),
+      autoCompactionEnabled: false,
+    })
+
+    expect(screen.queryByText('Auto Compaction')).toBeNull()
+  })
+
+  it('hides Auto Compaction toggle when unauthenticated', () => {
+    useAppAuthStore.setState({
+      user: null,
+      isAuthenticated: false,
+    })
+
+    renderMenu({
+      onAutoCompactionChange: vi.fn(),
+      autoCompactionEnabled: false,
+    })
+
+    expect(screen.queryByText('Auto Compaction')).toBeNull()
+  })
+
+  it('renders Compress Conversation option for admin user when onCompressClick is provided and contextTokens > 0', () => {
+    useAppAuthStore.setState({
+      user: {
+        id: 'admin-1',
+        username: 'admin',
+        email: 'admin@test.com',
+        role: 'admin',
+      },
+      isAuthenticated: true,
+    })
+
+    renderMenu({
+      contextTokens: 500,
+      onCompressClick: vi.fn(),
+    })
+
+    expect(screen.getByText('Compress Conversation')).toBeTruthy()
+  })
+
+  it('hides Compress Conversation option for regular non-admin user even when onCompressClick is provided', () => {
+    useAppAuthStore.setState({
+      user: {
+        id: 'user-1',
+        username: 'user',
+        email: 'user@test.com',
+        role: 'user',
+      },
+      isAuthenticated: true,
+    })
+
+    renderMenu({
+      contextTokens: 500,
+      onCompressClick: vi.fn(),
+    })
+
+    expect(screen.queryByText('Compress Conversation')).toBeNull()
+  })
+
+  it('hides Compress Conversation option when unauthenticated', () => {
+    useAppAuthStore.setState({
+      user: null,
+      isAuthenticated: false,
+    })
+
+    renderMenu({
+      contextTokens: 500,
+      onCompressClick: vi.fn(),
+    })
+
+    expect(screen.queryByText('Compress Conversation')).toBeNull()
   })
 })

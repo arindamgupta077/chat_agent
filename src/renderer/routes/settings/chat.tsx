@@ -715,10 +715,10 @@ function ContextManagementSection() {
             </Tooltip>
           </Flex>
           <Switch
-            checked={settings.autoCompaction ?? true}
+            checked={settings.autoCompaction ?? false}
             onChange={() =>
               setSettings({
-                autoCompaction: !(settings.autoCompaction ?? true),
+                autoCompaction: !(settings.autoCompaction ?? false),
               })
             }
           />
@@ -771,7 +771,7 @@ function ContextManagementSection() {
             value={settings.compactionThreshold ?? 0.6}
             onChange={(v) => setSettings({ compactionThreshold: v })}
             label={(v) => `${Math.round(v * 100)}%`}
-            disabled={!(settings.autoCompaction ?? true)}
+            disabled={!(settings.autoCompaction ?? false)}
           />
           <Flex justify="space-between" px={2}>
             <Text size="xs" c="chatbox-tertiary">

@@ -353,18 +353,18 @@ describe('Context Management Integration Tests', () => {
     })
 
     it('should use global autoCompaction when session is undefined', () => {
-      const globalSettings: Partial<Settings> = { autoCompaction: false }
+      const globalSettings: Partial<Settings> = { autoCompaction: true }
       const sessionSettings: SessionSettings = {} // autoCompaction undefined
 
       const result = isAutoCompactionEnabled(sessionSettings, globalSettings as Settings)
 
-      expect(result).toBe(false) // Falls back to global
+      expect(result).toBe(true) // Falls back to global
     })
 
-    it('should default to true when both are undefined', () => {
+    it('should default to false when both are undefined', () => {
       const result = isAutoCompactionEnabled(undefined, undefined)
 
-      expect(result).toBe(true) // Default is true
+      expect(result).toBe(false) // Default is false
     })
 
     it('should use session true over global false', () => {

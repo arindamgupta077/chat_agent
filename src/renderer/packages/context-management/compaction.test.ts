@@ -40,7 +40,8 @@ vi.mock('./context-tokens', () => ({
 }))
 vi.mock('./summary-generator', () => ({ generateSummaryWithStream: generateSummaryWithStreamMock }))
 
-import { runCompactionWithUIState } from './compaction'
+import { useAppAuthStore } from '@/stores/appAuthStore'
+import { needsCompaction, runCompactionWithUIState } from './compaction'
 
 function message(id: string, overrides: Partial<Message> = {}): Message {
   return { id, role: 'assistant', contentParts: [], ...overrides }
@@ -64,6 +65,15 @@ describe('runCompactionWithUIState', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     getDefaultStore().set(compactionUIStateMapAtom, {})
+    useAppAuthStore.setState({
+      user: {
+        id: 'admin-1',
+        username: 'admin',
+        email: 'admin@test.com',
+        role: 'admin',
+      },
+      isAuthenticated: true,
+    })
     getSessionMock.mockResolvedValue(testSession())
     getSessionSettingsMock.mockResolvedValue({})
     updateSessionWithMessagesMock.mockImplementation((_id: string, updater: (s: Session) => Session) => {
@@ -169,5 +179,39 @@ describe('runCompactionWithUIState', () => {
       status: 'completed',
       summaryMessageId: expect.any(String),
     })
+  })
+
+  it('strictly prevents auto-compaction for all users including admin', async () => {
+    // Admin user attempting auto-compaction (force: false)
+    useAppAuthStore.setState({
+      user: {
+        id: 'admin-1',
+        username: 'admin',
+        email: 'admin@test.com',
+        role: 'admin',
+      },
+      isAuthenticated: true,
+    })
+
+    const result = await runCompactionWithUIState('session-1')
+    expect(result).toEqual({ success: true, compacted: false })
+    expect(generateSummaryWithStreamMock).not.toHaveBeenCalled()
+    expect(await needsCompaction('session-1')).toBe(false)
+  })
+
+  it('prevents manual forced compaction for non-admin users', async () => {
+    useAppAuthStore.setState({
+      user: {
+        id: 'user-1',
+        username: 'user',
+        email: 'user@test.com',
+        role: 'user',
+      },
+      isAuthenticated: true,
+    })
+
+    const result = await runCompactionWithUIState('session-1', { force: true })
+    expect(result).toEqual({ success: true, compacted: false })
+    expect(generateSummaryWithStreamMock).not.toHaveBeenCalled()
   })
 })

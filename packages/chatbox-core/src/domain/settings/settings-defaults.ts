@@ -51,7 +51,7 @@ export function createDefaultSettings(): Settings {
     autoCollapseCodeBlock: true,
     pasteLongTextAsAFile: true,
     autoGenerateTitle: true,
-    autoCompaction: true,
+    autoCompaction: false,
     compactionThreshold: 0.6,
     pauseOnToolCallLimit: true,
     autoLaunch: false,

@@ -1,7 +1,8 @@
-import { describe, expect, it, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { rendererApplication } from '@/app/renderer-application'
 import { useAppAuthStore } from '../appAuthStore'
 import { settingsStore } from '../settingsStore'
-import { getSessionTokenModel } from './session-settings'
+import { getSessionSettings, getSessionTokenModel } from './session-settings'
 import type { Session } from '@shared/types'
 
 describe('session-settings admin model enforcement', () => {
@@ -75,5 +76,65 @@ describe('session-settings admin model enforcement', () => {
       provider: 'custom-provider',
       modelId: 'custom-model',
     })
+  })
+
+  it('enforces autoCompaction = false for non-admin users in getSessionSettings', async () => {
+    useAppAuthStore.setState({
+      user: {
+        id: 'user-123',
+        username: 'regular_user',
+        email: 'user@example.com',
+        role: 'user',
+      },
+      isAuthenticated: true,
+    })
+
+    const session: Session = {
+      id: 'session-1',
+      name: 'Test Chat',
+      type: 'chat',
+      threadName: '',
+      messages: [],
+      settings: {
+        provider: 'openrouter',
+        modelId: 'openai/gpt-5.4-mini',
+        autoCompaction: true,
+      },
+    }
+
+    vi.spyOn(rendererApplication.sessionQueryBridge, 'getSession').mockResolvedValue(session)
+
+    const sessionSettings = await getSessionSettings('session-1')
+    expect(sessionSettings.autoCompaction).toBe(false)
+  })
+
+  it('enforces autoCompaction = false for all users including admin in getSessionSettings', async () => {
+    useAppAuthStore.setState({
+      user: {
+        id: 'admin-1',
+        username: 'admin',
+        email: 'admin@agentlab.local',
+        role: 'admin',
+      },
+      isAuthenticated: true,
+    })
+
+    const session: Session = {
+      id: 'session-2',
+      name: 'Admin Chat',
+      type: 'chat',
+      threadName: '',
+      messages: [],
+      settings: {
+        provider: 'openrouter',
+        modelId: 'openai/gpt-5.4-mini',
+        autoCompaction: true,
+      },
+    }
+
+    vi.spyOn(rendererApplication.sessionQueryBridge, 'getSession').mockResolvedValue(session)
+
+    const sessionSettings = await getSessionSettings('session-2')
+    expect(sessionSettings.autoCompaction).toBe(false)
   })
 })

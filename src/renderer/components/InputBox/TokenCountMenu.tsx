@@ -5,6 +5,7 @@ import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppTooltip as Tooltip } from '@/components/ui/tooltip'
 import { useIsSmallScreen } from '@/hooks/useScreenChange'
+import { useAppAuthStore } from '@/stores/appAuthStore'
 import { ScalableIcon } from '../common/ScalableIcon'
 
 type Props = {
@@ -53,8 +54,10 @@ const TokenCountMenu: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const isSmallScreen = useIsSmallScreen()
+  const user = useAppAuthStore((s) => s.user)
+  const isAdmin = user?.role === 'admin'
 
-  const autoCompactionToggle = onAutoCompactionChange !== undefined && (
+  const autoCompactionToggle = isAdmin && onAutoCompactionChange !== undefined && (
     <Menu.Item closeMenuOnClick={false} style={{ cursor: 'default' }}>
       <Flex justify="space-between" align="center" gap="xs">
         <Flex align="center" gap="xs">
@@ -190,7 +193,7 @@ const TokenCountMenu: FC<Props> = ({
           </>
         )}
 
-        {onCompressClick && contextTokens > 0 && (
+        {isAdmin && onCompressClick && contextTokens > 0 && (
           <>
             <Menu.Divider />
             <Menu.Item

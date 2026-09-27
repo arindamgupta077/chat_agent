@@ -781,9 +781,10 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
     })
 
     const autoCompactionEnabled = useMemo(() => {
-      if (!currentSession) return globalAutoCompaction ?? true
+      if (!isAdmin) return false
+      if (!currentSession) return globalAutoCompaction ?? false
       return isAutoCompactionEnabled(currentSession.settings, settingsStore.getState())
-    }, [currentSession, globalAutoCompaction])
+    }, [currentSession, globalAutoCompaction, isAdmin])
 
     const contextWindowKnown = useMemo(() => {
       if (!model?.modelId) return false
@@ -2051,11 +2052,11 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                   contextWindow={effectiveContextWindow ?? undefined}
                   currentMessageCount={currentContextMessageIds?.length ?? 0}
                   maxContextMessageCount={currentSessionMergedSettings?.maxContextMessageCount}
-                  onCompressClick={sessionId && !isNewSession ? () => setShowCompressionModal(true) : undefined}
+                  onCompressClick={isAdmin && sessionId && !isNewSession ? () => setShowCompressionModal(true) : undefined}
                   autoCompactionEnabled={autoCompactionEnabled}
                   isCompacting={isCompacting}
                   contextWindowKnown={contextWindowKnown}
-                  onAutoCompactionChange={sessionId && !isNewSession ? handleAutoCompactionChange : undefined}
+                  onAutoCompactionChange={isAdmin && sessionId && !isNewSession ? handleAutoCompactionChange : undefined}
                 >
                   <Flex
                     align="center"
@@ -2120,7 +2121,7 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
             </Flex>
           </Box>
         </Stack>
-        {currentSession && (
+        {isAdmin && currentSession && (
           <CompressionModal
             opened={showCompressionModal}
             onClose={() => setShowCompressionModal(false)}
