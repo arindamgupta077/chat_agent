@@ -85,5 +85,6 @@ export function migrateSettings(persisted: unknown, version: number, host: Setti
     }
   }
 
+  settings.autoCompaction = false
   return SettingsSchema.parse(settings)
 }

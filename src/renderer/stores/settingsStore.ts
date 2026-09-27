@@ -32,6 +32,9 @@ export function initSettingsStore() {
       .hydrate()
       .then(() => {
         const state = settingsStore.getState()
+        if (state.autoCompaction !== false) {
+          state.setSettings({ autoCompaction: false })
+        }
         if (state.defaultChatModel?.provider === 'chatbox-ai' || state.defaultChatModel?.provider === 'ChatboxAI') {
           state.setSettings({ defaultChatModel: undefined })
         }

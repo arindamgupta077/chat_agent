@@ -65,7 +65,6 @@ import { useSessionLockState } from '@/hooks/useSessionLockState'
 import { cn } from '@/lib/utils'
 import {
   getContextMessageIds,
-  isAutoCompactionEnabled,
   isCompactionInProgress,
   useContextTokens,
   useStableEligibleMessages,
@@ -739,7 +738,6 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
       constructedMessage: preConstructedMessage.message,
     })
 
-    const globalAutoCompaction = useSettingsStore((state) => state.autoCompaction)
     const [isCompacting, setIsCompacting] = useState(false)
 
     // The session-level share of the submit gate comes from the shared
@@ -780,11 +778,7 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
       queueEnabled,
     })
 
-    const autoCompactionEnabled = useMemo(() => {
-      if (!isAdmin) return false
-      if (!currentSession) return globalAutoCompaction ?? false
-      return isAutoCompactionEnabled(currentSession.settings, settingsStore.getState())
-    }, [currentSession, globalAutoCompaction, isAdmin])
+
 
     const contextWindowKnown = useMemo(() => {
       if (!model?.modelId) return false
@@ -825,24 +819,7 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
       return () => clearInterval(interval)
     }, [currentSessionId, isNewSession])
 
-    const handleAutoCompactionChange = useCallback(
-      async (enabled: boolean) => {
-        if (!currentSessionId || isNewSession) return
-        await rendererApplication.sessions.updateSession(currentSessionId, (session) => {
-          if (!session) {
-            throw new Error('Session not found')
-          }
-          return {
-            ...session,
-            settings: {
-              ...session.settings,
-              autoCompaction: enabled,
-            },
-          }
-        })
-      },
-      [currentSessionId, isNewSession]
-    )
+
 
     const [showRollbackThreadButton, setShowRollbackThreadButton] = useState(false)
     useEffect(() => {
@@ -2053,10 +2030,8 @@ const InputBox = forwardRef<InputBoxRef, InputBoxProps>(
                   currentMessageCount={currentContextMessageIds?.length ?? 0}
                   maxContextMessageCount={currentSessionMergedSettings?.maxContextMessageCount}
                   onCompressClick={isAdmin && sessionId && !isNewSession ? () => setShowCompressionModal(true) : undefined}
-                  autoCompactionEnabled={autoCompactionEnabled}
                   isCompacting={isCompacting}
                   contextWindowKnown={contextWindowKnown}
-                  onAutoCompactionChange={isAdmin && sessionId && !isNewSession ? handleAutoCompactionChange : undefined}
                 >
                   <Flex
                     align="center"

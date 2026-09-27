@@ -1,9 +1,8 @@
-import { Flex, Loader, Menu, Switch, Text } from '@mantine/core'
+import { Flex, Loader, Menu, Text } from '@mantine/core'
 import { formatNumber } from '@shared/utils'
 import { IconFileZip } from '@tabler/icons-react'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AppTooltip as Tooltip } from '@/components/ui/tooltip'
 import { useIsSmallScreen } from '@/hooks/useScreenChange'
 import { useAppAuthStore } from '@/stores/appAuthStore'
 import { ScalableIcon } from '../common/ScalableIcon'
@@ -24,11 +23,8 @@ type Props = {
   maxContextMessageCount?: number
   children?: React.ReactNode
   onCompressClick?: () => void
-  // Auto-compaction props
-  autoCompactionEnabled?: boolean
   isCompacting?: boolean
   contextWindowKnown?: boolean
-  onAutoCompactionChange?: (enabled: boolean) => void
 }
 
 const TokenCountMenu: FC<Props> = ({
@@ -47,52 +43,13 @@ const TokenCountMenu: FC<Props> = ({
   maxContextMessageCount,
   children,
   onCompressClick,
-  autoCompactionEnabled,
   isCompacting,
   contextWindowKnown = true,
-  onAutoCompactionChange,
 }) => {
   const { t } = useTranslation()
   const isSmallScreen = useIsSmallScreen()
   const user = useAppAuthStore((s) => s.user)
   const isAdmin = user?.role === 'admin'
-
-  const autoCompactionToggle = isAdmin && onAutoCompactionChange !== undefined && (
-    <Menu.Item closeMenuOnClick={false} style={{ cursor: 'default' }}>
-      <Flex justify="space-between" align="center" gap="xs">
-        <Flex align="center" gap="xs">
-          <Text size="sm">{t('Auto Compaction')}</Text>
-          <Text size="xs" c="dimmed">
-            ({t('This session')})
-          </Text>
-        </Flex>
-        {isCompacting ? (
-          <Flex align="center" gap="xs">
-            <Loader size="xs" />
-            <Text size="xs" c="dimmed">
-              {t('Compacting...')}
-            </Text>
-          </Flex>
-        ) : (
-          <Tooltip
-            label={t('Context window unknown for this model')}
-            disabled={contextWindowKnown}
-            withArrow
-            position="top"
-          >
-            {/* Unknown-window models now compact against a fallback window, so the
-                toggle stays usable; the tooltip still surfaces that the window is unknown. */}
-            <Switch
-              size="xs"
-              checked={autoCompactionEnabled}
-              disabled={isCompacting}
-              onChange={(e) => onAutoCompactionChange(e.currentTarget.checked)}
-            />
-          </Tooltip>
-        )}
-      </Flex>
-    </Menu.Item>
-  )
 
   return (
     <Menu
@@ -186,12 +143,6 @@ const TokenCountMenu: FC<Props> = ({
           </Menu.Item>
         )}
 
-        {autoCompactionToggle && (
-          <>
-            <Menu.Divider />
-            {autoCompactionToggle}
-          </>
-        )}
 
         {isAdmin && onCompressClick && contextTokens > 0 && (
           <>

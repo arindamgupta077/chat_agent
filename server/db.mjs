@@ -177,6 +177,31 @@ export async function testConnection() {
       console.warn('[DB] Auto-backfill for users.mcp_servers failed:', bfErr.message)
     }
 
+    // Auto-disable autoCompaction for all existing users and sessions in database
+    try {
+      if (tables.includes('app_key_value')) {
+        await pool.query(`
+          UPDATE app_key_value
+          SET value = jsonb_set(value::jsonb, '{autoCompaction}', 'false'::jsonb, true)
+          WHERE key = 'settings' AND (value::jsonb->>'autoCompaction' IS DISTINCT FROM 'false')
+        `)
+        await pool.query(`
+          UPDATE app_key_value
+          SET value = jsonb_set(value::jsonb, '{settings,autoCompaction}', 'false'::jsonb, true)
+          WHERE key LIKE 'session:%' AND (value::jsonb ? 'settings') AND (value::jsonb->'settings'->>'autoCompaction' IS DISTINCT FROM 'false')
+        `)
+      }
+      if (tables.includes('chat_sessions')) {
+        await pool.query(`
+          UPDATE chat_sessions
+          SET data = jsonb_set(data::jsonb, '{settings,autoCompaction}', 'false'::jsonb, true)
+          WHERE (data::jsonb ? 'settings') AND (data::jsonb->'settings'->>'autoCompaction' IS DISTINCT FROM 'false')
+        `)
+      }
+    } catch (compactErr) {
+      console.warn('[DB] Auto-migration to disable autoCompaction failed:', compactErr.message)
+    }
+
     return {
       connected: true,
       time: result.rows[0].current_time,

@@ -54,6 +54,7 @@ export async function handleApiRequest(req, res) {
   const sendJson = (statusCode, data) => {
     res.writeHead(statusCode, {
       'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
       'Access-Control-Allow-Origin': '*',
     })
     res.end(JSON.stringify(data))
@@ -111,6 +112,7 @@ export async function handleApiRequest(req, res) {
           if (typeof val.__version !== 'number') {
             val.__version = 7
           }
+          val.autoCompaction = false
           try {
             const adminConfigRes = await query('SELECT llm_providers, selected_model, global_system_instruction FROM admin_global_config WHERE id = $1', ['global'])
             const globalConfig = adminConfigRes.rows[0]
@@ -152,6 +154,10 @@ export async function handleApiRequest(req, res) {
           }
         }
 
+        if (key.startsWith('session:') && val && typeof val === 'object' && val.settings) {
+          val.settings.autoCompaction = false
+        }
+
         sendJson(200, { value: val })
         return true
       }
@@ -163,6 +169,7 @@ export async function handleApiRequest(req, res) {
 
         let finalValue = value
         if (key === 'settings' && value && typeof value === 'object') {
+          finalValue.autoCompaction = false
           if (user.role !== 'admin') {
             // Normal users cannot configure LLM API models or global system instruction; enforce administrator's settings.
             try {
@@ -226,6 +233,10 @@ export async function handleApiRequest(req, res) {
             // NEVER wipe out users.mcp_servers from a generic settings update! Always preserve existing servers.
             finalValue.mcp.servers = currentDbServers
           }
+        }
+
+        if (key.startsWith('session:') && finalValue && typeof finalValue === 'object' && finalValue.settings) {
+          finalValue.settings.autoCompaction = false
         }
 
         await query(
@@ -346,6 +357,12 @@ export async function handleApiRequest(req, res) {
         if (typeof valuesMap.settings.__version !== 'number') {
           valuesMap.settings.__version = 7
         }
+        valuesMap.settings.autoCompaction = false
+        for (const k in valuesMap) {
+          if (k.startsWith('session:') && valuesMap[k] && typeof valuesMap[k] === 'object' && valuesMap[k].settings) {
+            valuesMap[k].settings.autoCompaction = false
+          }
+        }
         try {
           const adminConfigRes = await query('SELECT llm_providers, selected_model, global_system_instruction FROM admin_global_config WHERE id = $1', ['global'])
           const globalConfig = adminConfigRes.rows[0]
@@ -395,6 +412,7 @@ export async function handleApiRequest(req, res) {
         for (let [key, value] of Object.entries(data || {})) {
           let batchValue = value
           if (key === 'settings' && value && typeof value === 'object') {
+            batchValue.autoCompaction = false
             if (user.role !== 'admin') {
               try {
                 const adminConfigRes = await query('SELECT llm_providers, selected_model, global_system_instruction FROM admin_global_config WHERE id = $1', ['global'])
@@ -447,6 +465,9 @@ export async function handleApiRequest(req, res) {
             } else {
               batchValue.mcp.servers = currentDbServers
             }
+          }
+          if (key.startsWith('session:') && batchValue && typeof batchValue === 'object' && batchValue.settings) {
+            batchValue.settings.autoCompaction = false
           }
           await query(
             `INSERT INTO app_key_value (user_id, key, value, updated_at)
@@ -982,6 +1003,9 @@ function formatImageGenRow(row) {
 }
 
 async function syncRelationalSession(userId, sessionId, sessionData) {
+  if (sessionData && typeof sessionData === 'object' && sessionData.settings) {
+    sessionData.settings.autoCompaction = false
+  }
   // Upsert chat_sessions
   await query(
     `INSERT INTO chat_sessions (id, user_id, name, type, data, created_at, updated_at)

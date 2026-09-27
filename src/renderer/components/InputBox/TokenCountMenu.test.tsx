@@ -100,7 +100,7 @@ describe('TokenCountMenu', () => {
     expect(getMenuRow('Total').querySelector('.mantine-Loader-root')).toBeNull()
   })
 
-  it('renders Auto Compaction toggle for admin user when onAutoCompactionChange is provided', () => {
+  it('does not render Auto Compaction toggle', () => {
     useAppAuthStore.setState({
       user: {
         id: 'admin-1',
@@ -111,43 +111,7 @@ describe('TokenCountMenu', () => {
       isAuthenticated: true,
     })
 
-    renderMenu({
-      onAutoCompactionChange: vi.fn(),
-      autoCompactionEnabled: false,
-    })
-
-    expect(screen.getByText('Auto Compaction')).toBeTruthy()
-  })
-
-  it('hides Auto Compaction toggle for regular non-admin user even when onAutoCompactionChange is provided', () => {
-    useAppAuthStore.setState({
-      user: {
-        id: 'user-1',
-        username: 'user',
-        email: 'user@test.com',
-        role: 'user',
-      },
-      isAuthenticated: true,
-    })
-
-    renderMenu({
-      onAutoCompactionChange: vi.fn(),
-      autoCompactionEnabled: false,
-    })
-
-    expect(screen.queryByText('Auto Compaction')).toBeNull()
-  })
-
-  it('hides Auto Compaction toggle when unauthenticated', () => {
-    useAppAuthStore.setState({
-      user: null,
-      isAuthenticated: false,
-    })
-
-    renderMenu({
-      onAutoCompactionChange: vi.fn(),
-      autoCompactionEnabled: false,
-    })
+    renderMenu({})
 
     expect(screen.queryByText('Auto Compaction')).toBeNull()
   })

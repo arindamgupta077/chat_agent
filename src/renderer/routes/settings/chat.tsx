@@ -680,58 +680,14 @@ function ContextManagementSection() {
   const { t } = useTranslation()
   const { setSettings, ...settings } = useSettingsStore((state) => state)
 
-  // Get strategy hint based on threshold value
-  const strategyHint = useMemo(() => {
-    const threshold = settings.compactionThreshold ?? 0.6
-    if (threshold <= 0.5) {
-      return t('Cost Priority: Compacts early to save tokens, may lose some context')
-    }
-    if (threshold >= 0.8) {
-      return t('Context Priority: Preserves more context, uses more tokens')
-    }
-    return t('Balanced: Good balance between cost and context preservation')
-  }, [settings.compactionThreshold, t])
-
   return (
     <Stack gap="xl">
       <Text fw="600">{t('Context Management')}</Text>
 
-      {/* Auto Compaction Toggle */}
-      <Stack gap="sm">
-        <Flex align="center" gap="xs" justify="space-between">
-          <Flex align="center" gap="xs">
-            <Text size="sm">{t('Auto Compaction')}</Text>
-            <Tooltip
-              label={t(
-                'Automatically summarize and compact conversation history when context size exceeds the threshold, preserving key information while reducing token usage.'
-              )}
-              withArrow={true}
-              maw={320}
-              className="!whitespace-normal"
-              zIndex={3000}
-              openOnTouch
-            >
-              <TooltipInfoTrigger label={t('Auto Compaction')} />
-            </Tooltip>
-          </Flex>
-          <Switch
-            checked={settings.autoCompaction ?? false}
-            onChange={() =>
-              setSettings({
-                autoCompaction: !(settings.autoCompaction ?? false),
-              })
-            }
-          />
-        </Flex>
-        <Text c="chatbox-tertiary" size="xs">
-          {t('When enabled, conversations will be automatically summarized to manage context window usage.')}
-        </Text>
-      </Stack>
-
       <Stack gap="sm">
         <Textarea
-          label={t('Compaction Prompt')}
-          description={t('Used for automatic and manual compression. Leave empty to use the built-in prompt.')}
+          label={t('Compression Prompt')}
+          description={t('Used for manual conversation compression. Leave empty to use the built-in prompt.')}
           value={settings.compactionPrompt ?? getDefaultCompactionPrompt(languageNameMap[settings.language])}
           onChange={(event) => setSettings({ compactionPrompt: event.currentTarget.value })}
           autosize
@@ -743,49 +699,6 @@ function ContextManagementSection() {
             {t('Restore Default')}
           </Button>
         </Flex>
-      </Stack>
-
-      {/* Compaction Threshold Slider */}
-      <Stack gap="sm">
-        <Flex align="center" gap="xs">
-          <Text size="sm">{t('Compaction Threshold')}</Text>
-          <Tooltip
-            label={t(
-              'The percentage of context window usage that triggers automatic compaction. Lower values save tokens but may lose context earlier.'
-            )}
-            withArrow={true}
-            maw={320}
-            className="!whitespace-normal"
-            zIndex={3000}
-            openOnTouch
-          >
-            <TooltipInfoTrigger label={t('Compaction Threshold')} />
-          </Tooltip>
-        </Flex>
-
-        <Stack gap="xs" mt="xs">
-          <Slider
-            min={0.4}
-            max={0.9}
-            step={0.05}
-            value={settings.compactionThreshold ?? 0.6}
-            onChange={(v) => setSettings({ compactionThreshold: v })}
-            label={(v) => `${Math.round(v * 100)}%`}
-            disabled={!(settings.autoCompaction ?? false)}
-          />
-          <Flex justify="space-between" px={2}>
-            <Text size="xs" c="chatbox-tertiary">
-              {t('Cost')}
-            </Text>
-            <Text size="xs" c="chatbox-tertiary">
-              {t('Context')}
-            </Text>
-          </Flex>
-        </Stack>
-
-        <Text c="chatbox-tertiary" size="xs">
-          {strategyHint}
-        </Text>
       </Stack>
     </Stack>
   )

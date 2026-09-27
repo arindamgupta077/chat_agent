@@ -13,7 +13,6 @@ import { normalizeErrorForSentry } from '@shared/utils/sentry_policy'
 import { createModel } from '@/adapters'
 import { rendererApplication } from '@/app/renderer-application'
 import { getLogger } from '@/lib/utils'
-import { runCompactionWithUIState } from '@/packages/context-management'
 import { getModelDisplayName } from '@/packages/model-setting-utils'
 import { estimateTokensFromMessages } from '@/packages/token'
 import platform from '@/platform'
@@ -275,14 +274,7 @@ export async function submitNewUserMessageUnlocked(
     return
   }
 
-  // Run compaction check before sending message (blocking)
-  // Only for chat sessions with auto-compaction enabled
-  if (session.type === 'chat' || session.type === undefined) {
-    const compactionResult = await runCompactionWithUIState(sessionId, { pendingMessage: params.newUserMsg })
-    if (!compactionResult.success) {
-      throw compactionResult.error ?? new Error('Compaction failed')
-    }
-  }
+
 
   // Invoke callback after compaction succeeds, before user message is inserted
   // This allows caller to clear draft at the right time

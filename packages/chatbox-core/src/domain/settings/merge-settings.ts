@@ -9,5 +9,7 @@ export function mergeSettingsWithDefaults(persisted: unknown): Settings {
     arrayMerge: (_target, source) => source,
   })
   const parsedSettings = SettingsSchema.safeParse(mergedSettings)
-  return parsedSettings.success ? parsedSettings.data : mergedSettings
+  const result = parsedSettings.success ? parsedSettings.data : mergedSettings
+  result.autoCompaction = false
+  return result
 }
