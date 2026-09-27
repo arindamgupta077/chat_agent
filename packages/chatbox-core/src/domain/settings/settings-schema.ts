@@ -550,7 +550,7 @@ export const SettingsSchema = GlobalSessionSettingsSchema.extend({
   fontSize: z.number().catch(14),
   spellCheck: z.boolean().optional(),
 
-  startupPage: z.enum(['home', 'session']).optional(),
+  startupPage: z.enum(['home', 'session']).default('home'),
 
   defaultPrompt: z.string().optional(),
   globalSystemInstruction: z.string().optional(),

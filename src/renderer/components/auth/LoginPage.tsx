@@ -1,7 +1,7 @@
 import { Alert, Box, Button, Card, Image, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core'
 import { IconAlertCircle, IconArrowRight, IconCheck, IconLock, IconMail } from '@tabler/icons-react'
 import React, { useState } from 'react'
-import { useAppAuthStore } from '@/stores/appAuthStore'
+import { resetAppToHome, useAppAuthStore } from '@/stores/appAuthStore'
 import icon from '@/static/icon.png'
 
 export default function LoginPage() {
@@ -30,8 +30,7 @@ export default function LoginPage() {
 
     const ok = await login(trimmedEmail, password)
     if (ok) {
-      // Reload page to rehydrate platform with postgres storage
-      window.location.reload()
+      resetAppToHome()
     }
   }
 

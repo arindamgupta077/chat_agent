@@ -38,6 +38,7 @@ export function createDefaultSettings(): Settings {
     language: 'en',
     fontSize: 14,
     spellCheck: true,
+    startupPage: 'home',
     defaultPrompt: DEFAULT_SYSTEM_PROMPT,
     globalSystemInstruction: '',
     allowReportingAndTracking: true,

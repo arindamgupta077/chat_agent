@@ -78,6 +78,7 @@ import * as settingActions from '@/stores/settingActions'
 import { initSettingsStore, settingsStore, useLanguage, useSettingsStore, useTheme } from '@/stores/settingsStore'
 import { add as addToast } from '@/stores/toastActions'
 import { useUIStore } from '@/stores/uiStore'
+import { CHATBOX_BUILD_CHANNEL, CHATBOX_BUILD_PLATFORM } from '@/variables'
 import LoginPage from '@/components/auth/LoginPage'
 import { useAppAuthStore } from '@/stores/appAuthStore'
 import { blobToDataUrl } from './image-creator/-components/constants'
@@ -255,6 +256,7 @@ function Root() {
 
   useEffect(() => {
     if (startupPathname.current !== '/') return
+    if (!useAppAuthStore.getState().isAuthenticated) return
     const { startupPage } = settingsStore.getState()
     let sid = ''
     try {

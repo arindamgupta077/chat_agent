@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import platform from '@/platform'
 
 export interface AuthUser {
   id: string
@@ -35,6 +36,22 @@ export function getAuthHeaders(): Record<string, string> {
   if (!token) return {}
   return {
     Authorization: `Bearer ${token}`,
+  }
+}
+
+export function resetAppToHome(): void {
+  try {
+    localStorage.removeItem('_currentSessionIdCachedAtom')
+  } catch {
+    // ignore
+  }
+  if (typeof window !== 'undefined') {
+    if (platform.type === 'web') {
+      window.location.replace('/')
+    } else {
+      window.location.hash = '#/'
+      window.location.reload()
+    }
   }
 }
 
@@ -108,6 +125,7 @@ export const useAppAuthStore = create<AppAuthState>((set, get) => ({
   logout: () => {
     try {
       localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem('_currentSessionIdCachedAtom')
     } catch {
       // ignore
     }
@@ -117,7 +135,7 @@ export const useAppAuthStore = create<AppAuthState>((set, get) => ({
       isAuthenticated: false,
       error: null,
     })
-    window.location.reload()
+    resetAppToHome()
   },
 
   checkAuth: async () => {
@@ -137,6 +155,11 @@ export const useAppAuthStore = create<AppAuthState>((set, get) => ({
         return true
       } else {
         localStorage.removeItem(TOKEN_KEY)
+        try {
+          localStorage.removeItem('_currentSessionIdCachedAtom')
+        } catch {
+          // ignore
+        }
         set({ isAuthenticated: false, user: null, token: null })
         return false
       }
